@@ -1,0 +1,112 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: dev",
+      "type": "npm",
+      "script": "dev",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": {
+        "owner": "typescript",
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+|\\d+,\\d+|\\d+,\\d+,\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Starting development server.*",
+          "endsPattern": "^.*Server running at.*|^.*Ready in.*"
+        }
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "npm: build",
+      "type": "npm",
+      "script": "build",
+      "group": "build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "npm: check",
+      "type": "npm",
+      "script": "check",
+      "group": "test",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Docker: Start Services",
+      "type": "shell",
+      "command": "make docker-up",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Docker: Stop Services",
+      "type": "shell",
+      "command": "make docker-down",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Database: Setup",
+      "type": "shell",
+      "command": "make db-setup",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Database: Seed",
+      "type": "shell",
+      "command": "make db-seed",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Full Setup",
+      "type": "shell",
+      "command": "make setup",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Watch TypeScript",
+      "type": "npm",
+      "script": "check",
+      "args": ["--watch"],
+      "isBackground": true,
+      "problemMatcher": "$tsc-watch",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    }
+  ]
+}
