@@ -1,0 +1,17 @@
+Test Legal Document
+===================
+
+This is a test document for the Solicitor Brain v2 system.
+
+Case Details:
+- Client: Test Client
+- Matter: Testing file upload functionality
+- Date: 2025-08-30
+
+Document Content:
+This document contains sample legal text to verify that the file upload system is working correctly. It should be processed by the system and stored with appropriate metadata.
+
+Privacy Notice:
+All personal information has been redacted in accordance with GDPR requirements.
+
+End of Document
