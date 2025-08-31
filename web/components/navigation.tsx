@@ -3,10 +3,34 @@
 import Link from 'next/link'
 import { useAuth, usePermissions } from '@/contexts/auth-context'
 import { LogOut, User, Settings, Upload, Search, FileText, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 export default function Navigation() {
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, logout, isLoading } = useAuth()
   const { canManageUsers, canUploadDocuments, isStaff } = usePermissions()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // During SSR or initial load, show minimal navigation
+  if (!mounted || isLoading) {
+    return (
+      <nav className="border-b bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="text-2xl font-bold text-blue-600">
+              Solicitor Brain
+            </Link>
+            <div className="flex gap-4">
+              {/* Empty during loading to prevent hydration mismatch */}
+            </div>
+          </div>
+        </div>
+      </nav>
+    )
+  }
 
   if (!isAuthenticated) {
     return (
