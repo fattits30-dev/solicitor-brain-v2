@@ -1,6 +1,7 @@
 import DocumentUpload from '@/components/document-upload'
+import { withAuth } from '@/contexts/auth-context'
 
-export default function Home() {
+function Home() {
   // Mock case ID for testing - in production this would come from case selection
   const mockCaseId = '123e4567-e89b-12d3-a456-426614174000'
   
@@ -76,3 +77,5 @@ export default function Home() {
     </div>
   )
 }
+
+export default withAuth(Home)

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Search, FileText, Loader2, ChevronRight } from 'lucide-react'
 import axios from 'axios'
 import { cn } from '@/lib/utils'
+import { withAuth } from '@/contexts/auth-context'
 
 interface SearchResult {
   chunk_id: string
@@ -223,3 +224,5 @@ export default function SearchPage() {
     </div>
   )
 }
+
+export default withAuth(SearchPage)
