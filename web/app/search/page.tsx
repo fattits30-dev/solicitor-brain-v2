@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, FileText, Loader2, ChevronRight } from 'lucide-react'
 import axios from 'axios'
 import { cn } from '@/lib/utils'
-import { withAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/contexts/auth-context'
+import { useRouter } from 'next/navigation'
 
 interface SearchResult {
   chunk_id: string
@@ -16,11 +17,32 @@ interface SearchResult {
   chunk_index: number
 }
 
-export default function SearchPage() {
+function SearchPage() {
+  const { isAuthenticated, isLoading } = useAuth()
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [searchType, setSearchType] = useState<'semantic' | 'hybrid'>('semantic')
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, isLoading, router])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null
+  }
+  
   const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set())
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -29,11 +51,17 @@ export default function SearchPage() {
 
     setLoading(true)
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       const response = await axios.post(
         `http://localhost:8000/api/v1/search/${searchType}`,
         searchType === 'semantic' 
           ? { query, limit: 20, threshold: 0.3 }
-          : { query, limit: 20, keyword_weight: 0.3, semantic_weight: 0.7 }
+          : { query, limit: 20, keyword_weight: 0.3, semantic_weight: 0.7 },
+        {
+          headers: {
+            ...(token && { 'Authorization': `Bearer ${token}` })
+          }
+        }
       )
       setResults(response.data)
     } catch (error) {
@@ -225,4 +253,4 @@ export default function SearchPage() {
   )
 }
 
-export default withAuth(SearchPage)
+export default SearchPage

@@ -1,9 +1,48 @@
-import DocumentUpload from '@/components/document-upload'
-import { withAuth } from '@/contexts/auth-context'
+'use client'
 
-function Home() {
+import DocumentUpload from '@/components/document-upload'
+import { useAuth, usePermissions } from '@/contexts/auth-context'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
+export default function Home() {
+  const { isAuthenticated, isLoading } = useAuth()
+  const { canUploadDocuments } = usePermissions()
+  const router = useRouter()
+  
   // Mock case ID for testing - in production this would come from case selection
   const mockCaseId = '123e4567-e89b-12d3-a456-426614174000'
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, isLoading, router])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null
+  }
+
+  if (!canUploadDocuments) {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-yellow-50 rounded-lg p-6 border border-yellow-200">
+          <h2 className="text-lg font-semibold text-yellow-900 mb-2">Access Restricted</h2>
+          <p className="text-yellow-800">
+            You do not have permission to upload documents. Please contact your administrator if you believe this is an error.
+          </p>
+        </div>
+      </div>
+    )
+  }
   
   return (
     <div className="max-w-6xl mx-auto">
@@ -77,5 +116,3 @@ function Home() {
     </div>
   )
 }
-
-export default withAuth(Home)

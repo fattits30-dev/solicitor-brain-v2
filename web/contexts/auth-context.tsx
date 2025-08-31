@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface User {
@@ -31,108 +31,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAuthenticated = !!user
 
-  // Check for existing auth on mount
-  useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('access_token')
-      const savedUser = localStorage.getItem('user')
-      
-      if (token && savedUser) {
-        try {
-          // Verify token with backend
-          const response = await fetch('http://localhost:8000/api/v1/auth/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
-          
-          if (response.ok) {
-            const userData = await response.json()
-            setUser(userData)
-          } else {
-            // Token invalid, try to refresh
-            const refreshed = await refreshToken()
-            if (!refreshed) {
-              // Refresh failed, clear auth
-              localStorage.removeItem('access_token')
-              localStorage.removeItem('refresh_token')
-              localStorage.removeItem('user')
-            }
-          }
-        } catch (error) {
-          console.error('Auth initialization error:', error)
-          // Clear invalid auth
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
-          localStorage.removeItem('user')
-        }
-      }
-      
-      setIsLoading(false)
-    }
-
-    initAuth()
-  }, [])
-
-  const login = async (email_or_username: string, password: string) => {
-    setIsLoading(true)
+  // Define refreshToken function with useCallback to avoid dependency issues
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    if (typeof window === 'undefined') return false
     
-    try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email_or_username, password })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Login failed')
-      }
-
-      const data = await response.json()
-      
-      // Store tokens and user data
-      localStorage.setItem('access_token', data.tokens.access_token)
-      localStorage.setItem('refresh_token', data.tokens.refresh_token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-      
-      setUser(data.user)
-      
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const logout = async () => {
-    setIsLoading(true)
-    
-    try {
-      const token = localStorage.getItem('access_token')
-      if (token) {
-        // Call logout endpoint
-        await fetch('http://localhost:8000/api/v1/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      // Clear local storage and state
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
-      localStorage.removeItem('user')
-      setUser(null)
-      setIsLoading(false)
-      router.push('/auth/login')
-    }
-  }
-
-  const refreshToken = async (): Promise<boolean> => {
     const refresh_token = localStorage.getItem('refresh_token')
     if (!refresh_token) return false
 
@@ -162,6 +64,125 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Token refresh error:', error)
       return false
+    }
+  }, [])
+
+  // Check for existing auth on mount
+  useEffect(() => {
+    const initAuth = async () => {
+      // Only run on client side
+      if (typeof window === 'undefined') {
+        setIsLoading(false)
+        return
+      }
+      
+      const token = localStorage.getItem('access_token')
+      const savedUser = localStorage.getItem('user')
+      
+      if (token && savedUser) {
+        try {
+          // Try to parse the saved user first
+          const parsedUser = JSON.parse(savedUser)
+          setUser(parsedUser)
+          
+          // Then verify token with backend in background
+          const response = await fetch('http://localhost:8000/api/v1/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          
+          if (response.ok) {
+            const userData = await response.json()
+            setUser(userData)
+          } else if (response.status === 401) {
+            // Token expired, try to refresh
+            const refreshed = await refreshToken()
+            if (!refreshed) {
+              // Refresh failed, clear auth
+              localStorage.removeItem('access_token')
+              localStorage.removeItem('refresh_token')
+              localStorage.removeItem('user')
+              setUser(null)
+            }
+          }
+        } catch (error) {
+          console.error('Auth initialization error:', error)
+          // Clear invalid auth
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          localStorage.removeItem('user')
+          setUser(null)
+        }
+      }
+      
+      setIsLoading(false)
+    }
+
+    initAuth()
+  }, [refreshToken])
+
+  const login = async (email_or_username: string, password: string) => {
+    setIsLoading(true)
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email_or_username, password })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Login failed')
+      }
+
+      const data = await response.json()
+      
+      // Store tokens and user data
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', data.tokens.access_token)
+        localStorage.setItem('refresh_token', data.tokens.refresh_token)
+        localStorage.setItem('user', JSON.stringify(data.user))
+      }
+      
+      setUser(data.user)
+      
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const logout = async () => {
+    setIsLoading(true)
+    
+    try {
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('access_token')
+        if (token) {
+          // Call logout endpoint
+          await fetch('http://localhost:8000/api/v1/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // Clear local storage and state
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        localStorage.removeItem('user')
+      }
+      setUser(null)
+      setIsLoading(false)
+      router.push('/auth/login')
     }
   }
 
