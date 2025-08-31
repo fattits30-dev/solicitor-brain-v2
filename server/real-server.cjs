@@ -350,22 +350,30 @@ app.get('/api/cases', async (req, res) => {
 // ============ STATS ============
 app.get('/api/stats', async (req, res) => {
   try {
-    const casesCount = await pool.query('SELECT COUNT(*) FROM cases');
+    // Get real counts from database
+    const casesCount = await pool.query("SELECT COUNT(*) FROM cases WHERE status IN ('active', 'urgent')");
     const docsCount = await pool.query('SELECT COUNT(*) FROM documents');
     const chatsCount = await pool.query('SELECT COUNT(*) FROM chat_history');
     
+    // Calculate privacy score based on actual data
+    const docsWithEmbeddings = await pool.query('SELECT COUNT(*) FROM documents WHERE embedding IS NOT NULL');
+    const privacyScore = docsCount.rows[0].count > 0 
+      ? Math.round((docsWithEmbeddings.rows[0].count / docsCount.rows[0].count) * 100)
+      : 100;
+    
     res.json({
-      activeCases: parseInt(casesCount.rows[0].count) || 24,
-      documentsProcessed: parseInt(docsCount.rows[0].count) || 156,
-      aiQueries: parseInt(chatsCount.rows[0].count) || 42,
-      privacyScore: 98
+      activeCases: parseInt(casesCount.rows[0].count),
+      documentsProcessed: parseInt(docsCount.rows[0].count),
+      aiQueries: parseInt(chatsCount.rows[0].count),
+      privacyScore: privacyScore
     });
   } catch (error) {
+    // Return zeros instead of fake data
     res.json({
-      activeCases: 24,
-      documentsProcessed: 156,
-      aiQueries: 42,
-      privacyScore: 98
+      activeCases: 0,
+      documentsProcessed: 0,
+      aiQueries: 0,
+      privacyScore: 0
     });
   }
 });
