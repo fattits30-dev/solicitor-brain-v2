@@ -3,6 +3,7 @@ import { authenticate as requireAuth } from "../middleware/auth.js";
 import { upload, saveDocumentMetadata, getDocumentFile, deleteDocument } from "../services/upload.js";
 import { storage } from "../storage.js";
 import { auditLog } from "../services/audit.js";
+import { ocrService } from "../services/ocr.js";
 import path from "path";
 import { createReadStream } from "fs";
 
@@ -54,6 +55,15 @@ router.post(
         }
       });
 
+      // Process document with OCR in the background
+      ocrService.processAndStore(
+        document.id,
+        req.file.path,
+        req.file.mimetype
+      ).catch(error => {
+        console.error(`OCR processing failed for document ${document.id}:`, error);
+      });
+
       res.json({
         message: "Document uploaded successfully",
         document: {
@@ -61,7 +71,8 @@ router.post(
           filename: req.file.originalname,
           size: req.file.size,
           type: documentType,
-          uploadedAt: document.createdAt
+          uploadedAt: document.createdAt,
+          ocrStatus: "processing"
         }
       });
     } catch (error) {
@@ -120,8 +131,17 @@ router.post(
             uploadedAt: document.createdAt
           });
 
+          // Process with OCR in background
+          ocrService.processAndStore(
+            document.id,
+            file.path,
+            file.mimetype
+          ).catch(error => {
+            console.error(`OCR processing failed for document ${document.id}:`, error);
+          });
+
           // Log audit entry
-          await AuditService.log({
+          await auditLog({
             userId: req.user!.id,
             action: "document.uploaded",
             resource: "document",
@@ -175,7 +195,7 @@ router.get("/documents/:id/download", requireAuth, async (req, res) => {
     }
 
     // Log audit entry
-    await AuditService.log({
+    await auditLog({
       userId: req.user!.id,
       action: "document.downloaded",
       resource: "document",
@@ -218,7 +238,7 @@ router.delete("/documents/:id", requireAuth, async (req, res) => {
     }
 
     // Log audit entry
-    await AuditService.log({
+    await auditLog({
       userId: req.user!.id,
       action: "document.deleted",
       resource: "document",

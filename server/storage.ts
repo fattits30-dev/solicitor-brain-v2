@@ -23,6 +23,13 @@ export interface IStorage {
   // Documents
   getDocumentsByCase(caseId: string): Promise<Document[]>;
   createDocument(document: InsertDocument): Promise<Document>;
+  updateDocumentOCR(id: string, ocrData: {
+    extractedText?: string | null;
+    ocrConfidence?: number;
+    pages?: number;
+    processingTime?: number;
+    ocrError?: string;
+  }): Promise<void>;
   
   // Events
   getEventsByCase(caseId: string): Promise<Event[]>;
@@ -109,6 +116,22 @@ export class DatabaseStorage implements IStorage {
       .values(document)
       .returning();
     return newDocument;
+  }
+
+  async updateDocumentOCR(id: string, ocrData: {
+    extractedText?: string | null;
+    ocrConfidence?: number;
+    pages?: number;
+    processingTime?: number;
+    ocrError?: string;
+  }): Promise<void> {
+    await db
+      .update(documents)
+      .set({
+        ocrText: ocrData.extractedText,
+        updatedAt: new Date()
+      })
+      .where(eq(documents.id, id));
   }
 
   async getEventsByCase(caseId: string): Promise<Event[]> {
