@@ -69,12 +69,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check for existing auth on mount
   useEffect(() => {
+    // Skip during SSR
+    if (typeof window === 'undefined') {
+      return
+    }
+
     const initAuth = async () => {
-      // Only run on client side
-      if (typeof window === 'undefined') {
-        setIsLoading(false)
-        return
-      }
       
       const token = localStorage.getItem('access_token')
       const savedUser = localStorage.getItem('user')
