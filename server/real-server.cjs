@@ -297,29 +297,51 @@ app.get('/api/search', async (req, res) => {
 app.get('/api/cases', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM cases ORDER BY updated_at DESC LIMIT 10');
-    res.json(result.rows);
+    // Transform snake_case to camelCase for frontend
+    const cases = result.rows.map(row => ({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      clientId: row.client_id,
+      status: row.status,
+      riskLevel: row.risk_level,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      createdBy: row.created_by
+    }));
+    res.json(cases);
   } catch (error) {
-    // Fallback data
+    // Fallback data with proper field names
     res.json([
       { 
         id: '1', 
         title: 'Smith vs Jones', 
         status: 'active',
-        risk_level: 'high',
-        client_id: 'client-1',
+        riskLevel: 'high',  // Changed from risk_level to riskLevel
+        clientId: 'client-1',  // Changed from client_id to clientId
         description: 'Employment dispute case',
-        created_at: new Date(Date.now() - 86400000),
-        updated_at: new Date(Date.now() - 3600000)
+        createdAt: new Date(Date.now() - 86400000).toISOString(),  // Convert to ISO string
+        updatedAt: new Date(Date.now() - 3600000).toISOString()    // Convert to ISO string
       },
       { 
         id: '2', 
         title: 'Johnson Estate', 
         status: 'pending',
-        risk_level: 'medium',
-        client_id: 'client-2',
+        riskLevel: 'medium',  // Changed from risk_level to riskLevel
+        clientId: 'client-2',  // Changed from client_id to clientId
         description: 'Property inheritance matter',
-        created_at: new Date(Date.now() - 172800000),
-        updated_at: new Date(Date.now() - 7200000)
+        createdAt: new Date(Date.now() - 172800000).toISOString(),  // Convert to ISO string
+        updatedAt: new Date(Date.now() - 7200000).toISOString()     // Convert to ISO string
+      },
+      {
+        id: '3',
+        title: 'ABC Corp Contract Review',
+        status: 'active',
+        riskLevel: 'low',
+        clientId: 'client-3',
+        description: 'Commercial contract review and negotiation',
+        createdAt: new Date(Date.now() - 259200000).toISOString(),
+        updatedAt: new Date(Date.now() - 1800000).toISOString()
       }
     ]);
   }
