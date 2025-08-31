@@ -184,6 +184,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced Document API endpoints
+  
+  // Get all documents (not case-specific)
+  app.get("/api/documents", authenticate, async (req, res) => {
+    try {
+      const documents = await storage.getAllDocuments();
+      res.json(documents);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch documents" });
+    }
+  });
+
+  // Get single document with metadata
+  app.get("/api/documents/:id", authenticate, async (req, res) => {
+    try {
+      const document = await storage.getDocument(req.params.id);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.json(document);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch document" });
+    }
+  });
+
+  // Get document metadata
+  app.get("/api/documents/:id/metadata", authenticate, async (req, res) => {
+    try {
+      const metadata = await storage.getDocumentMetadata(req.params.id);
+      if (!metadata) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.json(metadata);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch document metadata" });
+    }
+  });
+
+  // Update document metadata
+  app.patch("/api/documents/:id/metadata", authenticate, async (req, res) => {
+    try {
+      const updatedMetadata = await storage.updateDocumentMetadata(req.params.id, req.body);
+      
+      await storage.createAuditEntry({
+        actor: req.user?.username || "system",
+        action: "document_metadata_updated",
+        target: req.params.id,
+        redactedFields: [],
+      });
+      
+      res.json(updatedMetadata);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update document metadata" });
+    }
+  });
+
+  // Get document for viewing
+  app.get("/api/documents/:id/view", authenticate, async (req, res) => {
+    try {
+      const filePath = await storage.getDocumentFilePath(req.params.id);
+      if (!filePath) {
+        return res.status(404).json({ error: "Document file not found" });
+      }
+      
+      // In a real implementation, you would stream the file content
+      // For now, we'll just return the file path
+      res.json({ message: "Document viewer would display file", path: filePath });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to view document" });
+    }
+  });
+
+  // Get OCR status
+  app.get("/api/documents/:id/ocr-status", authenticate, async (req, res) => {
+    try {
+      const ocrStatus = await storage.getDocumentOCRStatus(req.params.id);
+      if (!ocrStatus) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.json(ocrStatus);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get OCR status" });
+    }
+  });
+
+  // Start OCR processing
+  app.post("/api/documents/:id/ocr", authenticate, async (req, res) => {
+    try {
+      const result = await storage.startOCRProcessing(req.params.id);
+      
+      await storage.createAuditEntry({
+        actor: req.user?.username || "system",
+        action: "ocr_processing_started",
+        target: req.params.id,
+        redactedFields: [],
+      });
+      
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to start OCR processing" });
+    }
+  });
+
+  // Add document annotations
+  app.post("/api/documents/:id/annotations", authenticate, async (req, res) => {
+    try {
+      const annotation = await storage.addDocumentAnnotation(req.params.id, {
+        ...req.body,
+        author: req.user?.username || "anonymous",
+        createdAt: new Date().toISOString()
+      });
+      
+      res.status(201).json(annotation);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to add annotation" });
+    }
+  });
+
   // AI Activity endpoint (simulated for now)
   app.get("/api/ai-activity", async (req, res) => {
     try {

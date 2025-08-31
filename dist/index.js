@@ -5,7 +5,7 @@ var __export = (target, all) => {
 };
 
 // server/index.ts
-import express2 from "express";
+import express3 from "express";
 
 // server/routes.ts
 import { createServer } from "http";
@@ -32,19 +32,45 @@ __export(schema_exports, {
   insertDocumentSchema: () => insertDocumentSchema,
   insertDraftSchema: () => insertDraftSchema,
   insertEventSchema: () => insertEventSchema,
+  insertMfaAttemptSchema: () => insertMfaAttemptSchema,
+  insertMfaRecoveryCodeSchema: () => insertMfaRecoveryCodeSchema,
+  insertMfaSettingsSchema: () => insertMfaSettingsSchema,
+  insertPermissionSchema: () => insertPermissionSchema,
   insertPersonSchema: () => insertPersonSchema,
+  insertRolePermissionSchema: () => insertRolePermissionSchema,
+  insertRoleSchema: () => insertRoleSchema,
+  insertTrustedDeviceSchema: () => insertTrustedDeviceSchema,
+  insertUserRoleSchema: () => insertUserRoleSchema,
   insertUserSchema: () => insertUserSchema,
+  mfaAttempts: () => mfaAttempts,
+  mfaAttemptsRelations: () => mfaAttemptsRelations,
+  mfaRecoveryCodes: () => mfaRecoveryCodes,
+  mfaRecoveryCodesRelations: () => mfaRecoveryCodesRelations,
+  mfaSettings: () => mfaSettings,
+  mfaSettingsRelations: () => mfaSettingsRelations,
+  permissions: () => permissions,
+  permissionsRelations: () => permissionsRelations,
   persons: () => persons,
   personsRelations: () => personsRelations,
-  users: () => users
+  rolePermissions: () => rolePermissions,
+  rolePermissionsRelations: () => rolePermissionsRelations,
+  roles: () => roles,
+  rolesRelations: () => rolesRelations,
+  trustedDevices: () => trustedDevices,
+  trustedDevicesRelations: () => trustedDevicesRelations,
+  userRoles: () => userRoles,
+  userRolesRelations: () => userRolesRelations,
+  users: () => users,
+  usersRelations: () => usersRelations,
+  usersRelationsUpdated: () => usersRelationsUpdated
 });
 import { sql } from "drizzle-orm";
-import { pgTable, text, timestamp, integer, jsonb, vector, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, jsonb, vector, boolean, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 var users = pgTable("users", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
@@ -127,6 +153,51 @@ var embeddings = pgTable("embeddings", {
   meta: jsonb("meta"),
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
+var mfaSettings = pgTable("mfa_settings", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull().unique(),
+  isEnabled: boolean("is_enabled").default(false).notNull(),
+  totpSecret: text("totp_secret"),
+  // encrypted
+  backupCodes: jsonb("backup_codes"),
+  // array of encrypted codes
+  smsPhoneNumber: text("sms_phone_number"),
+  // encrypted
+  emailAddress: text("email_address"),
+  // encrypted
+  gracePeriodEnd: timestamp("grace_period_end"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+var trustedDevices = pgTable("trusted_devices", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  deviceFingerprint: text("device_fingerprint").notNull(),
+  deviceName: text("device_name"),
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+  lastUsed: timestamp("last_used").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+var mfaAttempts = pgTable("mfa_attempts", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  method: text("method").notNull(),
+  // totp, sms, email, backup
+  success: boolean("success").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  attemptedAt: timestamp("attempted_at").defaultNow().notNull()
+});
+var mfaRecoveryCodes = pgTable("mfa_recovery_codes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  codeHash: text("code_hash").notNull(),
+  used: boolean("used").default(false).notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
 var casesRelations = relations(cases, ({ many }) => ({
   documents: many(documents),
   events: many(events),
@@ -164,6 +235,36 @@ var embeddingsRelations = relations(embeddings, ({ one }) => ({
   document: one(documents, {
     fields: [embeddings.documentId],
     references: [documents.id]
+  })
+}));
+var usersRelations = relations(users, ({ one, many }) => ({
+  mfaSettings: one(mfaSettings),
+  trustedDevices: many(trustedDevices),
+  mfaAttempts: many(mfaAttempts),
+  recoveryCodes: many(mfaRecoveryCodes)
+}));
+var mfaSettingsRelations = relations(mfaSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [mfaSettings.userId],
+    references: [users.id]
+  })
+}));
+var trustedDevicesRelations = relations(trustedDevices, ({ one }) => ({
+  user: one(users, {
+    fields: [trustedDevices.userId],
+    references: [users.id]
+  })
+}));
+var mfaAttemptsRelations = relations(mfaAttempts, ({ one }) => ({
+  user: one(users, {
+    fields: [mfaAttempts.userId],
+    references: [users.id]
+  })
+}));
+var mfaRecoveryCodesRelations = relations(mfaRecoveryCodes, ({ one }) => ({
+  user: one(users, {
+    fields: [mfaRecoveryCodes.userId],
+    references: [users.id]
   })
 }));
 var insertUserSchema = createInsertSchema(users).pick({
@@ -220,6 +321,133 @@ var insertAuditLogSchema = createInsertSchema(auditLog).pick({
   resourceId: true,
   metadata: true,
   redactedData: true
+});
+var insertMfaSettingsSchema = createInsertSchema(mfaSettings).pick({
+  userId: true,
+  isEnabled: true,
+  totpSecret: true,
+  backupCodes: true,
+  smsPhoneNumber: true,
+  emailAddress: true,
+  gracePeriodEnd: true
+});
+var insertTrustedDeviceSchema = createInsertSchema(trustedDevices).pick({
+  userId: true,
+  deviceFingerprint: true,
+  deviceName: true,
+  userAgent: true,
+  ipAddress: true,
+  expiresAt: true
+});
+var insertMfaAttemptSchema = createInsertSchema(mfaAttempts).pick({
+  userId: true,
+  method: true,
+  success: true,
+  ipAddress: true,
+  userAgent: true
+});
+var insertMfaRecoveryCodeSchema = createInsertSchema(mfaRecoveryCodes).pick({
+  userId: true,
+  codeHash: true,
+  used: true,
+  usedAt: true
+});
+var roles = pgTable("roles", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+var permissions = pgTable("permissions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  resource: text("resource").notNull(),
+  action: text("action").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+var rolePermissions = pgTable("role_permissions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  roleId: uuid("role_id").references(() => roles.id, { onDelete: "cascade" }).notNull(),
+  permissionId: uuid("permission_id").references(() => permissions.id, { onDelete: "cascade" }).notNull(),
+  grantedAt: timestamp("granted_at").defaultNow().notNull(),
+  grantedBy: text("granted_by").references(() => users.id)
+});
+var userRoles = pgTable("user_roles", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  roleId: uuid("role_id").references(() => roles.id, { onDelete: "cascade" }).notNull(),
+  assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+  assignedBy: text("assigned_by").references(() => users.id),
+  expiresAt: timestamp("expires_at")
+});
+var rolesRelations = relations(roles, ({ many }) => ({
+  permissions: many(rolePermissions),
+  users: many(userRoles)
+}));
+var permissionsRelations = relations(permissions, ({ many }) => ({
+  roles: many(rolePermissions)
+}));
+var rolePermissionsRelations = relations(rolePermissions, ({ one }) => ({
+  role: one(roles, {
+    fields: [rolePermissions.roleId],
+    references: [roles.id]
+  }),
+  permission: one(permissions, {
+    fields: [rolePermissions.permissionId],
+    references: [permissions.id]
+  }),
+  grantedByUser: one(users, {
+    fields: [rolePermissions.grantedBy],
+    references: [users.id]
+  })
+}));
+var userRolesRelations = relations(userRoles, ({ one }) => ({
+  user: one(users, {
+    fields: [userRoles.userId],
+    references: [users.id]
+  }),
+  role: one(roles, {
+    fields: [userRoles.roleId],
+    references: [roles.id]
+  }),
+  assignedByUser: one(users, {
+    fields: [userRoles.assignedBy],
+    references: [users.id]
+  })
+}));
+var usersRelationsUpdated = relations(users, ({ one, many }) => ({
+  mfaSettings: one(mfaSettings),
+  trustedDevices: many(trustedDevices),
+  mfaAttempts: many(mfaAttempts),
+  recoveryCodes: many(mfaRecoveryCodes),
+  userRoles: many(userRoles)
+}));
+var insertRoleSchema = createInsertSchema(roles).pick({
+  name: true,
+  description: true,
+  isActive: true
+});
+var insertPermissionSchema = createInsertSchema(permissions).pick({
+  name: true,
+  resource: true,
+  action: true,
+  description: true,
+  isActive: true
+});
+var insertRolePermissionSchema = createInsertSchema(rolePermissions).pick({
+  roleId: true,
+  permissionId: true,
+  grantedBy: true
+});
+var insertUserRoleSchema = createInsertSchema(userRoles).pick({
+  userId: true,
+  roleId: true,
+  assignedBy: true,
+  expiresAt: true
 });
 
 // server/db.ts
@@ -326,7 +554,7 @@ var DatabaseStorage = class {
 var storage = new DatabaseStorage();
 
 // server/routes.ts
-import { z as z3 } from "zod";
+import { z as z4 } from "zod";
 
 // server/routes/auth.ts
 import { Router } from "express";
@@ -474,6 +702,7 @@ function authenticate(req, res, next) {
     res.status(500).json({ error: "Authentication failed" });
   }
 }
+var requireAuth = authenticate;
 
 // server/services/audit.ts
 var REDACTED_FIELDS = [
@@ -1560,9 +1789,909 @@ router3.post("/summarize", authenticate, async (req, res) => {
 });
 var ai_default = router3;
 
+// server/routes/mfa.ts
+import express from "express";
+import rateLimit from "express-rate-limit";
+import { z as z3 } from "zod";
+
+// server/services/mfa.ts
+import speakeasy from "speakeasy";
+import QRCode from "qrcode";
+import nodemailer from "nodemailer";
+import twilio from "twilio";
+
+// server/services/crypto.ts
+import crypto2 from "crypto";
+var ALGORITHM = "aes-256-gcm";
+var IV_LENGTH = 16;
+var ENCRYPTION_KEY = process.env.MFA_ENCRYPTION_KEY;
+if (!ENCRYPTION_KEY) {
+  throw new Error("MFA_ENCRYPTION_KEY must be set in environment variables");
+}
+var keyBuffer = Buffer.from(ENCRYPTION_KEY, "hex");
+if (keyBuffer.length !== 32) {
+  throw new Error("MFA_ENCRYPTION_KEY must be 64 hex characters (32 bytes)");
+}
+function encrypt(text2) {
+  const iv = crypto2.randomBytes(IV_LENGTH);
+  const cipher = crypto2.createCipher(ALGORITHM, keyBuffer);
+  cipher.setAAD(Buffer.from("mfa-data"));
+  let encrypted = cipher.update(text2, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  const tag = cipher.getAuthTag();
+  return {
+    iv: iv.toString("hex"),
+    tag: tag.toString("hex"),
+    data: encrypted
+  };
+}
+function decrypt(encryptedData) {
+  const iv = Buffer.from(encryptedData.iv, "hex");
+  const tag = Buffer.from(encryptedData.tag, "hex");
+  const decipher = crypto2.createDecipher(ALGORITHM, keyBuffer);
+  decipher.setAAD(Buffer.from("mfa-data"));
+  decipher.setAuthTag(tag);
+  let decrypted = decipher.update(encryptedData.data, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  return decrypted;
+}
+function hashData(data) {
+  return crypto2.createHash("sha256").update(data).digest("hex");
+}
+function generateSecureCode(length = 8) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+  const bytes = crypto2.randomBytes(length);
+  for (let i = 0; i < length; i++) {
+    result += chars[bytes[i] % chars.length];
+  }
+  return result;
+}
+function generateDeviceFingerprint(userAgent, ipAddress) {
+  const data = `${userAgent}:${ipAddress}`;
+  return crypto2.createHash("sha256").update(data).digest("hex");
+}
+
+// server/services/mfa.ts
+import { eq as eq4, and as and2, gte, count } from "drizzle-orm";
+var EMAIL_CONFIG = {
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: process.env.SMTP_SECURE === "true",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+};
+var TWILIO_CONFIG = {
+  accountSid: process.env.TWILIO_ACCOUNT_SID,
+  authToken: process.env.TWILIO_AUTH_TOKEN,
+  phoneNumber: process.env.TWILIO_PHONE_NUMBER
+};
+var MFA_CONFIG = {
+  appName: "Solicitor Brain",
+  gracePeriodDays: parseInt(process.env.MFA_GRACE_PERIOD_DAYS || "7"),
+  maxAttemptsPerHour: parseInt(process.env.MFA_MAX_ATTEMPTS_PER_HOUR || "5"),
+  trustedDeviceDays: parseInt(process.env.MFA_TRUSTED_DEVICE_DAYS || "30"),
+  backupCodesCount: parseInt(process.env.MFA_BACKUP_CODES_COUNT || "10")
+};
+var emailTransporter = null;
+var twilioClient = null;
+if (EMAIL_CONFIG.host && EMAIL_CONFIG.auth.user) {
+  emailTransporter = nodemailer.createTransporter(EMAIL_CONFIG);
+}
+if (TWILIO_CONFIG.accountSid && TWILIO_CONFIG.authToken) {
+  twilioClient = twilio(TWILIO_CONFIG.accountSid, TWILIO_CONFIG.authToken);
+}
+var MfaService = class {
+  /**
+   * Check if MFA is enabled for a user
+   */
+  async isMfaEnabled(userId) {
+    const settings = await db.select().from(mfaSettings).where(eq4(mfaSettings.userId, userId)).limit(1);
+    return settings.length > 0 && settings[0].isEnabled;
+  }
+  /**
+   * Check if user is in MFA grace period
+   */
+  async isInGracePeriod(userId) {
+    const settings = await db.select().from(mfaSettings).where(eq4(mfaSettings.userId, userId)).limit(1);
+    if (settings.length === 0) return false;
+    const gracePeriodEnd = settings[0].gracePeriodEnd;
+    if (!gracePeriodEnd) return false;
+    return /* @__PURE__ */ new Date() < gracePeriodEnd;
+  }
+  /**
+   * Setup TOTP for a user
+   */
+  async setupTotp(userId, userEmail) {
+    const secret = speakeasy.generateSecret({
+      name: userEmail,
+      issuer: MFA_CONFIG.appName,
+      length: 32
+    });
+    const qrCode = await QRCode.toDataURL(secret.otpauth_url);
+    const backupCodes = Array.from(
+      { length: MFA_CONFIG.backupCodesCount },
+      () => generateSecureCode(8)
+    );
+    const encryptedSecret = encrypt(secret.base32);
+    const encryptedBackupCodes = backupCodes.map((code) => encrypt(code));
+    const encryptedEmail = encrypt(userEmail);
+    const gracePeriodEnd = /* @__PURE__ */ new Date();
+    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + MFA_CONFIG.gracePeriodDays);
+    await db.insert(mfaSettings).values({
+      userId,
+      isEnabled: false,
+      // Will be enabled after verification
+      totpSecret: JSON.stringify(encryptedSecret),
+      backupCodes: JSON.stringify(encryptedBackupCodes),
+      emailAddress: JSON.stringify(encryptedEmail),
+      gracePeriodEnd
+    }).onConflictDoUpdate({
+      target: mfaSettings.userId,
+      set: {
+        totpSecret: JSON.stringify(encryptedSecret),
+        backupCodes: JSON.stringify(encryptedBackupCodes),
+        emailAddress: JSON.stringify(encryptedEmail),
+        gracePeriodEnd,
+        updatedAt: /* @__PURE__ */ new Date()
+      }
+    });
+    const recoveryCodeInserts = backupCodes.map((code) => ({
+      userId,
+      codeHash: hashData(code),
+      used: false
+    }));
+    await db.delete(mfaRecoveryCodes).where(eq4(mfaRecoveryCodes.userId, userId));
+    await db.insert(mfaRecoveryCodes).values(recoveryCodeInserts);
+    await this.logMfaEvent(userId, "mfa_setup_initiated", true, "", "");
+    return {
+      secret: secret.base32,
+      qrCode,
+      backupCodes
+    };
+  }
+  /**
+   * Verify TOTP setup and enable MFA
+   */
+  async verifyTotpSetup(userId, token, context) {
+    const settings = await this.getUserMfaSettings(userId);
+    if (!settings || !settings.totpSecret) {
+      await this.logMfaEvent(userId, "totp", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    const encryptedSecret = JSON.parse(settings.totpSecret);
+    const secret = decrypt(encryptedSecret);
+    const verified = speakeasy.totp.verify({
+      secret,
+      encoding: "base32",
+      token,
+      window: 2
+      // Allow 2 time steps before/after current
+    });
+    if (verified) {
+      await db.update(mfaSettings).set({
+        isEnabled: true,
+        updatedAt: /* @__PURE__ */ new Date(),
+        gracePeriodEnd: null
+        // Remove grace period
+      }).where(eq4(mfaSettings.userId, userId));
+      await this.logMfaEvent(userId, "totp_setup_completed", true, context.ipAddress, context.userAgent);
+    } else {
+      await this.logMfaEvent(userId, "totp_setup_failed", false, context.ipAddress, context.userAgent);
+    }
+    return verified;
+  }
+  /**
+   * Verify TOTP token
+   */
+  async verifyTotp(userId, token, context) {
+    if (await this.isRateLimited(userId)) {
+      await this.logMfaEvent(userId, "totp", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    const settings = await this.getUserMfaSettings(userId);
+    if (!settings || !settings.totpSecret || !settings.isEnabled) {
+      await this.logMfaEvent(userId, "totp", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    const encryptedSecret = JSON.parse(settings.totpSecret);
+    const secret = decrypt(encryptedSecret);
+    const verified = speakeasy.totp.verify({
+      secret,
+      encoding: "base32",
+      token,
+      window: 1
+      // Stricter window for actual verification
+    });
+    await this.logMfaEvent(userId, "totp", verified, context.ipAddress, context.userAgent);
+    return verified;
+  }
+  /**
+   * Send SMS verification code
+   */
+  async sendSmsCode(userId, phoneNumber) {
+    if (!twilioClient) {
+      throw new Error("SMS service not configured");
+    }
+    if (await this.isRateLimited(userId)) {
+      return false;
+    }
+    const ukPhoneRegex = /^(\+44|0)[1-9]\d{8,9}$/;
+    if (!ukPhoneRegex.test(phoneNumber)) {
+      throw new Error("Invalid UK phone number format");
+    }
+    const code = Math.floor(1e5 + Math.random() * 9e5).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1e3);
+    const encryptedPhone = encrypt(phoneNumber);
+    const encryptedCode = encrypt(code);
+    await db.update(mfaSettings).set({
+      smsPhoneNumber: JSON.stringify({
+        ...encryptedPhone,
+        code: encryptedCode,
+        expiresAt: expiresAt.toISOString()
+      }),
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq4(mfaSettings.userId, userId));
+    try {
+      await twilioClient.messages.create({
+        body: `Your Solicitor Brain verification code is: ${code}. This code expires in 10 minutes.`,
+        from: TWILIO_CONFIG.phoneNumber,
+        to: phoneNumber
+      });
+      await this.logMfaEvent(userId, "sms_sent", true, "", "");
+      return true;
+    } catch (error) {
+      await this.logMfaEvent(userId, "sms_send_failed", false, "", "");
+      throw error;
+    }
+  }
+  /**
+   * Verify SMS code
+   */
+  async verifySmsCode(userId, code, context) {
+    if (await this.isRateLimited(userId)) {
+      await this.logMfaEvent(userId, "sms", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    const settings = await this.getUserMfaSettings(userId);
+    if (!settings || !settings.smsPhoneNumber) {
+      await this.logMfaEvent(userId, "sms", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    const smsData = JSON.parse(settings.smsPhoneNumber);
+    if (/* @__PURE__ */ new Date() > new Date(smsData.expiresAt)) {
+      await this.logMfaEvent(userId, "sms", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    const storedCode = decrypt(smsData.code);
+    const verified = code === storedCode;
+    if (verified) {
+      await db.update(mfaSettings).set({
+        smsPhoneNumber: JSON.stringify({
+          iv: smsData.iv,
+          tag: smsData.tag,
+          data: smsData.data
+        }),
+        updatedAt: /* @__PURE__ */ new Date()
+      }).where(eq4(mfaSettings.userId, userId));
+    }
+    await this.logMfaEvent(userId, "sms", verified, context.ipAddress, context.userAgent);
+    return verified;
+  }
+  /**
+   * Send email verification code
+   */
+  async sendEmailCode(userId) {
+    if (!emailTransporter) {
+      throw new Error("Email service not configured");
+    }
+    if (await this.isRateLimited(userId)) {
+      return false;
+    }
+    const settings = await this.getUserMfaSettings(userId);
+    if (!settings || !settings.emailAddress) {
+      return false;
+    }
+    const encryptedEmail = JSON.parse(settings.emailAddress);
+    const email = decrypt(encryptedEmail);
+    const code = Math.floor(1e5 + Math.random() * 9e5).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1e3);
+    const encryptedCode = encrypt(code);
+    await db.update(mfaSettings).set({
+      emailAddress: JSON.stringify({
+        ...encryptedEmail,
+        code: encryptedCode,
+        expiresAt: expiresAt.toISOString()
+      }),
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq4(mfaSettings.userId, userId));
+    try {
+      await emailTransporter.sendMail({
+        from: process.env.FROM_EMAIL,
+        to: email,
+        subject: "Solicitor Brain - Verification Code",
+        html: `
+          <h2>Verification Code</h2>
+          <p>Your verification code is: <strong>${code}</strong></p>
+          <p>This code expires in 10 minutes.</p>
+          <p>If you did not request this code, please contact support immediately.</p>
+        `
+      });
+      await this.logMfaEvent(userId, "email_sent", true, "", "");
+      return true;
+    } catch (error) {
+      await this.logMfaEvent(userId, "email_send_failed", false, "", "");
+      throw error;
+    }
+  }
+  /**
+   * Verify email code
+   */
+  async verifyEmailCode(userId, code, context) {
+    if (await this.isRateLimited(userId)) {
+      await this.logMfaEvent(userId, "email", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    const settings = await this.getUserMfaSettings(userId);
+    if (!settings || !settings.emailAddress) {
+      await this.logMfaEvent(userId, "email", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    const emailData = JSON.parse(settings.emailAddress);
+    if (!emailData.code || !emailData.expiresAt) {
+      await this.logMfaEvent(userId, "email", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    if (/* @__PURE__ */ new Date() > new Date(emailData.expiresAt)) {
+      await this.logMfaEvent(userId, "email", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    const storedCode = decrypt(emailData.code);
+    const verified = code === storedCode;
+    if (verified) {
+      const { code: _, expiresAt: __, ...cleanEmailData } = emailData;
+      await db.update(mfaSettings).set({
+        emailAddress: JSON.stringify(cleanEmailData),
+        updatedAt: /* @__PURE__ */ new Date()
+      }).where(eq4(mfaSettings.userId, userId));
+    }
+    await this.logMfaEvent(userId, "email", verified, context.ipAddress, context.userAgent);
+    return verified;
+  }
+  /**
+   * Verify backup code
+   */
+  async verifyBackupCode(userId, code, context) {
+    if (await this.isRateLimited(userId)) {
+      await this.logMfaEvent(userId, "backup", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    const codeHash = hashData(code);
+    const recoveryCode = await db.select().from(mfaRecoveryCodes).where(and2(
+      eq4(mfaRecoveryCodes.userId, userId),
+      eq4(mfaRecoveryCodes.codeHash, codeHash),
+      eq4(mfaRecoveryCodes.used, false)
+    )).limit(1);
+    if (recoveryCode.length === 0) {
+      await this.logMfaEvent(userId, "backup", false, context.ipAddress, context.userAgent);
+      return false;
+    }
+    await db.update(mfaRecoveryCodes).set({ used: true, usedAt: /* @__PURE__ */ new Date() }).where(eq4(mfaRecoveryCodes.id, recoveryCode[0].id));
+    await this.logMfaEvent(userId, "backup", true, context.ipAddress, context.userAgent);
+    return true;
+  }
+  /**
+   * Add trusted device
+   */
+  async addTrustedDevice(userId, context, options = {}) {
+    const deviceFingerprint = generateDeviceFingerprint(context.userAgent, context.ipAddress);
+    const expiresAt = /* @__PURE__ */ new Date();
+    expiresAt.setDate(expiresAt.getDate() + (options.expirationDays || MFA_CONFIG.trustedDeviceDays));
+    const deviceData = {
+      userId,
+      deviceFingerprint,
+      deviceName: options.deviceName || "Unknown Device",
+      userAgent: context.userAgent,
+      ipAddress: context.ipAddress,
+      expiresAt
+    };
+    await db.insert(trustedDevices).values(deviceData);
+    await this.logMfaEvent(userId, "trusted_device_added", true, context.ipAddress, context.userAgent);
+    return deviceFingerprint;
+  }
+  /**
+   * Check if device is trusted
+   */
+  async isDeviceTrusted(userId, context) {
+    const deviceFingerprint = generateDeviceFingerprint(context.userAgent, context.ipAddress);
+    const trustedDevice = await db.select().from(trustedDevices).where(and2(
+      eq4(trustedDevices.userId, userId),
+      eq4(trustedDevices.deviceFingerprint, deviceFingerprint),
+      gte(trustedDevices.expiresAt, /* @__PURE__ */ new Date())
+    )).limit(1);
+    if (trustedDevice.length > 0) {
+      await db.update(trustedDevices).set({ lastUsed: /* @__PURE__ */ new Date() }).where(eq4(trustedDevices.id, trustedDevice[0].id));
+      return true;
+    }
+    return false;
+  }
+  /**
+   * Remove trusted device
+   */
+  async removeTrustedDevice(userId, deviceId) {
+    const result = await db.delete(trustedDevices).where(and2(
+      eq4(trustedDevices.userId, userId),
+      eq4(trustedDevices.id, deviceId)
+    ));
+    await this.logMfaEvent(userId, "trusted_device_removed", true, "", "");
+    return result.rowCount > 0;
+  }
+  /**
+   * Get user's trusted devices
+   */
+  async getTrustedDevices(userId) {
+    return await db.select({
+      id: trustedDevices.id,
+      deviceName: trustedDevices.deviceName,
+      lastUsed: trustedDevices.lastUsed,
+      createdAt: trustedDevices.createdAt,
+      expiresAt: trustedDevices.expiresAt
+    }).from(trustedDevices).where(and2(
+      eq4(trustedDevices.userId, userId),
+      gte(trustedDevices.expiresAt, /* @__PURE__ */ new Date())
+    )).orderBy(trustedDevices.lastUsed);
+  }
+  /**
+   * Disable MFA for a user (emergency use)
+   */
+  async disableMfa(userId, adminUserId) {
+    await db.update(mfaSettings).set({ isEnabled: false, updatedAt: /* @__PURE__ */ new Date() }).where(eq4(mfaSettings.userId, userId));
+    await db.delete(trustedDevices).where(eq4(trustedDevices.userId, userId));
+    await db.insert(auditLog).values({
+      userId: adminUserId,
+      action: "mfa_disabled_by_admin",
+      resource: "user",
+      resourceId: userId,
+      metadata: { targetUserId: userId }
+    });
+  }
+  /**
+   * Generate new backup codes
+   */
+  async generateNewBackupCodes(userId) {
+    const backupCodes = Array.from(
+      { length: MFA_CONFIG.backupCodesCount },
+      () => generateSecureCode(8)
+    );
+    const encryptedBackupCodes = backupCodes.map((code) => encrypt(code));
+    await db.update(mfaSettings).set({
+      backupCodes: JSON.stringify(encryptedBackupCodes),
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq4(mfaSettings.userId, userId));
+    await db.delete(mfaRecoveryCodes).where(eq4(mfaRecoveryCodes.userId, userId));
+    const recoveryCodeInserts = backupCodes.map((code) => ({
+      userId,
+      codeHash: hashData(code),
+      used: false
+    }));
+    await db.insert(mfaRecoveryCodes).values(recoveryCodeInserts);
+    await this.logMfaEvent(userId, "backup_codes_regenerated", true, "", "");
+    return backupCodes;
+  }
+  /**
+   * Get MFA status for user
+   */
+  async getMfaStatus(userId) {
+    const settings = await this.getUserMfaSettings(userId);
+    const trustedDevicesCount = await db.select({ count: count() }).from(trustedDevices).where(and2(
+      eq4(trustedDevices.userId, userId),
+      gte(trustedDevices.expiresAt, /* @__PURE__ */ new Date())
+    ));
+    const unusedBackupCodes = await db.select({ count: count() }).from(mfaRecoveryCodes).where(and2(
+      eq4(mfaRecoveryCodes.userId, userId),
+      eq4(mfaRecoveryCodes.used, false)
+    ));
+    return {
+      enabled: settings?.isEnabled || false,
+      hasTotp: !!settings?.totpSecret,
+      hasSms: !!settings?.smsPhoneNumber,
+      hasEmail: !!settings?.emailAddress,
+      inGracePeriod: await this.isInGracePeriod(userId),
+      gracePeriodEnd: settings?.gracePeriodEnd,
+      trustedDevicesCount: trustedDevicesCount[0].count,
+      unusedBackupCodes: unusedBackupCodes[0].count
+    };
+  }
+  /**
+   * Private helper methods
+   */
+  async getUserMfaSettings(userId) {
+    const settings = await db.select().from(mfaSettings).where(eq4(mfaSettings.userId, userId)).limit(1);
+    return settings.length > 0 ? settings[0] : null;
+  }
+  async isRateLimited(userId) {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1e3);
+    const attempts = await db.select({ count: count() }).from(mfaAttempts).where(and2(
+      eq4(mfaAttempts.userId, userId),
+      gte(mfaAttempts.attemptedAt, oneHourAgo)
+    ));
+    return attempts[0].count >= MFA_CONFIG.maxAttemptsPerHour;
+  }
+  async logMfaEvent(userId, method, success, ipAddress, userAgent) {
+    const attemptData = {
+      userId,
+      method,
+      success,
+      ipAddress,
+      userAgent
+    };
+    await db.insert(mfaAttempts).values(attemptData);
+    const auditData = {
+      userId,
+      action: `mfa_${method}_${success ? "success" : "failure"}`,
+      resource: "authentication",
+      resourceId: userId,
+      metadata: {
+        method,
+        success,
+        ipAddress,
+        userAgent: userAgent.substring(0, 255)
+        // Truncate if too long
+      }
+    };
+    await db.insert(auditLog).values(auditData);
+  }
+};
+var mfaService = new MfaService();
+
+// server/routes/mfa.ts
+var router4 = express.Router();
+var mfaRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1e3,
+  // 15 minutes
+  max: 10,
+  // limit each IP to 10 requests per windowMs
+  message: { error: "Too many MFA attempts, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+var strictMfaRateLimit = rateLimit({
+  windowMs: 5 * 60 * 1e3,
+  // 5 minutes
+  max: 3,
+  // limit each IP to 3 requests per windowMs
+  message: { error: "Too many verification attempts, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+var setupTotpSchema = z3.object({
+  email: z3.string().email()
+});
+var verifyTotpSchema = z3.object({
+  token: z3.string().length(6).regex(/^\d+$/)
+});
+var setupSmsSchema = z3.object({
+  phoneNumber: z3.string().regex(/^(\+44|0)[1-9]\d{8,9}$/, "Invalid UK phone number")
+});
+var verifyCodeSchema = z3.object({
+  code: z3.string().length(6).regex(/^\d+$/)
+});
+var verifyBackupCodeSchema = z3.object({
+  code: z3.string().length(8).regex(/^[A-Z0-9]+$/)
+});
+var trustedDeviceSchema = z3.object({
+  deviceName: z3.string().min(1).max(100).optional(),
+  expirationDays: z3.number().min(1).max(365).optional()
+});
+function getVerificationContext(req) {
+  return {
+    userId: req.user.id,
+    ipAddress: req.ip || req.connection.remoteAddress || "unknown",
+    userAgent: req.get("User-Agent") || "unknown"
+  };
+}
+router4.get("/status", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const status = await mfaService.getMfaStatus(userId);
+    const context = getVerificationContext(req);
+    const isDeviceTrusted = await mfaService.isDeviceTrusted(userId, context);
+    res.json({
+      ...status,
+      deviceTrusted: isDeviceTrusted
+    });
+  } catch (error) {
+    console.error("MFA status error:", error);
+    res.status(500).json({ error: "Failed to get MFA status" });
+  }
+});
+router4.post("/setup/totp", requireAuth, mfaRateLimit, async (req, res) => {
+  try {
+    const { email } = setupTotpSchema.parse(req.body);
+    const userId = req.user.id;
+    const setup = await mfaService.setupTotp(userId, email);
+    res.json({
+      secret: setup.secret,
+      qrCode: setup.qrCode,
+      backupCodes: setup.backupCodes
+    });
+  } catch (error) {
+    if (error instanceof z3.ZodError) {
+      return res.status(400).json({ error: "Invalid input", details: error.errors });
+    }
+    console.error("TOTP setup error:", error);
+    res.status(500).json({ error: "Failed to setup TOTP" });
+  }
+});
+router4.post("/setup/totp/verify", requireAuth, strictMfaRateLimit, async (req, res) => {
+  try {
+    const { token } = verifyTotpSchema.parse(req.body);
+    const userId = req.user.id;
+    const context = getVerificationContext(req);
+    const verified = await mfaService.verifyTotpSetup(userId, token, context);
+    if (verified) {
+      res.json({ success: true, message: "TOTP setup completed successfully" });
+    } else {
+      res.status(400).json({ error: "Invalid verification code" });
+    }
+  } catch (error) {
+    if (error instanceof z3.ZodError) {
+      return res.status(400).json({ error: "Invalid input", details: error.errors });
+    }
+    console.error("TOTP verification error:", error);
+    res.status(500).json({ error: "Failed to verify TOTP" });
+  }
+});
+router4.post("/verify/totp", requireAuth, strictMfaRateLimit, async (req, res) => {
+  try {
+    const { token } = verifyTotpSchema.parse(req.body);
+    const userId = req.user.id;
+    const context = getVerificationContext(req);
+    const verified = await mfaService.verifyTotp(userId, token, context);
+    if (verified) {
+      res.json({ success: true, message: "TOTP verified successfully" });
+    } else {
+      res.status(400).json({ error: "Invalid verification code" });
+    }
+  } catch (error) {
+    if (error instanceof z3.ZodError) {
+      return res.status(400).json({ error: "Invalid input", details: error.errors });
+    }
+    console.error("TOTP verification error:", error);
+    res.status(500).json({ error: "Failed to verify TOTP" });
+  }
+});
+router4.post("/send/sms", requireAuth, mfaRateLimit, async (req, res) => {
+  try {
+    const { phoneNumber } = setupSmsSchema.parse(req.body);
+    const userId = req.user.id;
+    const sent = await mfaService.sendSmsCode(userId, phoneNumber);
+    if (sent) {
+      res.json({ success: true, message: "SMS code sent successfully" });
+    } else {
+      res.status(429).json({ error: "Rate limit exceeded" });
+    }
+  } catch (error) {
+    if (error instanceof z3.ZodError) {
+      return res.status(400).json({ error: "Invalid input", details: error.errors });
+    }
+    console.error("SMS send error:", error);
+    res.status(500).json({ error: "Failed to send SMS code" });
+  }
+});
+router4.post("/verify/sms", requireAuth, strictMfaRateLimit, async (req, res) => {
+  try {
+    const { code } = verifyCodeSchema.parse(req.body);
+    const userId = req.user.id;
+    const context = getVerificationContext(req);
+    const verified = await mfaService.verifySmsCode(userId, code, context);
+    if (verified) {
+      res.json({ success: true, message: "SMS code verified successfully" });
+    } else {
+      res.status(400).json({ error: "Invalid or expired verification code" });
+    }
+  } catch (error) {
+    if (error instanceof z3.ZodError) {
+      return res.status(400).json({ error: "Invalid input", details: error.errors });
+    }
+    console.error("SMS verification error:", error);
+    res.status(500).json({ error: "Failed to verify SMS code" });
+  }
+});
+router4.post("/send/email", requireAuth, mfaRateLimit, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const sent = await mfaService.sendEmailCode(userId);
+    if (sent) {
+      res.json({ success: true, message: "Email code sent successfully" });
+    } else {
+      res.status(429).json({ error: "Rate limit exceeded or email not configured" });
+    }
+  } catch (error) {
+    console.error("Email send error:", error);
+    res.status(500).json({ error: "Failed to send email code" });
+  }
+});
+router4.post("/verify/email", requireAuth, strictMfaRateLimit, async (req, res) => {
+  try {
+    const { code } = verifyCodeSchema.parse(req.body);
+    const userId = req.user.id;
+    const context = getVerificationContext(req);
+    const verified = await mfaService.verifyEmailCode(userId, code, context);
+    if (verified) {
+      res.json({ success: true, message: "Email code verified successfully" });
+    } else {
+      res.status(400).json({ error: "Invalid or expired verification code" });
+    }
+  } catch (error) {
+    if (error instanceof z3.ZodError) {
+      return res.status(400).json({ error: "Invalid input", details: error.errors });
+    }
+    console.error("Email verification error:", error);
+    res.status(500).json({ error: "Failed to verify email code" });
+  }
+});
+router4.post("/verify/backup", requireAuth, strictMfaRateLimit, async (req, res) => {
+  try {
+    const { code } = verifyBackupCodeSchema.parse(req.body);
+    const userId = req.user.id;
+    const context = getVerificationContext(req);
+    const verified = await mfaService.verifyBackupCode(userId, code, context);
+    if (verified) {
+      res.json({ success: true, message: "Backup code verified successfully" });
+    } else {
+      res.status(400).json({ error: "Invalid or already used backup code" });
+    }
+  } catch (error) {
+    if (error instanceof z3.ZodError) {
+      return res.status(400).json({ error: "Invalid input", details: error.errors });
+    }
+    console.error("Backup code verification error:", error);
+    res.status(500).json({ error: "Failed to verify backup code" });
+  }
+});
+router4.post("/trusted-devices", requireAuth, async (req, res) => {
+  try {
+    const options = trustedDeviceSchema.parse(req.body);
+    const userId = req.user.id;
+    const context = getVerificationContext(req);
+    const deviceFingerprint = await mfaService.addTrustedDevice(userId, context, options);
+    res.json({
+      success: true,
+      message: "Device added as trusted",
+      deviceFingerprint
+    });
+  } catch (error) {
+    if (error instanceof z3.ZodError) {
+      return res.status(400).json({ error: "Invalid input", details: error.errors });
+    }
+    console.error("Add trusted device error:", error);
+    res.status(500).json({ error: "Failed to add trusted device" });
+  }
+});
+router4.get("/trusted-devices", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const devices = await mfaService.getTrustedDevices(userId);
+    res.json({ devices });
+  } catch (error) {
+    console.error("Get trusted devices error:", error);
+    res.status(500).json({ error: "Failed to get trusted devices" });
+  }
+});
+router4.delete("/trusted-devices/:deviceId", requireAuth, async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const userId = req.user.id;
+    const removed = await mfaService.removeTrustedDevice(userId, deviceId);
+    if (removed) {
+      res.json({ success: true, message: "Trusted device removed" });
+    } else {
+      res.status(404).json({ error: "Trusted device not found" });
+    }
+  } catch (error) {
+    console.error("Remove trusted device error:", error);
+    res.status(500).json({ error: "Failed to remove trusted device" });
+  }
+});
+router4.post("/backup-codes/regenerate", requireAuth, mfaRateLimit, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const backupCodes = await mfaService.generateNewBackupCodes(userId);
+    res.json({
+      success: true,
+      message: "New backup codes generated",
+      backupCodes
+    });
+  } catch (error) {
+    console.error("Regenerate backup codes error:", error);
+    res.status(500).json({ error: "Failed to generate new backup codes" });
+  }
+});
+router4.post("/disable", requireAuth, strictMfaRateLimit, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const adminUserId = req.user.id;
+    await mfaService.disableMfa(userId, adminUserId);
+    res.json({ success: true, message: "MFA disabled successfully" });
+  } catch (error) {
+    console.error("Disable MFA error:", error);
+    res.status(500).json({ error: "Failed to disable MFA" });
+  }
+});
+router4.get("/device/trusted", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const context = getVerificationContext(req);
+    const trusted = await mfaService.isDeviceTrusted(userId, context);
+    res.json({ trusted });
+  } catch (error) {
+    console.error("Check trusted device error:", error);
+    res.status(500).json({ error: "Failed to check device trust status" });
+  }
+});
+router4.post("/complete", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const mfaEnabled = await mfaService.isMfaEnabled(userId);
+    if (!mfaEnabled) {
+      return res.status(400).json({ error: "MFA not enabled for this user" });
+    }
+    res.json({
+      success: true,
+      message: "MFA verification completed",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  } catch (error) {
+    console.error("Complete MFA error:", error);
+    res.status(500).json({ error: "Failed to complete MFA verification" });
+  }
+});
+var mfa_default = router4;
+
+// server/middleware/mfa.ts
+function checkMfaRequirement(req, res, next) {
+  if (req.path.startsWith("/api/mfa/")) {
+    return next();
+  }
+  if (!req.user) {
+    return next();
+  }
+  const context = {
+    userId: req.user.id,
+    ipAddress: req.ip || req.connection.remoteAddress || "unknown",
+    userAgent: req.get("User-Agent") || "unknown"
+  };
+  Promise.all([
+    mfaService.isMfaEnabled(req.user.id),
+    mfaService.isInGracePeriod(req.user.id),
+    mfaService.isDeviceTrusted(req.user.id, context)
+  ]).then(([mfaEnabled, inGracePeriod, deviceTrusted]) => {
+    req.mfaRequired = mfaEnabled && !inGracePeriod && !deviceTrusted;
+    req.deviceTrusted = deviceTrusted;
+    req.mfaVerified = false;
+    if (req.mfaRequired && !req.mfaVerified) {
+      return res.status(403).json({
+        error: "MFA verification required",
+        mfaRequired: true,
+        inGracePeriod,
+        deviceTrusted
+      });
+    }
+    next();
+  }).catch((error) => {
+    console.error("MFA check error:", error);
+    res.status(500).json({ error: "Failed to check MFA requirements" });
+  });
+}
+
 // server/routes.ts
 async function registerRoutes(app2) {
   app2.use("/api/auth", auth_default);
+  app2.use("/api/mfa", mfa_default);
+  app2.use("/api", checkMfaRequirement);
   app2.use("/api", upload_default);
   app2.use("/api/ai", ai_default);
   app2.get("/api/cases", authenticate, async (req, res) => {
@@ -1596,7 +2725,7 @@ async function registerRoutes(app2) {
       });
       res.status(201).json(newCase);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ error: "Invalid case data", details: error.errors });
       }
       res.status(500).json({ error: "Failed to create case" });
@@ -1625,7 +2754,7 @@ async function registerRoutes(app2) {
       });
       res.status(201).json(newDocument);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ error: "Invalid document data", details: error.errors });
       }
       res.status(500).json({ error: "Failed to upload document" });
@@ -1648,7 +2777,7 @@ async function registerRoutes(app2) {
       const newEvent = await storage.createEvent(validatedData);
       res.status(201).json(newEvent);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ error: "Invalid event data", details: error.errors });
       }
       res.status(500).json({ error: "Failed to create event" });
@@ -1677,7 +2806,7 @@ async function registerRoutes(app2) {
       });
       res.status(201).json(newDraft);
     } catch (error) {
-      if (error instanceof z3.ZodError) {
+      if (error instanceof z4.ZodError) {
         return res.status(400).json({ error: "Invalid draft data", details: error.errors });
       }
       res.status(500).json({ error: "Failed to create draft" });
@@ -1697,6 +2826,98 @@ async function registerRoutes(app2) {
       res.json(auditEntries);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch audit log" });
+    }
+  });
+  app2.get("/api/documents", authenticate, async (req, res) => {
+    try {
+      const documents2 = await storage.getAllDocuments();
+      res.json(documents2);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch documents" });
+    }
+  });
+  app2.get("/api/documents/:id", authenticate, async (req, res) => {
+    try {
+      const document = await storage.getDocument(req.params.id);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.json(document);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch document" });
+    }
+  });
+  app2.get("/api/documents/:id/metadata", authenticate, async (req, res) => {
+    try {
+      const metadata = await storage.getDocumentMetadata(req.params.id);
+      if (!metadata) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.json(metadata);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch document metadata" });
+    }
+  });
+  app2.patch("/api/documents/:id/metadata", authenticate, async (req, res) => {
+    try {
+      const updatedMetadata = await storage.updateDocumentMetadata(req.params.id, req.body);
+      await storage.createAuditEntry({
+        actor: req.user?.username || "system",
+        action: "document_metadata_updated",
+        target: req.params.id,
+        redactedFields: []
+      });
+      res.json(updatedMetadata);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update document metadata" });
+    }
+  });
+  app2.get("/api/documents/:id/view", authenticate, async (req, res) => {
+    try {
+      const filePath = await storage.getDocumentFilePath(req.params.id);
+      if (!filePath) {
+        return res.status(404).json({ error: "Document file not found" });
+      }
+      res.json({ message: "Document viewer would display file", path: filePath });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to view document" });
+    }
+  });
+  app2.get("/api/documents/:id/ocr-status", authenticate, async (req, res) => {
+    try {
+      const ocrStatus = await storage.getDocumentOCRStatus(req.params.id);
+      if (!ocrStatus) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.json(ocrStatus);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get OCR status" });
+    }
+  });
+  app2.post("/api/documents/:id/ocr", authenticate, async (req, res) => {
+    try {
+      const result = await storage.startOCRProcessing(req.params.id);
+      await storage.createAuditEntry({
+        actor: req.user?.username || "system",
+        action: "ocr_processing_started",
+        target: req.params.id,
+        redactedFields: []
+      });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to start OCR processing" });
+    }
+  });
+  app2.post("/api/documents/:id/annotations", authenticate, async (req, res) => {
+    try {
+      const annotation = await storage.addDocumentAnnotation(req.params.id, {
+        ...req.body,
+        author: req.user?.username || "anonymous",
+        createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      });
+      res.status(201).json(annotation);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to add annotation" });
     }
   });
   app2.get("/api/ai-activity", async (req, res) => {
@@ -1737,7 +2958,7 @@ async function registerRoutes(app2) {
 }
 
 // server/vite.ts
-import express from "express";
+import express2 from "express";
 import fs3 from "fs";
 import path5 from "path";
 import { createServer as createViteServer, createLogger } from "vite";
@@ -1811,6 +3032,9 @@ async function setupVite(app2, server) {
   app2.use(vite.middlewares);
   app2.use("*", async (req, res, next) => {
     const url = req.originalUrl;
+    if (url.startsWith("/api")) {
+      return next();
+    }
     try {
       const clientTemplate = path5.resolve(
         import.meta.dirname,
@@ -1838,8 +3062,11 @@ function serveStatic(app2) {
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
-  app2.use(express.static(distPath));
-  app2.use("*", (_req, res) => {
+  app2.use(express2.static(distPath));
+  app2.use("*", (req, res) => {
+    if (req.originalUrl.startsWith("/api")) {
+      return res.status(404).json({ error: "API endpoint not found" });
+    }
     res.sendFile(path5.resolve(distPath, "index.html"));
   });
 }
@@ -1847,9 +3074,9 @@ function serveStatic(app2) {
 // server/index.ts
 import dotenv2 from "dotenv";
 dotenv2.config();
-var app = express2();
-app.use(express2.json());
-app.use(express2.urlencoded({ extended: false }));
+var app = express3();
+app.use(express3.json());
+app.use(express3.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   const start = Date.now();
   const path6 = req.path;
