@@ -5,6 +5,7 @@ import { insertCaseSchema, insertDocumentSchema, insertEventSchema, insertDraftS
 import { z } from "zod";
 import authRoutes from "./routes/auth.js";
 import uploadRoutes from "./routes/upload.js";
+import aiRoutes from "./routes/ai.js";
 import { authenticate, optionalAuth } from "./middleware/auth.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -13,6 +14,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Upload routes (protected)
   app.use("/api", uploadRoutes);
+  
+  // AI routes (protected) - Real Ollama integration
+  app.use("/api/ai", aiRoutes);
   
   // Cases endpoints (protected)
   app.get("/api/cases", authenticate, async (req, res) => {

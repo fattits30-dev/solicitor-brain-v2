@@ -1381,10 +1381,190 @@ router2.get("/upload/status", authenticate, async (req, res) => {
 });
 var upload_default = router2;
 
+// server/routes/ai.ts
+import { Router as Router3 } from "express";
+
+// server/services/real-ai.ts
+import { Ollama as Ollama2 } from "ollama";
+var RealAIService = class {
+  ollama;
+  embedModel = "nomic-embed-text:latest";
+  chatModel = "llama3.2:latest";
+  constructor() {
+    this.ollama = new Ollama2({
+      host: process.env.OLLAMA_HOST || "http://localhost:11434"
+    });
+  }
+  async chat(message, context) {
+    try {
+      const response = await this.ollama.chat({
+        model: this.chatModel,
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful legal assistant specializing in UK law. Provide accurate, professional advice while being empathetic to clients."
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
+        stream: false
+      });
+      return response.message.content;
+    } catch (error) {
+      console.error("Ollama chat error:", error);
+      throw new Error("AI service temporarily unavailable");
+    }
+  }
+  async generateEmbedding(text2) {
+    try {
+      const response = await this.ollama.embeddings({
+        model: this.embedModel,
+        prompt: text2
+      });
+      return response.embedding;
+    } catch (error) {
+      console.error("Ollama embedding error:", error);
+      throw new Error("Embedding generation failed");
+    }
+  }
+  async analyzeDocument(content) {
+    try {
+      const prompt = `Analyze this legal document and extract:
+1. Key parties involved
+2. Important dates
+3. Main legal issues
+4. Risk assessment (high/medium/low)
+5. Recommended actions
+
+Document:
+${content.substring(0, 3e3)}`;
+      const response = await this.ollama.chat({
+        model: this.chatModel,
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        stream: false
+      });
+      return {
+        analysis: response.message.content,
+        timestamp: (/* @__PURE__ */ new Date()).toISOString()
+      };
+    } catch (error) {
+      console.error("Document analysis error:", error);
+      throw new Error("Document analysis failed");
+    }
+  }
+  async generateDraft(template, data) {
+    try {
+      const prompt = `Generate a professional legal document based on this template and data:
+
+Template: ${template}
+Data: ${JSON.stringify(data)}
+
+Create a complete, properly formatted document.`;
+      const response = await this.ollama.chat({
+        model: this.chatModel,
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        stream: false
+      });
+      return response.message.content;
+    } catch (error) {
+      console.error("Draft generation error:", error);
+      throw new Error("Draft generation failed");
+    }
+  }
+  async summarize(text2) {
+    try {
+      const response = await this.ollama.chat({
+        model: this.chatModel,
+        messages: [
+          {
+            role: "user",
+            content: `Summarize this legal text in 3-5 bullet points:
+
+${text2.substring(0, 2e3)}`
+          }
+        ],
+        stream: false
+      });
+      return response.message.content;
+    } catch (error) {
+      console.error("Summarization error:", error);
+      throw new Error("Summarization failed");
+    }
+  }
+};
+var aiService2 = new RealAIService();
+
+// server/routes/ai.ts
+var router3 = Router3();
+router3.post("/chat", authenticate, async (req, res) => {
+  try {
+    const { message, context } = req.body;
+    const response = await aiService2.chat(message, context);
+    res.json({
+      response,
+      model: "llama3.2",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  } catch (error) {
+    console.error("AI chat error:", error);
+    res.status(500).json({ error: error.message || "AI service unavailable" });
+  }
+});
+router3.post("/analyze-document", authenticate, async (req, res) => {
+  try {
+    const { content } = req.body;
+    const analysis = await aiService2.analyzeDocument(content);
+    res.json(analysis);
+  } catch (error) {
+    console.error("Document analysis error:", error);
+    res.status(500).json({ error: error.message || "Analysis failed" });
+  }
+});
+router3.post("/generate-draft", authenticate, async (req, res) => {
+  try {
+    const { template, data } = req.body;
+    const draft = await aiService2.generateDraft(template, data);
+    res.json({
+      content: draft,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  } catch (error) {
+    console.error("Draft generation error:", error);
+    res.status(500).json({ error: error.message || "Draft generation failed" });
+  }
+});
+router3.post("/summarize", authenticate, async (req, res) => {
+  try {
+    const { text: text2 } = req.body;
+    const summary = await aiService2.summarize(text2);
+    res.json({
+      summary,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  } catch (error) {
+    console.error("Summarization error:", error);
+    res.status(500).json({ error: error.message || "Summarization failed" });
+  }
+});
+var ai_default = router3;
+
 // server/routes.ts
 async function registerRoutes(app2) {
   app2.use("/api/auth", auth_default);
   app2.use("/api", upload_default);
+  app2.use("/api/ai", ai_default);
   app2.get("/api/cases", authenticate, async (req, res) => {
     try {
       const cases2 = await storage.getCases();
