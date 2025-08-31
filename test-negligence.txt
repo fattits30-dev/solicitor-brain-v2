@@ -1,0 +1,26 @@
+NEGLIGENCE CLAIM DOCUMENTATION
+
+Case: Smith v. ABC Supermarket
+Date: March 15, 2024
+
+FACTS:
+- Mr. John Smith slipped on a wet floor in ABC Supermarket
+- No "wet floor" warning signs were present
+- Injury: Fractured wrist requiring surgery
+- CCTV footage shows spill occurred 45 minutes before accident
+
+LEGAL BASIS:
+Establishing negligence under UK tort law requires proving:
+1. Duty of care owed by defendant to claimant
+2. Breach of that duty
+3. Causation between breach and injury
+4. Damages resulting from the breach
+
+APPLICATION:
+- ABC Supermarket owes duty of care to customers (established precedent)
+- Failed to clean spill or place warning signs (breach)
+- Direct causation: slip caused by unaddressed hazard
+- Damages: Medical expenses £12,000, lost wages £8,000
+
+PRECEDENT:
+Ward v Tesco Stores Ltd [1976] - Established liability for slip hazards
