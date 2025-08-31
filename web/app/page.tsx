@@ -11,7 +11,7 @@ export default function Home() {
           Document Upload
         </h1>
         <p className="text-gray-600">
-          Upload documents for processing and analysis. Files will be automatically OCR'd and indexed for search.
+          Upload documents for processing and analysis. Files will be automatically OCR&apos;d and indexed for search.
         </p>
       </div>
 

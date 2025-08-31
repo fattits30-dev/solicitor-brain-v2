@@ -88,7 +88,8 @@ async def readiness_check():
     try:
         # Check database
         async with engine.connect() as conn:
-            await conn.execute("SELECT 1")
+            from sqlalchemy import text
+            await conn.execute(text("SELECT 1"))
         
         # Check Redis (if needed)
         # TODO: Add Redis check
