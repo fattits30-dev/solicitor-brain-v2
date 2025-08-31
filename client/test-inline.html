@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Inline React</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+</head>
+<body>
+    <div id="root">Initial Loading...</div>
+    
+    <script>
+        const e = React.createElement;
+        
+        function TestApp() {
+            return e('div', {style: {padding: '50px', backgroundColor: 'lightgreen'}}, 
+                e('h1', null, 'React is Working!'),
+                e('p', null, 'This is rendered with inline React.'),
+                e('button', {onClick: () => alert('Clicked!')}, 'Test Button')
+            );
+        }
+        
+        const domContainer = document.getElementById('root');
+        const root = ReactDOM.createRoot(domContainer);
+        root.render(e(TestApp));
+        
+        console.log('Inline React app rendered');
+    </script>
+</body>
+</html>
