@@ -8,6 +8,9 @@ const multer = require('multer');
 const fs = require('fs').promises;
 const pdfParse = require('pdf-parse');
 
+// Import real legal automation services
+const { DeadlineCalculator, DocumentGenerator, ComplianceChecker } = require('./services/service-bridge.cjs');
+
 const app = express();
 const PORT = process.env.PORT || 3333;
 
@@ -380,168 +383,51 @@ app.get('/api/stats', async (req, res) => {
 
 // ============ LEGAL AUTOMATION ENDPOINTS ============
 
-// Deadline calculation
+// Initialize services
+const deadlineCalculator = new DeadlineCalculator();
+const documentGenerator = new DocumentGenerator();
+const complianceChecker = new ComplianceChecker();
+
+// Deadline calculation - REAL IMPLEMENTATION
 app.post('/api/deadlines/calculate', async (req, res) => {
   try {
-    const { eventType, startDate, defendantType } = req.body;
-    const start = new Date(startDate);
-    let deadline = new Date(start);
-    let description = '';
-    
-    // UK Civil Procedure Rules deadlines
-    switch(eventType) {
-      case 'serviceOfClaim':
-        // CPR 10.3 - Acknowledgment of service
-        deadline.setDate(deadline.getDate() + 14);
-        description = 'Acknowledgment of Service due (CPR 10.3)';
-        break;
-      case 'defence':
-        // CPR 15.4 - Defence deadline
-        deadline.setDate(deadline.getDate() + 28);
-        description = 'Defence due (CPR 15.4)';
-        break;
-      case 'appealPermission':
-        // CPR 52.4 - Permission to appeal
-        deadline.setDate(deadline.getDate() + 21);
-        description = 'Permission to appeal deadline (CPR 52.4)';
-        break;
-      case 'limitation':
-        // Limitation Act 1980
-        if (defendantType === 'contract') {
-          deadline.setFullYear(deadline.getFullYear() + 6);
-          description = 'Limitation period expires (6 years - contract)';
-        } else if (defendantType === 'personalInjury') {
-          deadline.setFullYear(deadline.getFullYear() + 3);
-          description = 'Limitation period expires (3 years - personal injury)';
-        }
-        break;
-      default:
-        deadline.setDate(deadline.getDate() + 14);
-        description = 'Standard deadline';
-    }
-    
-    res.json({
-      startDate,
-      deadline: deadline.toISOString(),
-      description,
-      businessDays: true,
-      rule: eventType === 'serviceOfClaim' ? 'CPR 10.3' : 'CPR 15.4'
-    });
+    const { eventType, startDate, options } = req.body;
+    const result = deadlineCalculator.calculateDeadline(eventType, startDate, options);
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ error: 'Deadline calculation failed' });
+    console.error('Deadline calculation error:', error);
+    res.status(500).json({ error: 'Deadline calculation failed', details: error.message });
   }
 });
 
-// Document generation
+// Document generation - REAL IMPLEMENTATION  
 app.post('/api/documents/generate', async (req, res) => {
   try {
     const { documentType, caseData } = req.body;
-    
-    let content = '';
-    switch(documentType) {
-      case 'claimForm':
-        content = `IN THE COUNTY COURT AT ${caseData.court || 'CENTRAL LONDON'}
-Claim No: [To be allocated]
-
-BETWEEN:
-${caseData.claimant || '[CLAIMANT NAME]'}
-Claimant
--and-
-${caseData.defendant || '[DEFENDANT NAME]'}
-Defendant
-
-CLAIM FORM (N1)
-
-The Claimant claims:
-1. ${caseData.claim || 'Damages for breach of contract'}
-2. Interest pursuant to s.69 County Courts Act 1984
-3. Costs
-
-Value: ${caseData.value || 'Between £10,000 and £25,000'}
-
-Statement of Truth
-I believe that the facts stated in this claim form are true.
-
-Dated: ${new Date().toLocaleDateString('en-GB')}`;
-        break;
-        
-      case 'letterBeforeAction':
-        content = `Dear ${caseData.defendant || 'Sir/Madam'},
-
-LETTER BEFORE ACTION
-Pre-Action Protocol for Debt Claims
-
-Our Client: ${caseData.claimant}
-Amount Outstanding: £${caseData.amount || '0.00'}
-
-We act for the above-named client in connection with the outstanding debt.
-
-Unless payment in full is received within 14 days of the date of this letter, our client will commence court proceedings against you without further notice.
-
-This may result in:
-- County Court Judgment against you
-- Additional court costs
-- Enforcement action
-- Damage to your credit rating
-
-Please contact us immediately to discuss payment.
-
-Yours faithfully,
-[Solicitor Name]`;
-        break;
-        
-      default:
-        content = 'Document template not found';
-    }
+    const content = documentGenerator.generateDocument(documentType, caseData);
     
     res.json({
       documentType,
       content,
       generated: new Date().toISOString(),
-      compliant: true
+      compliant: true,
+      service: 'DocumentGenerator'
     });
   } catch (error) {
-    res.status(500).json({ error: 'Document generation failed' });
+    console.error('Document generation error:', error);
+    res.status(500).json({ error: 'Document generation failed', details: error.message });
   }
 });
 
-// Compliance check
+// Compliance check - REAL IMPLEMENTATION
 app.post('/api/compliance/check', async (req, res) => {
   try {
     const { checkType, data } = req.body;
-    const issues = [];
-    const recommendations = [];
-    
-    if (checkType === 'clientMoney') {
-      if (!data.separateAccount) {
-        issues.push('Client money must be held in separate client account (SRA Rule 4.1)');
-        recommendations.push('Open designated client account immediately');
-      }
-      if (!data.accountingRecords) {
-        issues.push('Must maintain proper accounting records (SRA Rule 8.1)');
-        recommendations.push('Implement client ledger system');
-      }
-    }
-    
-    if (checkType === 'gdpr') {
-      if (!data.privacyNotice) {
-        issues.push('Privacy notice required under GDPR Article 13');
-        recommendations.push('Provide privacy notice to all clients');
-      }
-      if (!data.lawfulBasis) {
-        issues.push('Must establish lawful basis for processing (GDPR Article 6)');
-        recommendations.push('Document lawful basis for each processing activity');
-      }
-    }
-    
-    res.json({
-      compliant: issues.length === 0,
-      issues,
-      recommendations,
-      checkedAt: new Date().toISOString()
-    });
+    const result = await complianceChecker.checkCompliance(checkType, data);
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ error: 'Compliance check failed' });
+    console.error('Compliance check error:', error);
+    res.status(500).json({ error: 'Compliance check failed', details: error.message });
   }
 });
 
