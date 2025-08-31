@@ -16,6 +16,7 @@ import Drafts from "@/pages/drafts";
 import Activity from "@/pages/activity";
 import Audit from "@/pages/audit";
 import Settings from "@/pages/settings";
+import AIWorkspace from "@/pages/ai-workspace";
 
 // Wrapper components for protected routes
 function ProtectedDashboard() {
@@ -82,6 +83,14 @@ function ProtectedSettings() {
   );
 }
 
+function ProtectedAIWorkspace() {
+  return (
+    <ProtectedRoute>
+      <AIWorkspace />
+    </ProtectedRoute>
+  );
+}
+
 function Router() {
   return (
     <Switch>
@@ -95,6 +104,7 @@ function Router() {
       <Route path="/activity" component={ProtectedActivity} />
       <Route path="/audit" component={ProtectedAudit} />
       <Route path="/settings" component={ProtectedSettings} />
+      <Route path="/ai" component={ProtectedAIWorkspace} />
       <Route component={NotFound} />
     </Switch>
   );

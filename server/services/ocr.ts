@@ -154,7 +154,12 @@ class OCRService {
 export const ocrService = new OCRService();
 
 // Initialize on module load
-ocrService.initialize().catch(console.error);
+// Delayed initialization to prevent server startup blocking
+setTimeout(() => {
+  if (process.env.ENABLE_OCR === 'true') {
+    ocrService.initialize().catch(console.error);
+  }
+}, 5000);
 
 // Cleanup on process exit
 process.on('SIGINT', async () => {

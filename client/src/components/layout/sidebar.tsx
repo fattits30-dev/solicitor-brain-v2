@@ -6,8 +6,9 @@ const navigationItems = [
   { href: "/cases", label: "Cases", icon: "fas fa-folder-open" },
   { href: "/upload", label: "Upload Documents", icon: "fas fa-upload" },
   { href: "/search", label: "Search", icon: "fas fa-search" },
+  { href: "/ai", label: "AI Workspace", icon: "fas fa-brain", badge: true },
   { href: "/drafts", label: "Draft Studio", icon: "fas fa-edit" },
-  { href: "/activity", label: "AI Activity", icon: "fas fa-robot", badge: true },
+  { href: "/activity", label: "AI Activity", icon: "fas fa-robot" },
   { href: "/audit", label: "Audit Log", icon: "fas fa-clipboard-list" },
 ];
 
