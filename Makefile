@@ -79,9 +79,26 @@ db-reset:
 	npm run db:reset
 
 # Testing
+
+# Run all unit/integration tests
 test:
-	@echo "⚠️  Tests not yet implemented"
-	# npm run test
+	npm test
+
+# Run tests in watch mode (Jest only)
+test-watch:
+	npx jest --watch --config jest.config.cjs
+
+# Run Playwright e2e tests
+e2e:
+	npx playwright test
+
+# Lint all code
+lint:
+	npx eslint .
+
+# Format check
+format:
+	npx prettier --check .
 
 test-watch:
 	@echo "⚠️  Tests not yet implemented"

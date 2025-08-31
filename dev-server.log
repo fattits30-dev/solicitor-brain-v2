@@ -1,0 +1,41 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+Debugger listening on ws://127.0.0.1:39385/48d47b59-ad30-48c6-886c-cdbfd4627ded
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+[dotenv@17.2.1] injecting env (17) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+Waiting for the debugger to disconnect...
+node:fs:561
+  return binding.open(
+                 ^
+
+Error: ENOENT: no such file or directory, open './test/data/05-versions-space.pdf'
+    at Object.openSync (node:fs:561:18)
+    at Object.readFileSync (node:fs:445:35)
+    at Object.<anonymous> (/home/mine/ai/claude-home/projects/solicitor-brain-v2/node_modules/pdf-parse/index.js:15:25)
+    at Module._compile (node:internal/modules/cjs/loader:1688:14)
+    at Object.transformer (/home/mine/ai/claude-home/projects/solicitor-brain-v2/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1423:32)
+    at Function._load (node:internal/modules/cjs/loader:1246:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at cjsLoader (node:internal/modules/esm/translators:268:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: './test/data/05-versions-space.pdf'
+}
+
+Node.js v22.18.0
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+Debugger listening on ws://127.0.0.1:38861/ebe58ecd-a518-4951-a933-b68e42f35d1d
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+[dotenv@17.2.1] injecting env (17) from .env -- tip: 📡 version env with Radar: https://dotenvx.com/radar
+[dotenv@17.2.1] injecting env (0) from .env -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+Warning: Indexing all PDF objects
