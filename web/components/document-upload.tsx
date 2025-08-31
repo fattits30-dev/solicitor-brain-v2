@@ -55,12 +55,14 @@ export default function DocumentUpload({ caseId }: { caseId: string }) {
       formData.append('uploaded_by_id', '00000000-0000-0000-0000-000000000001') // Mock user ID
 
       try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
         const response = await axios.post(
           'http://localhost:8000/api/v1/documents/upload',
           formData,
           {
             headers: {
               'Content-Type': 'multipart/form-data',
+              ...(token && { 'Authorization': `Bearer ${token}` })
             },
             onUploadProgress: (progressEvent) => {
               const percentCompleted = Math.round(
