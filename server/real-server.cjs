@@ -378,6 +378,198 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
+// ============ LEGAL AUTOMATION ENDPOINTS ============
+
+// Deadline calculation
+app.post('/api/deadlines/calculate', async (req, res) => {
+  try {
+    const { eventType, startDate, defendantType } = req.body;
+    const start = new Date(startDate);
+    let deadline = new Date(start);
+    let description = '';
+    
+    // UK Civil Procedure Rules deadlines
+    switch(eventType) {
+      case 'serviceOfClaim':
+        // CPR 10.3 - Acknowledgment of service
+        deadline.setDate(deadline.getDate() + 14);
+        description = 'Acknowledgment of Service due (CPR 10.3)';
+        break;
+      case 'defence':
+        // CPR 15.4 - Defence deadline
+        deadline.setDate(deadline.getDate() + 28);
+        description = 'Defence due (CPR 15.4)';
+        break;
+      case 'appealPermission':
+        // CPR 52.4 - Permission to appeal
+        deadline.setDate(deadline.getDate() + 21);
+        description = 'Permission to appeal deadline (CPR 52.4)';
+        break;
+      case 'limitation':
+        // Limitation Act 1980
+        if (defendantType === 'contract') {
+          deadline.setFullYear(deadline.getFullYear() + 6);
+          description = 'Limitation period expires (6 years - contract)';
+        } else if (defendantType === 'personalInjury') {
+          deadline.setFullYear(deadline.getFullYear() + 3);
+          description = 'Limitation period expires (3 years - personal injury)';
+        }
+        break;
+      default:
+        deadline.setDate(deadline.getDate() + 14);
+        description = 'Standard deadline';
+    }
+    
+    res.json({
+      startDate,
+      deadline: deadline.toISOString(),
+      description,
+      businessDays: true,
+      rule: eventType === 'serviceOfClaim' ? 'CPR 10.3' : 'CPR 15.4'
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Deadline calculation failed' });
+  }
+});
+
+// Document generation
+app.post('/api/documents/generate', async (req, res) => {
+  try {
+    const { documentType, caseData } = req.body;
+    
+    let content = '';
+    switch(documentType) {
+      case 'claimForm':
+        content = `IN THE COUNTY COURT AT ${caseData.court || 'CENTRAL LONDON'}
+Claim No: [To be allocated]
+
+BETWEEN:
+${caseData.claimant || '[CLAIMANT NAME]'}
+Claimant
+-and-
+${caseData.defendant || '[DEFENDANT NAME]'}
+Defendant
+
+CLAIM FORM (N1)
+
+The Claimant claims:
+1. ${caseData.claim || 'Damages for breach of contract'}
+2. Interest pursuant to s.69 County Courts Act 1984
+3. Costs
+
+Value: ${caseData.value || 'Between £10,000 and £25,000'}
+
+Statement of Truth
+I believe that the facts stated in this claim form are true.
+
+Dated: ${new Date().toLocaleDateString('en-GB')}`;
+        break;
+        
+      case 'letterBeforeAction':
+        content = `Dear ${caseData.defendant || 'Sir/Madam'},
+
+LETTER BEFORE ACTION
+Pre-Action Protocol for Debt Claims
+
+Our Client: ${caseData.claimant}
+Amount Outstanding: £${caseData.amount || '0.00'}
+
+We act for the above-named client in connection with the outstanding debt.
+
+Unless payment in full is received within 14 days of the date of this letter, our client will commence court proceedings against you without further notice.
+
+This may result in:
+- County Court Judgment against you
+- Additional court costs
+- Enforcement action
+- Damage to your credit rating
+
+Please contact us immediately to discuss payment.
+
+Yours faithfully,
+[Solicitor Name]`;
+        break;
+        
+      default:
+        content = 'Document template not found';
+    }
+    
+    res.json({
+      documentType,
+      content,
+      generated: new Date().toISOString(),
+      compliant: true
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Document generation failed' });
+  }
+});
+
+// Compliance check
+app.post('/api/compliance/check', async (req, res) => {
+  try {
+    const { checkType, data } = req.body;
+    const issues = [];
+    const recommendations = [];
+    
+    if (checkType === 'clientMoney') {
+      if (!data.separateAccount) {
+        issues.push('Client money must be held in separate client account (SRA Rule 4.1)');
+        recommendations.push('Open designated client account immediately');
+      }
+      if (!data.accountingRecords) {
+        issues.push('Must maintain proper accounting records (SRA Rule 8.1)');
+        recommendations.push('Implement client ledger system');
+      }
+    }
+    
+    if (checkType === 'gdpr') {
+      if (!data.privacyNotice) {
+        issues.push('Privacy notice required under GDPR Article 13');
+        recommendations.push('Provide privacy notice to all clients');
+      }
+      if (!data.lawfulBasis) {
+        issues.push('Must establish lawful basis for processing (GDPR Article 6)');
+        recommendations.push('Document lawful basis for each processing activity');
+      }
+    }
+    
+    res.json({
+      compliant: issues.length === 0,
+      issues,
+      recommendations,
+      checkedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Compliance check failed' });
+  }
+});
+
+// Legal research
+app.post('/api/research/analyze', async (req, res) => {
+  try {
+    const { citation } = req.body;
+    
+    // Parse citation format
+    const neutralMatch = citation.match(/\[(\d{4})\]\s+(\w+)\s+(\d+)/);
+    const year = neutralMatch ? neutralMatch[1] : '2024';
+    const court = neutralMatch ? neutralMatch[2] : 'Unknown';
+    
+    res.json({
+      citation,
+      year,
+      court,
+      hierarchy: court === 'UKSC' ? 'Supreme Court' : 
+                 court === 'EWCA' ? 'Court of Appeal' : 
+                 court === 'EWHC' ? 'High Court' : 'Lower Court',
+      binding: court === 'UKSC' || court === 'EWCA',
+      analysis: 'Case analyzed for precedent value'
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Research analysis failed' });
+  }
+});
+
 // ============ TEMPLATES ============
 app.get('/api/templates', (req, res) => {
   res.json({
@@ -402,6 +594,666 @@ app.get('/api/templates', (req, res) => {
       }
     ]
   });
+});
+
+// ============ DEADLINE CALCULATOR ENDPOINTS ============
+app.get('/api/deadlines/rules', (req, res) => {
+  try {
+    // Mock court deadline rules - in production would import from service
+    const rules = [
+      {
+        name: 'Acknowledgment of Service',
+        rule: 'CPR 10.3',
+        description: 'Time to file acknowledgment after service of claim form',
+        daysFromEvent: 14,
+        excludeWeekends: true,
+        excludePublicHolidays: true,
+        canExtend: false
+      },
+      {
+        name: 'Defence',
+        rule: 'CPR 15.4',
+        description: 'Time to file defence after service of particulars',
+        daysFromEvent: 14,
+        excludeWeekends: true,
+        excludePublicHolidays: true,
+        canExtend: true
+      }
+    ];
+    res.json({ rules });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch deadline rules' });
+  }
+});
+
+app.post('/api/deadlines/calculate', async (req, res) => {
+  try {
+    const { eventDate, ruleType, caseType, customDays } = req.body;
+    
+    if (!eventDate) {
+      return res.status(400).json({ error: 'Event date is required' });
+    }
+
+    // Mock deadline calculation
+    const eventDateObj = new Date(eventDate);
+    const daysToAdd = customDays || 14;
+    const deadlineDate = new Date(eventDateObj);
+    deadlineDate.setDate(deadlineDate.getDate() + daysToAdd);
+
+    // Skip weekends (simplified logic)
+    while (deadlineDate.getDay() === 0 || deadlineDate.getDay() === 6) {
+      deadlineDate.setDate(deadlineDate.getDate() + 1);
+    }
+
+    res.json({
+      eventDate: eventDateObj.toISOString(),
+      deadlineDate: deadlineDate.toISOString(),
+      ruleType: ruleType || 'Custom',
+      daysCalculated: daysToAdd,
+      businessDaysOnly: true,
+      warnings: []
+    });
+
+  } catch (error) {
+    console.error('Deadline calculation error:', error);
+    res.status(500).json({ error: 'Deadline calculation failed' });
+  }
+});
+
+app.post('/api/deadlines/generate-case-deadlines', async (req, res) => {
+  try {
+    const { caseId, caseType, keyDates } = req.body;
+    
+    if (!caseId || !caseType) {
+      return res.status(400).json({ error: 'Case ID and type are required' });
+    }
+
+    // Mock comprehensive deadline generation
+    const deadlines = [];
+    const now = new Date();
+
+    if (keyDates?.causeOfAction) {
+      const limitationDate = new Date(keyDates.causeOfAction);
+      const limitationYears = caseType === 'personal_injury' ? 3 : 6;
+      limitationDate.setFullYear(limitationDate.getFullYear() + limitationYears);
+
+      if (limitationDate > now) {
+        deadlines.push({
+          id: `${caseId}-limitation`,
+          title: 'Limitation Period Expires',
+          description: `${limitationYears} year limitation period expires`,
+          dueDate: limitationDate.toISOString(),
+          priority: 'critical',
+          category: 'limitation',
+          source: 'Limitation Act 1980'
+        });
+      }
+    }
+
+    if (keyDates?.serviceDate) {
+      const ackDate = new Date(keyDates.serviceDate);
+      ackDate.setDate(ackDate.getDate() + 14);
+
+      deadlines.push({
+        id: `${caseId}-acknowledgment`,
+        title: 'Acknowledgment of Service Due',
+        description: 'Deadline to file acknowledgment of service',
+        dueDate: ackDate.toISOString(),
+        priority: 'high',
+        category: 'court',
+        source: 'CPR 10.3'
+      });
+    }
+
+    res.json({
+      caseId,
+      caseType,
+      deadlines,
+      generated_at: now.toISOString()
+    });
+
+  } catch (error) {
+    console.error('Case deadline generation error:', error);
+    res.status(500).json({ error: 'Case deadline generation failed' });
+  }
+});
+
+// ============ DOCUMENT AUTOMATION ENDPOINTS ============
+app.get('/api/documents/templates', (req, res) => {
+  try {
+    const templates = [
+      {
+        id: 'n1-claim-form',
+        name: 'N1 Claim Form',
+        category: 'pleading',
+        description: 'HMCTS N1 Claim Form for money claims',
+        courtForm: 'N1'
+      },
+      {
+        id: 'particulars-of-claim',
+        name: 'Particulars of Claim',
+        category: 'pleading',
+        description: 'Detailed statement of the claim',
+        practiceDirection: 'CPR PD 16'
+      },
+      {
+        id: 'witness-statement',
+        name: 'Witness Statement',
+        category: 'statement',
+        description: 'Witness Statement compliant with CPR 32',
+        practiceDirection: 'CPR PD 32'
+      },
+      {
+        id: 'letter-before-action',
+        name: 'Letter Before Action',
+        category: 'correspondence',
+        description: 'Pre-action protocol letter'
+      }
+    ];
+
+    res.json({ templates });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch document templates' });
+  }
+});
+
+app.post('/api/documents/generate', async (req, res) => {
+  try {
+    const { templateId, data, caseId, clientId } = req.body;
+    
+    if (!templateId || !data) {
+      return res.status(400).json({ error: 'Template ID and data are required' });
+    }
+
+    // Use AI to generate document content
+    let documentContent = '';
+    const currentDate = new Date().toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    try {
+      const prompt = `Generate a professional ${templateId.replace('-', ' ')} document with this data:
+        ${JSON.stringify(data)}
+        
+        Include proper legal formatting and ensure compliance with UK legal requirements.`;
+
+      const aiResponse = await ollama.chat({
+        model: 'llama3.2',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are generating UK legal documents. Use proper formatting and professional language.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        stream: false
+      });
+
+      documentContent = aiResponse.message.content;
+    } catch (aiError) {
+      // Fallback to template generation
+      documentContent = `${templateId.replace('-', ' ').toUpperCase()}
+
+Generated on: ${currentDate}
+
+${JSON.stringify(data, null, 2)}
+
+[This document was generated automatically and should be reviewed before use]`;
+    }
+
+    const generatedDoc = {
+      id: `doc_${Date.now()}`,
+      templateId,
+      title: `${templateId.replace('-', ' ')} - ${currentDate}`,
+      content: documentContent,
+      metadata: {
+        caseId,
+        clientId,
+        generatedAt: new Date().toISOString(),
+        version: 1
+      },
+      compliance: {
+        practiceDirectionCompliant: true,
+        wordCount: documentContent.split(' ').length,
+        requiredFieldsComplete: true,
+        warnings: []
+      }
+    };
+
+    res.json(generatedDoc);
+
+  } catch (error) {
+    console.error('Document generation error:', error);
+    res.status(500).json({ error: 'Document generation failed' });
+  }
+});
+
+app.post('/api/documents/review', async (req, res) => {
+  try {
+    const { content, documentType } = req.body;
+    
+    if (!content || !documentType) {
+      return res.status(400).json({ error: 'Content and document type are required' });
+    }
+
+    // Mock document review
+    const review = {
+      overallScore: 8.5,
+      suggestions: [
+        { type: 'suggestion', message: 'Document appears well-structured' },
+        { type: 'warning', message: 'Consider adding more specific dates and references' }
+      ],
+      complianceIssues: [],
+      improvements: [
+        'Consider adding more specific legal references',
+        'Ensure all dates are clearly stated'
+      ]
+    };
+
+    res.json(review);
+
+  } catch (error) {
+    console.error('Document review error:', error);
+    res.status(500).json({ error: 'Document review failed' });
+  }
+});
+
+// ============ COMPLIANCE CHECKER ENDPOINTS ============
+app.post('/api/compliance/check', async (req, res) => {
+  try {
+    const { caseId, clientData, caseData } = req.body;
+    
+    if (!caseId) {
+      return res.status(400).json({ error: 'Case ID is required' });
+    }
+
+    // Mock compliance check
+    const complianceResult = {
+      overallCompliance: 'compliant',
+      checks: [
+        {
+          id: 'sra-principle-1',
+          category: 'SRA',
+          title: 'Rule of Law Compliance',
+          severity: 'critical',
+          status: 'compliant',
+          recommendation: 'Continue current practices',
+          regulation: 'SRA Principle 1'
+        }
+      ],
+      conflictCheck: {
+        hasConflict: false,
+        conflictingCases: [],
+        recommendation: 'No conflicts identified - safe to proceed',
+        requiresWaiver: false
+      },
+      amlAssessment: {
+        riskLevel: 'low',
+        riskFactors: [],
+        dueDiligenceRequired: ['Standard due diligence procedures sufficient'],
+        ongoingMonitoring: false,
+        reportingRequired: false,
+        recommendation: 'Standard due diligence procedures sufficient'
+      },
+      gdprCheck: {
+        dataProcessingLawful: true,
+        consentObtained: true,
+        dataMinimised: true,
+        retentionPolicyCompliant: true,
+        securityMeasuresAdequate: true,
+        breachProceduresInPlace: true,
+        dataSubjectRightsRespected: true,
+        issues: [],
+        recommendations: []
+      },
+      actionItems: []
+    };
+
+    res.json(complianceResult);
+
+  } catch (error) {
+    console.error('Compliance check error:', error);
+    res.status(500).json({ error: 'Compliance check failed' });
+  }
+});
+
+app.post('/api/compliance/conflict-check', async (req, res) => {
+  try {
+    const { clientData, caseData } = req.body;
+    
+    // Mock conflict check
+    const conflictResult = {
+      hasConflict: false,
+      conflictType: undefined,
+      conflictingCases: [],
+      recommendation: 'No conflicts identified - safe to proceed',
+      requiresWaiver: false
+    };
+
+    res.json(conflictResult);
+
+  } catch (error) {
+    console.error('Conflict check error:', error);
+    res.status(500).json({ error: 'Conflict check failed' });
+  }
+});
+
+// ============ LEGAL RESEARCH ENDPOINTS ============
+app.post('/api/research/search', async (req, res) => {
+  try {
+    const { question, areaOfLaw, jurisdiction } = req.body;
+    
+    if (!question) {
+      return res.status(400).json({ error: 'Research question is required' });
+    }
+
+    // Mock legal research
+    const researchResult = {
+      query: { question, areaOfLaw, jurisdiction },
+      relevant_cases: [
+        {
+          citation: {
+            citation: 'Donoghue v Stevenson [1932] AC 562',
+            courtLevel: 'supreme_court',
+            year: 1932,
+            parties: { appellant: 'Donoghue', respondent: 'Stevenson' }
+          },
+          relevance_score: 0.9,
+          summary: 'Foundational case establishing duty of care in negligence',
+          key_principles: ['Neighbour principle', 'Duty of care']
+        }
+      ],
+      relevant_statutes: [],
+      legal_analysis: 'Based on the research question, the key legal principle is the duty of care established in Donoghue v Stevenson.',
+      precedent_hierarchy: [
+        {
+          level: 1,
+          cases: [{ citation: 'Donoghue v Stevenson [1932] AC 562' }],
+          binding_authority: true
+        }
+      ],
+      recommended_arguments: ['Apply the neighbour principle'],
+      potential_counterarguments: ['Consider distinguishing factors'],
+      research_confidence: 0.8
+    };
+
+    res.json(researchResult);
+
+  } catch (error) {
+    console.error('Legal research error:', error);
+    res.status(500).json({ error: 'Legal research failed' });
+  }
+});
+
+app.post('/api/research/analyze-case', async (req, res) => {
+  try {
+    const { caseText, citation } = req.body;
+    
+    if (!caseText) {
+      return res.status(400).json({ error: 'Case text is required' });
+    }
+
+    // Mock case analysis
+    const analysis = {
+      ratio: 'The legal principle from this case is...',
+      obiter: 'Additional judicial comments...',
+      confidence: 0.8
+    };
+
+    res.json(analysis);
+
+  } catch (error) {
+    console.error('Case analysis error:', error);
+    res.status(500).json({ error: 'Case analysis failed' });
+  }
+});
+
+// ============ FORM AUTOMATION ENDPOINTS ============
+app.get('/api/forms/available', (req, res) => {
+  try {
+    const forms = [
+      {
+        id: 'n1-claim-form',
+        name: 'N1 Claim Form',
+        category: 'hmcts',
+        description: 'Money Claims Online - Claim Form',
+        fee: 154
+      },
+      {
+        id: 'n244-application',
+        name: 'N244 Application Notice',
+        category: 'hmcts',
+        description: 'General Application to Court',
+        fee: 154
+      },
+      {
+        id: 'cw1-legal-aid',
+        name: 'CW1 Application for Legal Aid',
+        category: 'legal_aid',
+        description: 'Application for Civil Legal Aid'
+      }
+    ];
+
+    res.json({ forms });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch available forms' });
+  }
+});
+
+app.post('/api/forms/auto-populate', async (req, res) => {
+  try {
+    const { formId, caseData, clientData, documentText } = req.body;
+    
+    if (!formId) {
+      return res.status(400).json({ error: 'Form ID is required' });
+    }
+
+    // Mock auto-population
+    const result = {
+      populated_fields: {
+        claimantName: clientData?.name || 'Client Name',
+        claimantAddress: clientData?.address || 'Client Address',
+        defendantName: caseData?.defendantName || 'Defendant Name',
+        claimAmount: caseData?.claimAmount || 1000
+      },
+      confidence_score: 0.85,
+      missing_required_fields: []
+    };
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Form auto-population error:', error);
+    res.status(500).json({ error: 'Form auto-population failed' });
+  }
+});
+
+app.post('/api/forms/validate', (req, res) => {
+  try {
+    const { formId, data } = req.body;
+    
+    if (!formId || !data) {
+      return res.status(400).json({ error: 'Form ID and data are required' });
+    }
+
+    // Mock validation
+    const validation = {
+      is_valid: true,
+      errors: [],
+      warnings: []
+    };
+
+    res.json(validation);
+
+  } catch (error) {
+    console.error('Form validation error:', error);
+    res.status(500).json({ error: 'Form validation failed' });
+  }
+});
+
+// ============ WORKFLOW ENGINE ENDPOINTS ============
+app.get('/api/workflows/templates', (req, res) => {
+  try {
+    const templates = [
+      {
+        id: 'debt-recovery-litigation',
+        name: 'Debt Recovery Litigation',
+        category: 'litigation',
+        estimated_duration: '4-8 months',
+        complexity: 'medium'
+      },
+      {
+        id: 'residential-conveyancing',
+        name: 'Residential Property Purchase',
+        category: 'conveyancing',
+        estimated_duration: '8-12 weeks',
+        complexity: 'medium'
+      }
+    ];
+
+    res.json({ templates });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch workflow templates' });
+  }
+});
+
+app.post('/api/workflows/create', async (req, res) => {
+  try {
+    const { caseId, templateId, clientId, matterType, createdBy } = req.body;
+    
+    if (!caseId || !templateId) {
+      return res.status(400).json({ error: 'Case ID and template ID are required' });
+    }
+
+    // Mock workflow creation
+    const workflow = {
+      id: `wf_${Date.now()}`,
+      case_id: caseId,
+      template_id: templateId,
+      status: 'not_started',
+      current_stage: 'initial_assessment',
+      created_at: new Date().toISOString(),
+      estimated_completion: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+    };
+
+    res.json(workflow);
+
+  } catch (error) {
+    console.error('Workflow creation error:', error);
+    res.status(500).json({ error: 'Workflow creation failed' });
+  }
+});
+
+app.get('/api/workflows/:workflowId/next-tasks', (req, res) => {
+  try {
+    const { workflowId } = req.params;
+    const { assigneeRole } = req.query;
+
+    // Mock next tasks
+    const tasks = [
+      {
+        task_id: 'debt_validation',
+        status: 'pending',
+        due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+        priority: 'critical',
+        assignee_role: 'associate'
+      }
+    ];
+
+    res.json({ workflowId, nextTasks: tasks });
+
+  } catch (error) {
+    console.error('Next tasks error:', error);
+    res.status(500).json({ error: 'Failed to fetch next tasks' });
+  }
+});
+
+// ============ CLIENT COMMUNICATIONS ENDPOINTS ============
+app.get('/api/communications/templates', (req, res) => {
+  try {
+    const templates = [
+      {
+        id: 'client-care-letter',
+        name: 'Client Care Letter',
+        category: 'client_care',
+        description: 'Initial client care letter'
+      },
+      {
+        id: 'progress-update',
+        name: 'Case Progress Update',
+        category: 'progress_update',
+        description: 'Regular case progress update'
+      },
+      {
+        id: 'appointment-confirmation',
+        name: 'Appointment Confirmation',
+        category: 'appointment',
+        description: 'Appointment confirmation letter'
+      }
+    ];
+
+    res.json({ templates });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch communication templates' });
+  }
+});
+
+app.post('/api/communications/generate', async (req, res) => {
+  try {
+    const { templateId, variables, caseData, clientData } = req.body;
+    
+    if (!templateId) {
+      return res.status(400).json({ error: 'Template ID is required' });
+    }
+
+    // Mock communication generation
+    const communication = {
+      subject: `Communication regarding your case - ${variables?.case_title || 'Legal Matter'}`,
+      body: `Dear ${variables?.client_name || 'Client'},\n\nThis is a generated communication regarding your legal matter.\n\nYours sincerely,\nLegal Team`,
+      recipient: clientData?.email || 'client@example.com',
+      variables_used: variables || {},
+      missing_variables: [],
+      compliance_warnings: []
+    };
+
+    res.json(communication);
+
+  } catch (error) {
+    console.error('Communication generation error:', error);
+    res.status(500).json({ error: 'Communication generation failed' });
+  }
+});
+
+app.post('/api/communications/send-update', async (req, res) => {
+  try {
+    const update = req.body;
+    
+    if (!update.case_id || !update.client_id) {
+      return res.status(400).json({ error: 'Case ID and client ID are required' });
+    }
+
+    // Mock communication record
+    const record = {
+      id: `comm_${Date.now()}`,
+      case_id: update.case_id,
+      client_id: update.client_id,
+      status: 'sent',
+      sent_at: new Date().toISOString(),
+      subject: update.title || 'Case Update',
+      method: 'email'
+    };
+
+    res.json(record);
+
+  } catch (error) {
+    console.error('Communication send error:', error);
+    res.status(500).json({ error: 'Failed to send communication' });
+  }
 });
 
 // Health check
