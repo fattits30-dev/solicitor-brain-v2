@@ -28,6 +28,24 @@
   "debug.javascript.autoAttachFilter": "smart",
   "debug.node.autoAttach": "on",
   "debug.terminal.clearBeforeReusing": true,
+  
+  // Debug panel visibility settings
+  "debug.showInlineBreakpointCandidates": true,
+  "debug.showBreakpointsInOverviewRuler": true,
+  "debug.toolBarLocation": "docked",
+  "debug.openDebug": "openOnDebugBreak",
+  "debug.internalConsoleOptions": "openOnSessionStart",
+  "debug.console.fontSize": 14,
+  "debug.showSubSessionsInToolBar": true,
+  "debug.focusWindowOnBreak": true,
+  "debug.onTaskErrors": "debugAnyway",
+  "debug.allowBreakpointsEverywhere": true,
+  "debug.showReturnValue": true,
+  "debug.autoExpandLazyVariables": true,
+  
+  // Editor settings for better debugging
+  "editor.glyphMargin": true,
+  "editor.folding": true,
   "terminal.integrated.env.linux": {
     "NODE_ENV": "development"
   },

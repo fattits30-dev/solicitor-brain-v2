@@ -17,13 +17,8 @@
         "NODE_ENV": "development",
         "DEBUG": "express:*"
       },
-      "skipFiles": [
-        "<node_internals>/**",
-        "node_modules/**"
-      ],
-      "outFiles": [
-        "${workspaceFolder}/dist/**/*.js"
-      ],
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
@@ -95,14 +90,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "test",
-        "--",
-        "--runInBand",
-        "--no-cache",
-        "--watchAll=false"
-      ],
+      "runtimeArgs": ["run", "test", "--", "--runInBand", "--no-cache", "--watchAll=false"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
