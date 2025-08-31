@@ -7,9 +7,14 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const fs = require('fs').promises;
 const pdfParse = require('pdf-parse');
+const session = require('express-session');
 
 // Import real legal automation services
 const { DeadlineCalculator, DocumentGenerator, ComplianceChecker } = require('./services/service-bridge.cjs');
+
+// Import MFA services
+const { router: mfaRouter, initializeMfaService } = require('./routes/mfa.cjs');
+const { requireMfa, checkMfaStatus, initializeMfaMiddleware } = require('./middleware/mfa.cjs');
 
 const app = express();
 const PORT = process.env.PORT || 3333;
@@ -17,6 +22,27 @@ const PORT = process.env.PORT || 3333;
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Database connection (needs to be before MFA initialization)
+const pool = new Pool({
+  connectionString: 'postgresql://postgres:development_secure_2024@localhost:5432/solicitor_brain_v2'
+});
+
+// Session middleware for MFA
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'development-session-secret-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize MFA services with database
+initializeMfaService(pool);
+initializeMfaMiddleware(pool);
 
 // CORS
 app.use((req, res, next) => {
@@ -27,11 +53,6 @@ app.use((req, res, next) => {
     return res.sendStatus(200);
   }
   next();
-});
-
-// Database connection
-const pool = new Pool({
-  connectionString: 'postgresql://postgres:development_secure_2024@localhost:5432/solicitor_brain_v2'
 });
 
 // Ollama client
@@ -1239,10 +1260,17 @@ app.get('/api/health', (req, res) => {
     services: {
       database: 'connected',
       ai: 'connected',
-      storage: 'ready'
+      storage: 'ready',
+      mfa: 'enabled'
     }
   });
 });
+
+// MFA routes
+app.use('/api/mfa', mfaRouter);
+
+// Apply MFA middleware to protected routes (excluding auth and mfa endpoints)
+app.use('/api', checkMfaStatus);
 
 // Serve static files
 const publicPath = path.join(__dirname, '..', 'dist', 'public');

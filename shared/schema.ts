@@ -104,6 +104,54 @@ export const embeddings = pgTable("embeddings", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// MFA Settings table
+export const mfaSettings = pgTable("mfa_settings", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull().unique(),
+  isEnabled: boolean("is_enabled").default(false).notNull(),
+  totpSecret: text("totp_secret"), // encrypted
+  backupCodes: jsonb("backup_codes"), // array of encrypted codes
+  smsPhoneNumber: text("sms_phone_number"), // encrypted
+  emailAddress: text("email_address"), // encrypted
+  gracePeriodEnd: timestamp("grace_period_end"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Trusted Devices table
+export const trustedDevices = pgTable("trusted_devices", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  deviceFingerprint: text("device_fingerprint").notNull(),
+  deviceName: text("device_name"),
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+  lastUsed: timestamp("last_used").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// MFA Attempts table (for rate limiting)
+export const mfaAttempts = pgTable("mfa_attempts", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  method: text("method").notNull(), // totp, sms, email, backup
+  success: boolean("success").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  attemptedAt: timestamp("attempted_at").defaultNow().notNull(),
+});
+
+// MFA Recovery Codes table
+export const mfaRecoveryCodes = pgTable("mfa_recovery_codes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  codeHash: text("code_hash").notNull(),
+  used: boolean("used").default(false).notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
 export const casesRelations = relations(cases, ({ many }) => ({
   documents: many(documents),
@@ -148,6 +196,41 @@ export const embeddingsRelations = relations(embeddings, ({ one }) => ({
   document: one(documents, {
     fields: [embeddings.documentId],
     references: [documents.id],
+  }),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  mfaSettings: one(mfaSettings),
+  trustedDevices: many(trustedDevices),
+  mfaAttempts: many(mfaAttempts),
+  recoveryCodes: many(mfaRecoveryCodes),
+}));
+
+export const mfaSettingsRelations = relations(mfaSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [mfaSettings.userId],
+    references: [users.id],
+  }),
+}));
+
+export const trustedDevicesRelations = relations(trustedDevices, ({ one }) => ({
+  user: one(users, {
+    fields: [trustedDevices.userId],
+    references: [users.id],
+  }),
+}));
+
+export const mfaAttemptsRelations = relations(mfaAttempts, ({ one }) => ({
+  user: one(users, {
+    fields: [mfaAttempts.userId],
+    references: [users.id],
+  }),
+}));
+
+export const mfaRecoveryCodesRelations = relations(mfaRecoveryCodes, ({ one }) => ({
+  user: one(users, {
+    fields: [mfaRecoveryCodes.userId],
+    references: [users.id],
   }),
 }));
 
@@ -215,6 +298,40 @@ export const insertAuditLogSchema = createInsertSchema(auditLog).pick({
   redactedData: true,
 });
 
+export const insertMfaSettingsSchema = createInsertSchema(mfaSettings).pick({
+  userId: true,
+  isEnabled: true,
+  totpSecret: true,
+  backupCodes: true,
+  smsPhoneNumber: true,
+  emailAddress: true,
+  gracePeriodEnd: true,
+});
+
+export const insertTrustedDeviceSchema = createInsertSchema(trustedDevices).pick({
+  userId: true,
+  deviceFingerprint: true,
+  deviceName: true,
+  userAgent: true,
+  ipAddress: true,
+  expiresAt: true,
+});
+
+export const insertMfaAttemptSchema = createInsertSchema(mfaAttempts).pick({
+  userId: true,
+  method: true,
+  success: true,
+  ipAddress: true,
+  userAgent: true,
+});
+
+export const insertMfaRecoveryCodeSchema = createInsertSchema(mfaRecoveryCodes).pick({
+  userId: true,
+  codeHash: true,
+  used: true,
+  usedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -240,3 +357,15 @@ export type InsertConsent = z.infer<typeof insertConsentSchema>;
 export type AuditLog = typeof auditLog.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type Embedding = typeof embeddings.$inferSelect;
+
+export type MfaSettings = typeof mfaSettings.$inferSelect;
+export type InsertMfaSettings = z.infer<typeof insertMfaSettingsSchema>;
+
+export type TrustedDevice = typeof trustedDevices.$inferSelect;
+export type InsertTrustedDevice = z.infer<typeof insertTrustedDeviceSchema>;
+
+export type MfaAttempt = typeof mfaAttempts.$inferSelect;
+export type InsertMfaAttempt = z.infer<typeof insertMfaAttemptSchema>;
+
+export type MfaRecoveryCode = typeof mfaRecoveryCodes.$inferSelect;
+export type InsertMfaRecoveryCode = z.infer<typeof insertMfaRecoveryCodeSchema>;

@@ -1,5 +1,11 @@
 {
   "version": "0.2.0",
+  // Debugging Tips:
+  // - To use variables in breakpoints or watch expressions, open the Run & Debug panel (Ctrl+Shift+D), start a debug session, and use the VARIABLES and WATCH panes.
+  // - You can add any in-scope variable or expression to the WATCH panel to track its value live.
+  // - Hover over variables in the editor during a debug session to see their current value.
+  // - For advanced watch expressions, use JavaScript/TypeScript syntax (e.g., myVar.length > 0).
+  // - You can set conditional breakpoints by right-clicking a breakpoint and choosing 'Edit Breakpoint'.
   "configurations": [
     {
       "name": "Debug Backend (Express)",
