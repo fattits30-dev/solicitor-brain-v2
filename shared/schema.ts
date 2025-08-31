@@ -4,9 +4,9 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table (existing)
+// Users table (existing - matches actual database structure)
 export const users = pgTable("users", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
@@ -369,3 +369,135 @@ export type InsertMfaAttempt = z.infer<typeof insertMfaAttemptSchema>;
 
 export type MfaRecoveryCode = typeof mfaRecoveryCodes.$inferSelect;
 export type InsertMfaRecoveryCode = z.infer<typeof insertMfaRecoveryCodeSchema>;
+
+// ============ RBAC TABLES ============
+
+// Roles table
+export const roles = pgTable("roles", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Permissions table
+export const permissions = pgTable("permissions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  resource: text("resource").notNull(),
+  action: text("action").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Role-Permission junction table
+export const rolePermissions = pgTable("role_permissions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  roleId: uuid("role_id").references(() => roles.id, { onDelete: "cascade" }).notNull(),
+  permissionId: uuid("permission_id").references(() => permissions.id, { onDelete: "cascade" }).notNull(),
+  grantedAt: timestamp("granted_at").defaultNow().notNull(),
+  grantedBy: text("granted_by").references(() => users.id),
+});
+
+// User-Role junction table
+export const userRoles = pgTable("user_roles", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  roleId: uuid("role_id").references(() => roles.id, { onDelete: "cascade" }).notNull(),
+  assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+  assignedBy: text("assigned_by").references(() => users.id),
+  expiresAt: timestamp("expires_at"),
+});
+
+// RBAC Relations
+export const rolesRelations = relations(roles, ({ many }) => ({
+  permissions: many(rolePermissions),
+  users: many(userRoles),
+}));
+
+export const permissionsRelations = relations(permissions, ({ many }) => ({
+  roles: many(rolePermissions),
+}));
+
+export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => ({
+  role: one(roles, {
+    fields: [rolePermissions.roleId],
+    references: [roles.id],
+  }),
+  permission: one(permissions, {
+    fields: [rolePermissions.permissionId],
+    references: [permissions.id],
+  }),
+  grantedByUser: one(users, {
+    fields: [rolePermissions.grantedBy],
+    references: [users.id],
+  }),
+}));
+
+export const userRolesRelations = relations(userRoles, ({ one }) => ({
+  user: one(users, {
+    fields: [userRoles.userId],
+    references: [users.id],
+  }),
+  role: one(roles, {
+    fields: [userRoles.roleId],
+    references: [roles.id],
+  }),
+  assignedByUser: one(users, {
+    fields: [userRoles.assignedBy],
+    references: [users.id],
+  }),
+}));
+
+// Update users relations to include roles
+export const usersRelationsUpdated = relations(users, ({ one, many }) => ({
+  mfaSettings: one(mfaSettings),
+  trustedDevices: many(trustedDevices),
+  mfaAttempts: many(mfaAttempts),
+  recoveryCodes: many(mfaRecoveryCodes),
+  userRoles: many(userRoles),
+}));
+
+// RBAC Schemas for validation
+export const insertRoleSchema = createInsertSchema(roles).pick({
+  name: true,
+  description: true,
+  isActive: true,
+});
+
+export const insertPermissionSchema = createInsertSchema(permissions).pick({
+  name: true,
+  resource: true,
+  action: true,
+  description: true,
+  isActive: true,
+});
+
+export const insertRolePermissionSchema = createInsertSchema(rolePermissions).pick({
+  roleId: true,
+  permissionId: true,
+  grantedBy: true,
+});
+
+export const insertUserRoleSchema = createInsertSchema(userRoles).pick({
+  userId: true,
+  roleId: true,
+  assignedBy: true,
+  expiresAt: true,
+});
+
+// RBAC Types
+export type Role = typeof roles.$inferSelect;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+
+export type Permission = typeof permissions.$inferSelect;
+export type InsertPermission = z.infer<typeof insertPermissionSchema>;
+
+export type RolePermission = typeof rolePermissions.$inferSelect;
+export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;
+
+export type UserRole = typeof userRoles.$inferSelect;
+export type InsertUserRole = z.infer<typeof insertUserRoleSchema>;

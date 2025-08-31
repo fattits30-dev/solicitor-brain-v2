@@ -16,6 +16,10 @@ const { DeadlineCalculator, DocumentGenerator, ComplianceChecker } = require('./
 const { router: mfaRouter, initializeMfaService } = require('./routes/mfa.cjs');
 const { requireMfa, checkMfaStatus, initializeMfaMiddleware } = require('./middleware/mfa.cjs');
 
+// Import RBAC services
+const { createRBACMiddleware } = require('./middleware/rbac.cjs');
+const { createRBACRoutes } = require('./routes/rbac.cjs');
+
 const app = express();
 const PORT = process.env.PORT || 3333;
 
@@ -43,6 +47,17 @@ app.use(session({
 // Initialize MFA services with database
 initializeMfaService(pool);
 initializeMfaMiddleware(pool);
+
+// Initialize RBAC middleware
+let rbacMiddleware;
+(async () => {
+  try {
+    rbacMiddleware = await createRBACMiddleware(pool, JWT_SECRET);
+    console.log('✅ RBAC system initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize RBAC system:', error);
+  }
+})();
 
 // CORS
 app.use((req, res, next) => {
@@ -134,7 +149,12 @@ app.get('/api/auth/me', (req, res) => {
 });
 
 // ============ AI ENDPOINTS ============
-app.post('/api/ai/chat', async (req, res) => {
+app.post('/api/ai/chat', (req, res, next) => {
+  if (rbacMiddleware) {
+    return rbacMiddleware.requirePermission('ai:chat')(req, res, next);
+  }
+  next();
+}, async (req, res) => {
   try {
     const { message } = req.body;
     
@@ -168,7 +188,12 @@ app.post('/api/ai/chat', async (req, res) => {
   }
 });
 
-app.post('/api/ai/generate-draft', async (req, res) => {
+app.post('/api/ai/generate-draft', (req, res, next) => {
+  if (rbacMiddleware) {
+    return rbacMiddleware.requirePermission('ai:generate')(req, res, next);
+  }
+  next();
+}, async (req, res) => {
   try {
     const { templateName, formData } = req.body;
     
@@ -199,7 +224,12 @@ app.post('/api/ai/generate-draft', async (req, res) => {
 });
 
 // ============ FILE UPLOAD ============
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post('/api/upload', upload.single('file'), (req, res, next) => {
+  if (rbacMiddleware) {
+    return rbacMiddleware.requirePermission('documents:create')(req, res, next);
+  }
+  next();
+}, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -253,7 +283,12 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 });
 
 // ============ SEARCH ============
-app.get('/api/search', async (req, res) => {
+app.get('/api/search', (req, res, next) => {
+  if (rbacMiddleware) {
+    return rbacMiddleware.requirePermission('documents:read')(req, res, next);
+  }
+  next();
+}, async (req, res) => {
   try {
     const { q } = req.query;
     if (!q) {
@@ -318,7 +353,12 @@ app.get('/api/search', async (req, res) => {
 });
 
 // ============ CASES ============
-app.get('/api/cases', async (req, res) => {
+app.get('/api/cases', (req, res, next) => {
+  if (rbacMiddleware) {
+    return rbacMiddleware.requirePermission('cases:read')(req, res, next);
+  }
+  next();
+}, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM cases ORDER BY updated_at DESC LIMIT 10');
     // Transform snake_case to camelCase for frontend
@@ -410,7 +450,12 @@ const documentGenerator = new DocumentGenerator();
 const complianceChecker = new ComplianceChecker();
 
 // Deadline calculation - REAL IMPLEMENTATION
-app.post('/api/deadlines/calculate', async (req, res) => {
+app.post('/api/deadlines/calculate', (req, res, next) => {
+  if (rbacMiddleware) {
+    return rbacMiddleware.requirePermission('deadlines:calculate')(req, res, next);
+  }
+  next();
+}, async (req, res) => {
   try {
     const { eventType, startDate, options } = req.body;
     const result = deadlineCalculator.calculateDeadline(eventType, startDate, options);
@@ -422,7 +467,12 @@ app.post('/api/deadlines/calculate', async (req, res) => {
 });
 
 // Document generation - REAL IMPLEMENTATION  
-app.post('/api/documents/generate', async (req, res) => {
+app.post('/api/documents/generate', (req, res, next) => {
+  if (rbacMiddleware) {
+    return rbacMiddleware.requirePermission('documents:generate')(req, res, next);
+  }
+  next();
+}, async (req, res) => {
   try {
     const { documentType, caseData } = req.body;
     const content = documentGenerator.generateDocument(documentType, caseData);
@@ -441,7 +491,12 @@ app.post('/api/documents/generate', async (req, res) => {
 });
 
 // Compliance check - REAL IMPLEMENTATION
-app.post('/api/compliance/check', async (req, res) => {
+app.post('/api/compliance/check', (req, res, next) => {
+  if (rbacMiddleware) {
+    return rbacMiddleware.requirePermission('compliance:check')(req, res, next);
+  }
+  next();
+}, async (req, res) => {
   try {
     const { checkType, data } = req.body;
     const result = await complianceChecker.checkCompliance(checkType, data);
@@ -1268,6 +1323,15 @@ app.get('/api/health', (req, res) => {
 
 // MFA routes
 app.use('/api/mfa', mfaRouter);
+
+// RBAC routes (initialize after RBAC middleware is ready)
+setTimeout(() => {
+  if (rbacMiddleware) {
+    const rbacRoutes = createRBACRoutes(pool, rbacMiddleware);
+    app.use('/api/rbac', rbacRoutes);
+    console.log('✅ RBAC routes initialized');
+  }
+}, 1000); // Give time for RBAC middleware to initialize
 
 // Apply MFA middleware to protected routes (excluding auth and mfa endpoints)
 app.use('/api', checkMfaStatus);
