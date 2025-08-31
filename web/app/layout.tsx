@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import Link from 'next/link'
+import { AuthProvider } from '@/contexts/auth-context'
+import Navigation from '@/components/navigation'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -18,23 +19,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-          <nav className="border-b bg-white shadow-sm">
-            <div className="container mx-auto px-4 py-4">
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-primary">Solicitor Brain</h1>
-                <div className="flex gap-4">
-                  <Link href="/" className="text-sm font-medium hover:text-primary">Upload</Link>
-                  <Link href="/search" className="text-sm font-medium hover:text-primary">Search</Link>
-                  <Link href="/cases" className="text-sm font-medium hover:text-primary">Cases</Link>
-                </div>
-              </div>
-            </div>
-          </nav>
-          <main className="container mx-auto px-4 py-8">
-            {children}
-          </main>
-        </div>
+        <AuthProvider>
+          <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+            <Navigation />
+            <main className="container mx-auto px-4 py-8">
+              {children}
+            </main>
+          </div>
+        </AuthProvider>
       </body>
     </html>
   )
