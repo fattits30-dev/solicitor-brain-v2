@@ -296,4 +296,9 @@ class AIService {
 export const aiService = new AIService();
 
 // Initialize on module load
-aiService.initialize().catch(console.error);
+// Delayed initialization to prevent server startup blocking
+setTimeout(() => {
+  if (process.env.ENABLE_AI_FEATURES === 'true') {
+    aiService.initialize().catch(console.error);
+  }
+}, 5000);

@@ -34,7 +34,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
     try {
       const payload = AuthService.verifyToken(token);
       
-      // Get user from database
+      // Get user from database - Fixed async handling
       AuthService.getUserById(payload.userId).then(user => {
         if (!user) {
           return res.status(401).json({ error: "User not found" });
@@ -46,8 +46,9 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
         next();
       }).catch(error => {
         console.error("Auth middleware error:", error);
-        res.status(500).json({ error: "Authentication failed" });
+        return res.status(500).json({ error: "Authentication failed" });
       });
+      return; // Prevent further execution while promise resolves
     } catch (error) {
       return res.status(401).json({ error: "Invalid or expired token" });
     }
@@ -103,6 +104,7 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction) {
     }).catch(() => {
       next();
     });
+    return; // Prevent further execution while promise resolves
   } catch {
     next();
   }
