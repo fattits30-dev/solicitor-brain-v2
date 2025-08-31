@@ -1626,16 +1626,18 @@ var RealAIService = class {
   }
   async chat(message, context) {
     try {
+      const systemPrompt = this.getSystemPrompt(context?.mode);
+      const contextualMessage = this.buildContextualMessage(message, context);
       const response = await this.ollama.chat({
-        model: this.chatModel,
+        model: context?.model === "mistral" ? "mistral:7b" : this.chatModel,
         messages: [
           {
             role: "system",
-            content: "You are a helpful legal assistant specializing in UK law. Provide accurate, professional advice while being empathetic to clients."
+            content: systemPrompt
           },
           {
             role: "user",
-            content: message
+            content: contextualMessage
           }
         ],
         stream: false
@@ -1645,6 +1647,70 @@ var RealAIService = class {
       console.error("Ollama chat error:", error);
       throw new Error("AI service temporarily unavailable");
     }
+  }
+  async chatStream(message, context) {
+    try {
+      const systemPrompt = this.getSystemPrompt(context?.mode);
+      const contextualMessage = this.buildContextualMessage(message, context);
+      let fullResponse = "";
+      const response = await this.ollama.chat({
+        model: context?.model === "mistral" ? "mistral:7b" : this.chatModel,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: contextualMessage
+          }
+        ],
+        stream: true
+      });
+      for await (const part of response) {
+        const chunk = part.message.content;
+        fullResponse += chunk;
+        if (context?.onChunk) {
+          context.onChunk(chunk);
+        }
+      }
+      return fullResponse;
+    } catch (error) {
+      console.error("Ollama streaming chat error:", error);
+      throw new Error("AI streaming service temporarily unavailable");
+    }
+  }
+  getSystemPrompt(mode) {
+    const basePrompt = "You are a helpful legal assistant specializing in UK law. Provide accurate, professional advice while being empathetic to clients.";
+    switch (mode) {
+      case "legal":
+        return `${basePrompt} Focus on providing detailed legal analysis, identifying relevant statutes, case law, and procedural requirements. Always include confidence levels and suggest when professional legal advice should be sought.`;
+      case "draft":
+        return `${basePrompt} Focus on drafting professional legal documents, letters, and correspondence. Use appropriate legal language while maintaining clarity. Include standard legal disclaimers and ensure trauma-informed language.`;
+      default:
+        return basePrompt;
+    }
+  }
+  buildContextualMessage(message, context) {
+    let contextualMessage = message;
+    if (context?.caseId) {
+      contextualMessage = `[Case ID: ${context.caseId}] ${contextualMessage}`;
+    }
+    if (context?.documentId) {
+      contextualMessage = `[Document Context Available] ${contextualMessage}`;
+    }
+    if (context?.attachedFiles && context.attachedFiles.length > 0) {
+      const fileList = context.attachedFiles.map((f) => f.name).join(", ");
+      contextualMessage = `[Attached Files: ${fileList}] ${contextualMessage}`;
+    }
+    if (context?.previousMessages && context.previousMessages.length > 0) {
+      const recentContext = context.previousMessages.slice(-3).map((msg) => `${msg.role}: ${msg.content.slice(0, 200)}`).join("\n");
+      contextualMessage = `[Recent conversation context:
+${recentContext}]
+
+${contextualMessage}`;
+    }
+    return contextualMessage;
   }
   async generateEmbedding(text2) {
     try {
@@ -1739,13 +1805,47 @@ var aiService2 = new RealAIService();
 var router3 = Router3();
 router3.post("/chat", authenticate, async (req, res) => {
   try {
-    const { message, context } = req.body;
-    const response = await aiService2.chat(message, context);
-    res.json({
-      response,
-      model: "llama3.2",
-      timestamp: (/* @__PURE__ */ new Date()).toISOString()
-    });
+    const {
+      message,
+      context,
+      model = "llama3",
+      mode = "general",
+      stream = false
+    } = req.body;
+    const startTime = Date.now();
+    if (stream) {
+      res.writeHead(200, {
+        "Content-Type": "text/plain",
+        "Transfer-Encoding": "chunked",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "*"
+      });
+      const response = await aiService2.chatStream(message, {
+        ...context,
+        model,
+        mode,
+        onChunk: (chunk) => {
+          res.write(chunk);
+        }
+      });
+      res.end();
+    } else {
+      const response = await aiService2.chat(message, {
+        ...context,
+        model,
+        mode
+      });
+      const processingTime = Date.now() - startTime;
+      res.json({
+        response,
+        content: response,
+        model: model === "llama3" ? "llama3.2" : model,
+        confidence: 0.85,
+        // Mock confidence for now
+        processingTime,
+        timestamp: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    }
   } catch (error) {
     console.error("AI chat error:", error);
     res.status(500).json({ error: error.message || "AI service unavailable" });
@@ -2994,6 +3094,12 @@ var vite_config_default = defineConfig({
     fs: {
       strict: true,
       deny: ["**/.*"]
+    },
+    proxy: {
+      "/api": {
+        target: "http://localhost:3333",
+        changeOrigin: true
+      }
     }
   }
 });

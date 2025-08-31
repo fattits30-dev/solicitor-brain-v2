@@ -26,7 +26,7 @@ const USER_KEY = "auth_user";
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Temporarily set to false for debugging
 
   // Load auth state from localStorage on mount
   useEffect(() => {
