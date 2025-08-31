@@ -214,7 +214,7 @@ export default function SearchPage() {
       {results.length === 0 && !loading && query && (
         <div className="text-center py-12">
           <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No results found for "{query}"</p>
+          <p className="text-gray-500">No results found for &ldquo;{query}&rdquo;</p>
           <p className="text-sm text-gray-400 mt-2">
             Try different keywords or adjust your search query
           </p>
