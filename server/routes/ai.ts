@@ -4,16 +4,56 @@ import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
 
-// AI Chat endpoint with real Ollama
+// Enhanced AI Chat endpoint with streaming support
 router.post('/chat', authenticate, async (req, res) => {
   try {
-    const { message, context } = req.body;
-    const response = await aiService.chat(message, context);
-    res.json({ 
-      response, 
-      model: 'llama3.2',
-      timestamp: new Date().toISOString() 
-    });
+    const { 
+      message, 
+      context, 
+      model = 'llama3', 
+      mode = 'general', 
+      stream = false 
+    } = req.body;
+    
+    const startTime = Date.now();
+    
+    if (stream) {
+      // Set headers for streaming
+      res.writeHead(200, {
+        'Content-Type': 'text/plain',
+        'Transfer-Encoding': 'chunked',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*'
+      });
+
+      const response = await aiService.chatStream(message, {
+        ...context,
+        model,
+        mode,
+        onChunk: (chunk: string) => {
+          res.write(chunk);
+        }
+      });
+      
+      res.end();
+    } else {
+      const response = await aiService.chat(message, {
+        ...context,
+        model,
+        mode
+      });
+      
+      const processingTime = Date.now() - startTime;
+      
+      res.json({ 
+        response, 
+        content: response,
+        model: model === 'llama3' ? 'llama3.2' : model,
+        confidence: 0.85, // Mock confidence for now
+        processingTime,
+        timestamp: new Date().toISOString() 
+      });
+    }
   } catch (error: any) {
     console.error('AI chat error:', error);
     res.status(500).json({ error: error.message || 'AI service unavailable' });
