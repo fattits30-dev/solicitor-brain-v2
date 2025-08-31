@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { ErrorBoundary } from "./components/error-boundary";
 import "./index.css";
 
 console.log("Main.tsx loading...");
@@ -12,7 +13,11 @@ if (rootElement) {
   try {
     const root = createRoot(rootElement);
     console.log("Rendering App component...");
-    root.render(<App />);
+    root.render(
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    );
     console.log("App rendered successfully");
   } catch (error) {
     console.error("Error rendering app:", error);

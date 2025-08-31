@@ -1142,6 +1142,95 @@ app.post('/api/communications/send-update', async (req, res) => {
   }
 });
 
+// PDF Generation endpoint
+app.post('/api/documents/generate-pdf', async (req, res) => {
+  try {
+    const PDFGenerator = require('./services/pdf-generator.cjs');
+    const pdfGen = new PDFGenerator();
+    
+    const { title, content, type, metadata } = req.body;
+    
+    if (!title || !content) {
+      return res.status(400).json({ error: 'Title and content are required' });
+    }
+    
+    const pdfBuffer = await pdfGen.generateDocument({
+      title,
+      content,
+      type: type || 'legal',
+      metadata: metadata || {}
+    });
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${title.replace(/[^a-z0-9]/gi, '_')}.pdf"`);
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    res.status(500).json({ error: 'PDF generation failed' });
+  }
+});
+
+// Generate case bundle PDF
+app.post('/api/cases/:caseId/generate-bundle', async (req, res) => {
+  try {
+    const PDFGenerator = require('./services/pdf-generator.cjs');
+    const pdfGen = new PDFGenerator();
+    
+    const { caseId } = req.params;
+    
+    // Get case data
+    const caseResult = await pool.query('SELECT * FROM cases WHERE id = $1', [caseId]);
+    if (caseResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Case not found' });
+    }
+    
+    const caseData = caseResult.rows[0];
+    
+    // Get documents for this case (mocked for now)
+    const documents = req.body.documents || [];
+    
+    const pdfBuffer = await pdfGen.generateBundle(caseData, documents);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="bundle_${caseId}.pdf"`);
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error('Bundle generation error:', error);
+    res.status(500).json({ error: 'Bundle generation failed' });
+  }
+});
+
+// Error logging endpoint
+app.post('/api/errors/log', async (req, res) => {
+  try {
+    const { message, stack, componentStack, timestamp, userAgent, url } = req.body;
+    
+    // Log to console
+    console.error('Client Error:', {
+      message,
+      timestamp,
+      url,
+      userAgent: userAgent?.substring(0, 100)
+    });
+    
+    // In production, save to database
+    if (process.env.NODE_ENV === 'production') {
+      await pool.query(
+        `INSERT INTO error_logs (message, stack, component_stack, url, user_agent, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [message, stack, componentStack, url, userAgent, new Date(timestamp)]
+      );
+    }
+    
+    res.json({ logged: true, id: Date.now().toString(36) });
+  } catch (error) {
+    console.error('Failed to log client error:', error);
+    res.status(500).json({ error: 'Failed to log error' });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 

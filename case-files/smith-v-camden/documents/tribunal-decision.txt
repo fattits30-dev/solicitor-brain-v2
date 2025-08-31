@@ -1,0 +1,151 @@
+FIRST-TIER TRIBUNAL
+SOCIAL ENTITLEMENT CHAMBER
+
+Appeal Number: SC/2024/HB/0234
+
+DECISION NOTICE
+
+Appellant: Mrs Margaret Smith
+Respondent: London Borough of Camden
+
+Tribunal: Judge Richards (Presiding)
+         Mrs A Kumar (Member)
+         Mr D Williams (Member)
+
+Hearing Date: 10 January 2024
+Venue: Fox Court, London
+Decision Date: 17 January 2024
+
+DECISION
+
+The appeal is ALLOWED.
+
+The decision of London Borough of Camden dated 15 May 2023 is SET ASIDE.
+
+The overpayment of £8,426.50 for the period 1 April 2021 to 31 March 2023 is NOT RECOVERABLE from Mrs Smith.
+
+Mrs Smith's Housing Benefit entitlement is reinstated in full from 20 April 2023.
+
+The Council must pay Mrs Smith £3,127.50 representing Housing Benefit wrongly withheld.
+
+REASONS FOR DECISION
+
+Introduction
+1. This appeal concerns an alleged overpayment of Housing Benefit arising from life insurance proceeds received following the appellant's husband's death.
+
+Background
+2. The appellant, aged 65, has been in receipt of Housing Benefit since 2015. Her husband died on 15 December 2020. She received a life insurance payment of £18,000 on 20 February 2021.
+
+3. The Council discovered this payment through a data matching exercise in April 2023. They decided:
+   a) Housing Benefit was overpaid from April 2021
+   b) The overpayment of £8,426.50 was recoverable
+   c) Recovery would be made by withholding ongoing benefit
+
+Issues for Determination
+4. The Tribunal must determine:
+   a) Was there an overpayment?
+   b) If so, is it recoverable?
+   c) Should recovery be waived?
+
+Legal Framework
+5. Regulation 88 of the Housing Benefit Regulations 2006 requires claimants to notify changes affecting entitlement.
+
+6. Regulation 100 provides that overpayments caused by official error are not recoverable unless the claimant contributed to the error.
+
+7. Regulation 101 allows non-recovery where the claimant had diminished capacity.
+
+8. The Upper Tribunal in CH/3656/2007 held that "reasonable excuse" can prevent recovery even where disclosure obligations exist.
+
+Findings of Fact
+9. We find the following facts based on evidence presented:
+
+   a) Mrs Smith immediately notified the Council of her husband's death
+   b) She was prescribed antidepressants and underwent bereavement counselling
+   c) Medical evidence confirms significant cognitive impairment during 2021
+   d) The insurance money was substantially spent on legitimate expenses:
+      - Funeral costs: £7,500 (invoice provided)
+      - Husband's debts: £2,500 (statements provided)
+      - Essential repairs: £3,000 (receipts provided)
+   e) Current capital is below £6,000
+   f) The Council's annual review form asked only about "changes in circumstances"
+   g) No specific question about capital or savings was included
+   h) Mrs Smith reasonably believed funeral expenses were disregarded
+
+Analysis
+
+Was there an overpayment?
+10. Technically yes. Capital over £16,000 removes Housing Benefit entitlement. For the period the capital exceeded £16,000, benefit was overpaid.
+
+Official Error
+11. We find official error contributed significantly:
+    - The Council knew of the bereavement
+    - No specific enquiries about insurance were made
+    - Review forms were inadequate
+    - No guidance provided about reporting insurance money
+    - Failed to recognise vulnerability and offer support
+
+12. Applying R(H) 3/04, the Council should have made reasonable enquiries given:
+    - Known bereavement
+    - Appellant's age and vulnerabilities
+    - Common occurrence of insurance payments after death
+
+Diminished Capacity
+13. Medical evidence clearly establishes Mrs Smith had significantly diminished capacity during the relevant period. Dr Mitchell's report states she was "unable to properly process information or make informed decisions" for at least 6 months post-bereavement.
+
+14. This satisfies Regulation 101. She could not reasonably be expected to understand or comply with notification requirements.
+
+Reasonable Excuse
+15. Even without diminished capacity, Mrs Smith had reasonable excuse:
+    - Genuine belief funeral money was exempt
+    - No previous experience with capital rules
+    - Overwhelming grief
+    - Money quickly reduced below threshold
+    - Complex rules not explained
+
+Recoverability
+16. We conclude the overpayment is NOT recoverable because:
+    a) Official error was the substantial cause
+    b) Mrs Smith had diminished capacity
+    c) She had reasonable excuse for non-disclosure
+    d) She did not contribute to the error
+
+Exceptional Hardship
+17. Even if recoverable (which we reject), recovery would cause exceptional hardship:
+    - Appellant is 65 with significant health problems
+    - Income consists only of basic pension benefits
+    - No remaining capital or savings
+    - Would be unable to pay rent
+    - Risk of homelessness
+
+Other Matters
+18. We are concerned about the Council's handling of this case:
+    - Failure to identify vulnerability
+    - Aggressive recovery action
+    - Inadequate review procedures
+    - Poor mandatory reconsideration
+
+19. We recommend the Council:
+    - Reviews its procedures for vulnerable claimants
+    - Improves annual review forms
+    - Provides better guidance on capital rules
+    - Considers appointeeship where appropriate
+
+Conclusion
+20. The appeal succeeds on multiple grounds. The overpayment is not recoverable due to official error and diminished capacity. Mrs Smith should never have been put through this ordeal.
+
+21. The Council must:
+    - Immediately reinstate full Housing Benefit
+    - Pay arrears of £3,127.50
+    - Cease all recovery action
+    - Apologise for distress caused
+
+Right of Appeal
+22. Any party dissatisfied with this decision may apply for permission to appeal to the Upper Tribunal. An application must be made in writing within one month of this decision being sent.
+
+Judge Richards
+First-tier Tribunal
+
+Date: 17 January 2024
+
+IMPORTANT NOTE TO COUNCIL:
+This decision is binding. Failure to implement it within 4 weeks may result in judicial review proceedings. The appellant has suffered significant hardship and prompt action is required.
