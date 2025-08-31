@@ -1,0 +1,33 @@
+EMPLOYMENT CONTRACT
+
+This Employment Agreement ("Agreement") is entered into as of January 1, 2024, between:
+
+Employer: ABC Corporation Ltd
+Registered Address: 123 Business Park, London, UK
+Company Number: 12345678
+
+Employee: John Smith
+Address: 456 Residential Street, London, UK
+National Insurance Number: AB123456C
+
+TERMS AND CONDITIONS:
+
+1. Position and Duties
+The Employee shall serve as Software Engineer and shall perform duties as assigned by the Employer.
+
+2. Compensation
+The Employee shall receive an annual salary of £60,000, payable monthly.
+
+3. Working Hours
+Standard working hours are Monday to Friday, 9:00 AM to 5:30 PM with one hour lunch break.
+
+4. Holiday Entitlement
+The Employee is entitled to 25 days of paid annual leave plus UK public holidays.
+
+5. Confidentiality
+The Employee agrees to maintain strict confidentiality of all proprietary information.
+
+6. Termination
+Either party may terminate this agreement with one month's written notice.
+
+This contract is governed by the laws of England and Wales.
