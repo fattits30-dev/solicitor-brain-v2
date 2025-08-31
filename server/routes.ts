@@ -6,11 +6,19 @@ import { z } from "zod";
 import authRoutes from "./routes/auth.js";
 import uploadRoutes from "./routes/upload.js";
 import aiRoutes from "./routes/ai.js";
+import mfaRoutes from "./routes/mfa.js";
 import { authenticate, optionalAuth } from "./middleware/auth.js";
+import { checkMfaRequirement } from "./middleware/mfa.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes (public)
   app.use("/api/auth", authRoutes);
+  
+  // MFA routes (semi-protected - requires basic auth but not MFA completion)
+  app.use("/api/mfa", mfaRoutes);
+  
+  // Apply MFA requirement check to all protected routes
+  app.use("/api", checkMfaRequirement);
   
   // Upload routes (protected)
   app.use("/api", uploadRoutes);

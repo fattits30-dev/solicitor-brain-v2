@@ -109,3 +109,6 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction) {
     next();
   }
 }
+// Aliases for backward compatibility and convenience
+export const requireAuth = authenticate;
+export const requireRole = authorize;
