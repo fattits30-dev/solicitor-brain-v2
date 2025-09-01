@@ -1,0 +1,138 @@
+{
+  "Fix All TypeScript Errors": {
+    "prefix": "fix-ts",
+    "body": [
+      "@workspace /fix",
+      "Fix all TypeScript errors in the current file.",
+      "Ensure proper typing and interface definitions.",
+      "Add missing type annotations where needed."
+    ],
+    "description": "Fix TypeScript errors with Copilot"
+  },
+  
+  "Generate Component Tests": {
+    "prefix": "test-component",
+    "body": [
+      "@workspace /tests", 
+      "Generate comprehensive tests for this React component.",
+      "Include:",
+      "- Rendering tests",
+      "- User interaction tests",
+      "- Props validation",
+      "- Edge cases",
+      "- Accessibility tests"
+    ],
+    "description": "Generate React component tests"
+  },
+  
+  "Fix ESLint Issues": {
+    "prefix": "fix-lint",
+    "body": [
+      "@workspace /fix",
+      "Fix all ESLint warnings and errors.",
+      "Follow the project's ESLint configuration.",
+      "Don't disable rules, fix the actual issues."
+    ],
+    "description": "Fix ESLint issues"
+  },
+  
+  "Add Error Handling": {
+    "prefix": "add-error",
+    "body": [
+      "@workspace /fix",
+      "Add proper error handling to this code.",
+      "Include try-catch blocks where needed.",
+      "Add appropriate error messages.",
+      "Ensure errors are logged properly."
+    ],
+    "description": "Add error handling"
+  },
+  
+  "Optimize Performance": {
+    "prefix": "optimize",
+    "body": [
+      "@workspace /optimize",
+      "Optimize this code for better performance.",
+      "Consider:",
+      "- Memoization",
+      "- Lazy loading", 
+      "- Query optimization",
+      "- Caching strategies",
+      "- Algorithm improvements"
+    ],
+    "description": "Optimize code performance"
+  },
+  
+  "Security Review": {
+    "prefix": "security",
+    "body": [
+      "@workspace /review",
+      "Review this code for security vulnerabilities.",
+      "Check for:",
+      "- SQL injection",
+      "- XSS vulnerabilities",
+      "- Authentication bypasses",
+      "- Sensitive data exposure",
+      "- Input validation issues"
+    ],
+    "description": "Security review"
+  },
+  
+  "Generate API Endpoint": {
+    "prefix": "api-endpoint",
+    "body": [
+      "@workspace /generate",
+      "Create a REST API endpoint with:",
+      "- Proper authentication check",
+      "- Zod validation schema",
+      "- Error handling",
+      "- Appropriate HTTP status codes",
+      "- TypeScript types",
+      "- Audit logging"
+    ],
+    "description": "Generate API endpoint"
+  },
+  
+  "Add JSDoc Documentation": {
+    "prefix": "doc",
+    "body": [
+      "@workspace /doc",
+      "Add comprehensive JSDoc documentation.",
+      "Include:",
+      "- Function description",
+      "- @param with types",
+      "- @returns with type",
+      "- @throws for errors",
+      "- @example with usage"
+    ],
+    "description": "Add JSDoc documentation"
+  },
+  
+  "Refactor Complex Function": {
+    "prefix": "refactor",
+    "body": [
+      "@workspace /refactor",
+      "Refactor this complex function.",
+      "- Extract helper functions",
+      "- Reduce cyclomatic complexity",
+      "- Improve readability",
+      "- Add proper typing",
+      "- Keep functionality identical"
+    ],
+    "description": "Refactor complex code"
+  },
+  
+  "Generate Database Migration": {
+    "prefix": "migration",
+    "body": [
+      "@workspace /generate",
+      "Create a database migration for:",
+      "- Schema changes",
+      "- Include rollback",
+      "- Add indexes where needed",
+      "- Consider foreign keys",
+      "- Add appropriate constraints"
+    ],
+    "description": "Generate DB migration"
+  }
+}

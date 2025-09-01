@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test.describe('Live Application Demo', () => {
   test('Complete user journey through the application', async ({ page }) => {
@@ -6,7 +6,7 @@ test.describe('Live Application Demo', () => {
     
     // Navigate to homepage
     console.log('📍 Navigating to homepage...');
-    await page.goto('http://localhost:3000');
+    await page.goto('http://localhost:5173');
     await page.waitForLoadState('networkidle');
     
     // Take screenshot of homepage
@@ -15,7 +15,7 @@ test.describe('Live Application Demo', () => {
     
     // Check if login page or dashboard
     const signInButton = page.locator('button:has-text("Sign In")');
-    const dashboardElement = page.locator('main, [data-testid="dashboard"]');
+    const _dashboardElement = page.locator('main, [data-testid="dashboard"]');
     
     if (await signInButton.count() > 0) {
       console.log('🔐 Login page detected');
@@ -65,7 +65,7 @@ test.describe('Live Application Demo', () => {
           const body = await response.text();
           console.log(`     Response preview: ${body.substring(0, 100)}...`);
         }
-      } catch (error) {
+      } catch {
         console.log(`  ❌ ${api.endpoint} - Failed`);
       }
     }

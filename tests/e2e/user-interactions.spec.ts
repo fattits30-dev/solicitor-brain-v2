@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test.describe('Real User Interactions', () => {
   test('Simulate real user behavior', async ({ page }) => {
@@ -13,7 +13,7 @@ test.describe('Real User Interactions', () => {
     });
     
     // Navigate to app
-    await page.goto('http://localhost:3000');
+    await page.goto('http://localhost:5173');
     console.log('✅ Loaded application');
     
     // Simulate user reading the page

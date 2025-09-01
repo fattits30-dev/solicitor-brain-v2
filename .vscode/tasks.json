@@ -107,6 +107,84 @@
         "kind": "build",
         "isDefault": false
       }
+    },
+    {
+      "label": "Git: Create PR",
+      "type": "shell",
+      "command": "gh pr create --draft --title '${input:prTitle}' --body '${input:prBody}'",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Push and Create PR",
+      "type": "shell",
+      "command": "git push -u origin HEAD && gh pr create --draft",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Sync with Main",
+      "type": "shell",
+      "command": "git fetch origin main && git rebase origin/main",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "NPM: Install from GitHub SSH",
+      "type": "shell",
+      "command": "npm install git+ssh://git@github.com/${input:repoOwner}/${input:repoName}.git",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "prTitle",
+      "description": "Pull Request Title",
+      "default": "feat: ",
+      "type": "promptString"
+    },
+    {
+      "id": "prBody",
+      "description": "Pull Request Body",
+      "default": "## Summary\n\n## Changes\n\n## Testing",
+      "type": "promptString"
+    },
+    {
+      "id": "repoOwner",
+      "description": "GitHub Repository Owner/Username",
+      "default": "fattits30-dev",
+      "type": "promptString"
+    },
+    {
+      "id": "repoName",
+      "description": "Repository Name",
+      "default": "",
+      "type": "promptString"
     }
   ]
 }

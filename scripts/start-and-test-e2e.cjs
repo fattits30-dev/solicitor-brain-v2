@@ -3,7 +3,7 @@
 const { spawn } = require('child_process');
 const http = require('http');
 
-const SERVER_URL = 'http://localhost:3000';
+const SERVER_URL = 'http://localhost:3333/api/health';
 const WAIT_TIMEOUT = 30000; // 30s
 const WAIT_INTERVAL = 1000; // 1s
 

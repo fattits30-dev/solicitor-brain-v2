@@ -14,7 +14,9 @@ ENV/
 .venv
 
 # IDE
-.vscode/
+# .vscode/ - Keep VS Code settings for team collaboration
+.vscode/launch.json
+.vscode/*.log
 .idea/
 *.swp
 *.swo
@@ -77,3 +79,6 @@ celerybeat-schedule
 
 # SageMath parsed files
 *.sage.py
+# Test Reports
+playwright-report/
+test-results/

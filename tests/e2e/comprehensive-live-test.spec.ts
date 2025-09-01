@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Comprehensive Live Testing', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3000');
+    await page.goto('http://localhost:5173');
   });
 
   test('Homepage loads with all essential elements', async ({ page }) => {
@@ -94,7 +94,7 @@ test.describe('Comprehensive Live Testing', () => {
     if (await fileInput.count() > 0) {
       console.log('Testing file upload...');
       
-      const testFilePath = '/tmp/test-document.pdf';
+      const _testFilePath = '/tmp/test-document.pdf';
       await page.evaluate(() => {
         const fs = require('fs');
         fs.writeFileSync('/tmp/test-document.pdf', 'Test PDF content');
@@ -138,7 +138,7 @@ test.describe('Comprehensive Live Testing', () => {
     ];
     
     for (const endpoint of apiEndpoints) {
-      const response = await page.request.get(`http://localhost:3000${endpoint}`).catch(err => null);
+      const response = await page.request.get(`http://localhost:3333${endpoint}`).catch(_err => null);
       
       if (response) {
         console.log(`API ${endpoint}: Status ${response.status()}`);
@@ -176,7 +176,7 @@ test.describe('Comprehensive Live Testing', () => {
   });
 
   test('Error handling works correctly', async ({ page }) => {
-    await page.goto('http://localhost:3000/non-existent-page');
+    await page.goto('http://localhost:5173/non-existent-page');
     
     const errorPage = page.locator('[class*="404"], [class*="error"], h1:has-text("404"), h1:has-text("Not Found")');
     if (await errorPage.count() > 0) {
@@ -184,7 +184,7 @@ test.describe('Comprehensive Live Testing', () => {
       await expect(errorPage.first()).toBeVisible();
     }
     
-    await page.goto('http://localhost:3000');
+    await page.goto('http://localhost:5173');
   });
 
   test('Performance metrics', async ({ page }) => {
