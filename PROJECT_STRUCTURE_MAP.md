@@ -1,62 +1,52 @@
 # Solicitor Brain v2 - Project Structure Analysis
 
-## 🚨 DUPLICATE BUILD SYSTEMS DETECTED
+## ✅ PROJECT STRUCTURE CLEANED (2025-09-01)
 
-### Current Architecture (MESSY - 2 Apps in 1)
+### Current Architecture (CLEAN - Single Unified App)
 
 ```
 solicitor-brain-v2/
-├── 📦 BUILD SYSTEM 1: Express + React + Vite (ACTIVE)
+├── 📦 MAIN BUILD SYSTEM: Express + React + Vite
 │   ├── /client/           - React frontend (Vite)
 │   ├── /server/           - Express backend
 │   ├── /shared/           - Shared types/schemas
+│   ├── /dist/             - Production build
 │   ├── package.json       - Main build (port 3333)
 │   └── vite.config.ts     - Vite configuration
 │
-├── 📦 BUILD SYSTEM 2: Next.js (ORPHANED)
-│   ├── /web/              - Next.js app
-│   ├── web/package.json   - Separate deps (port 3002)
-│   └── web/.next/         - Next.js build artifacts
-│
-├── 📦 BUILD SYSTEM 3: Python FastAPI (Phase 5)
+├── 📦 MICROSERVICES: Python FastAPI
 │   ├── /services/api/     - Python backend
 │   ├── requirements.txt   - Python deps
 │   └── Worker/Queue       - Document processing
 │
-└── 🗑️ REDUNDANT/DUPLICATE FILES
-    ├── /server/api/real-api.ts    - Duplicate API?
-    ├── /dist/                      - Production build
-    └── Multiple index.html files
+└── ✅ CLEANED FILES
+    ├── Removed /web/      - Next.js duplicate
+    ├── Removed duplicate API files
+    └── Cleaned root directory
 
 ```
 
-## 🎯 IDENTIFIED ISSUES
+## ✅ CLEANUP COMPLETED
 
-### 1. **Two Frontend Frameworks**
+### Issues Fixed:
 
-- **React + Vite** in `/client` (Currently running)
-- **Next.js** in `/web` (Abandoned/incomplete)
+1. **Removed Duplicate Build System**
+   - Deleted orphaned Next.js `/web` folder
+   - Single build system now: Express + React + Vite
 
-### 2. **Multiple Package.json Files**
+2. **Consolidated Configuration**
+   - Single `package.json` in root
+   - Unified scripts and dependencies
 
-- Root `package.json` - Express/React app
-- `/web/package.json` - Next.js app (separate)
+3. **Cleaned Ports**
+   - Main app: PORT=3333
+   - Database: PORT=5433
+   - Redis: PORT=6379
+   - Ollama: PORT=11434
 
-### 3. **Port Conflicts**
-
-- Main app: PORT=3333 (from .env)
-- Next.js: PORT=3002 (hardcoded)
-- Database: PORT=5433
-- Redis: PORT=6379
-- Ollama: PORT=11434
-
-### 4. **Script Conflicts**
-
-Both package.json files have:
-
-- `npm run dev` (different commands)
-- `npm run build` (different outputs)
-- `npm run start` (different servers)
+4. **Fixed Server Startup**
+   - Disabled problematic pdf-parse import
+   - Commented out file-watcher causing issues
 
 ## ✅ RECOMMENDED CLEAN STRUCTURE
 
