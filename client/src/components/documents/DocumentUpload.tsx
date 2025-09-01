@@ -1,31 +1,34 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Upload,
-  FileText,
-  FileImage,
-  FileType,
-  X,
-  CheckCircle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import {
   AlertCircle,
-  Loader2,
-  Eye,
-  Download,
-  RotateCcw,
+  CheckCircle,
   Cloud,
+  FileImage,
+  FileText,
+  FileType,
   HardDrive,
-  Zap
+  Loader2,
+  RotateCcw,
+  Upload,
+  X,
+  Zap,
 } from 'lucide-react';
+import React, { useCallback, useRef, useState } from 'react';
 
 interface UploadFile {
   id: string;
@@ -59,14 +62,14 @@ const DOCUMENT_TYPES = [
   { value: 'statement', label: 'Statement', icon: FileText },
   { value: 'report', label: 'Report', icon: FileText },
   { value: 'photo', label: 'Photo/Image', icon: FileImage },
-  { value: 'other', label: 'Other', icon: FileType }
+  { value: 'other', label: 'Other', icon: FileType },
 ];
 
 const UPLOAD_SOURCES = [
   { value: 'manual', label: 'Manual Upload', icon: Upload },
   { value: 'email', label: 'Email Import', icon: Cloud },
   { value: 'scan', label: 'Document Scan', icon: FileImage },
-  { value: 'external', label: 'External System', icon: HardDrive }
+  { value: 'external', label: 'External System', icon: HardDrive },
 ];
 
 export const DocumentUpload: React.FC<DocumentUploadProps> = ({
@@ -77,7 +80,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   maxFileSize = 10 * 1024 * 1024, // 10MB
   allowedTypes = ['.pdf', '.doc', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.gif'],
   autoOCR = true,
-  showMetadataForm = true
+  showMetadataForm = true,
 }) => {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -88,7 +91,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   const [priority, setPriority] = useState('normal');
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
@@ -107,17 +110,19 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const droppedFiles = Array.from(e.dataTransfer.files);
     handleFileSelection(droppedFiles);
   }, []);
 
   const handleFileSelection = (selectedFiles: File[]) => {
     setError(null);
-    
+
     // Validate file count
     if (files.length + selectedFiles.length > maxFiles) {
-      setError(`Maximum ${maxFiles} files allowed. You can upload ${maxFiles - files.length} more files.`);
+      setError(
+        `Maximum ${maxFiles} files allowed. You can upload ${maxFiles - files.length} more files.`,
+      );
       return;
     }
 
@@ -147,7 +152,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         file,
         type: detectedType || defaultType,
         progress: 0,
-        status: 'pending'
+        status: 'pending',
       });
     });
 
@@ -155,35 +160,38 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       setError(errors.join('\n'));
     }
 
-    setFiles(prev => [...prev, ...newFiles]);
+    setFiles((prev) => [...prev, ...newFiles]);
   };
 
   const detectDocumentType = (filename: string): string => {
     const name = filename.toLowerCase();
-    
+
     if (name.includes('contract') || name.includes('agreement')) return 'contract';
-    if (name.includes('letter') || name.includes('email') || name.includes('correspondence')) return 'correspondence';
-    if (name.includes('invoice') || name.includes('bill') || name.includes('receipt')) return 'invoice';
+    if (name.includes('letter') || name.includes('email') || name.includes('correspondence'))
+      return 'correspondence';
+    if (name.includes('invoice') || name.includes('bill') || name.includes('receipt'))
+      return 'invoice';
     if (name.includes('statement') || name.includes('account')) return 'statement';
     if (name.includes('report') || name.includes('analysis')) return 'report';
-    if (name.includes('court') || name.includes('filing') || name.includes('motion')) return 'court-filing';
+    if (name.includes('court') || name.includes('filing') || name.includes('motion'))
+      return 'court-filing';
     if (name.match(/\.(jpg|jpeg|png|gif)$/)) return 'photo';
-    
+
     return 'other';
   };
 
   const updateFile = (id: string, updates: Partial<UploadFile>) => {
-    setFiles(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+    setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...updates } : f)));
   };
 
   const removeFile = (id: string) => {
-    setFiles(prev => prev.filter(f => f.id !== id));
+    setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
   const uploadFile = async (uploadFile: UploadFile): Promise<void> => {
     const formData = new FormData();
     formData.append('file', uploadFile.file);
-    
+
     if (caseId) formData.append('caseId', caseId);
     formData.append('documentType', uploadFile.type);
     formData.append('source', defaultSource);
@@ -195,7 +203,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
       const response = await fetch('/api/upload/document', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
       if (!response.ok) {
@@ -204,13 +212,13 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       }
 
       const result = await response.json();
-      
+
       updateFile(uploadFile.id, {
         status: 'processing',
         progress: 100,
         documentId: result.document.id,
         ocrStatus: enableOCR ? 'processing' : 'pending',
-        ocrProgress: 0
+        ocrProgress: 0,
       });
 
       // Poll for OCR status if enabled
@@ -219,11 +227,10 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       } else {
         updateFile(uploadFile.id, { status: 'completed' });
       }
-
     } catch (error: any) {
       updateFile(uploadFile.id, {
         status: 'failed',
-        error: error.message
+        error: error.message,
       });
     }
   };
@@ -238,10 +245,10 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         if (!response.ok) return;
 
         const { status, progress } = await response.json();
-        
+
         updateFile(fileId, {
           ocrStatus: status,
-          ocrProgress: progress || 0
+          ocrProgress: progress || 0,
         });
 
         if (status === 'completed' || status === 'failed') {
@@ -256,7 +263,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           updateFile(fileId, {
             status: 'completed',
             ocrStatus: 'failed',
-            error: 'OCR timeout'
+            error: 'OCR timeout',
           });
         }
       } catch (error) {
@@ -264,7 +271,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         updateFile(fileId, {
           status: 'completed',
           ocrStatus: 'failed',
-          error: 'OCR monitoring failed'
+          error: 'OCR monitoring failed',
         });
       }
     };
@@ -275,35 +282,34 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
   const handleUpload = async () => {
     if (files.length === 0) return;
-    
+
     setIsUploading(true);
     setError(null);
 
     const uploadPromises = files
-      .filter(f => f.status === 'pending')
-      .map(file => uploadFile(file));
+      .filter((f) => f.status === 'pending')
+      .map((file) => uploadFile(file));
 
     try {
       await Promise.all(uploadPromises);
-      
+
       // Wait a bit for all files to complete processing
       setTimeout(() => {
         const completedDocuments = files
-          .filter(f => f.documentId)
-          .map(f => ({ id: f.documentId, name: f.file.name }));
-        
+          .filter((f) => f.documentId)
+          .map((f) => ({ id: f.documentId, name: f.file.name }));
+
         onUploadComplete?.(completedDocuments);
         setIsUploading(false);
       }, 2000);
-      
-    } catch (error: any) {
+    } catch {
       setError('Some uploads failed. Please check individual file statuses.');
       setIsUploading(false);
     }
   };
 
   const retryUpload = (fileId: string) => {
-    const file = files.find(f => f.id === fileId);
+    const file = files.find((f) => f.id === fileId);
     if (file) {
       updateFile(fileId, { status: 'pending', error: undefined });
     }
@@ -335,9 +341,11 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       case 'uploading':
         return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
       case 'processing':
-        return file.ocrStatus === 'processing' ? 
-          <Zap className="h-4 w-4 text-yellow-500 animate-pulse" /> :
-          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+        return file.ocrStatus === 'processing' ? (
+          <Zap className="h-4 w-4 text-yellow-500 animate-pulse" />
+        ) : (
+          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+        );
       case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'failed':
@@ -354,11 +362,13 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       case 'uploading':
         return `Uploading... ${file.progress}%`;
       case 'processing':
-        return file.ocrStatus === 'processing' ? 
-          `OCR Processing... ${file.ocrProgress || 0}%` :
-          'Processing...';
+        return file.ocrStatus === 'processing'
+          ? `OCR Processing... ${file.ocrProgress || 0}%`
+          : 'Processing...';
       case 'completed':
-        return enableOCR && file.ocrStatus === 'completed' ? 'Upload & OCR Complete' : 'Upload Complete';
+        return enableOCR && file.ocrStatus === 'completed'
+          ? 'Upload & OCR Complete'
+          : 'Upload Complete';
       case 'failed':
         return file.error || 'Upload failed';
       default:
@@ -366,9 +376,9 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     }
   };
 
-  const canUpload = files.length > 0 && !isUploading && files.some(f => f.status === 'pending');
-  const hasFailedUploads = files.some(f => f.status === 'failed');
-  const allCompleted = files.length > 0 && files.every(f => f.status === 'completed');
+  const canUpload = files.length > 0 && !isUploading && files.some((f) => f.status === 'pending');
+  const hasFailedUploads = files.some((f) => f.status === 'failed');
+  const allCompleted = files.length > 0 && files.every((f) => f.status === 'completed');
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -377,9 +387,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
             Upload Documents
-            {files.length > 0 && (
-              <Badge variant="secondary">{files.length} files</Badge>
-            )}
+            {files.length > 0 && <Badge variant="secondary">{files.length} files</Badge>}
           </CardTitle>
           {onClose && (
             <Button variant="ghost" size="icon" onClick={onClose}>
@@ -394,7 +402,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         {showMetadataForm && (
           <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
             <h3 className="font-medium">Upload Settings</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="document-type">Default Document Type</Label>
@@ -403,7 +411,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {DOCUMENT_TYPES.map(type => (
+                    {DOCUMENT_TYPES.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         <div className="flex items-center gap-2">
                           <type.icon className="h-4 w-4" />
@@ -422,7 +430,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {UPLOAD_SOURCES.map(source => (
+                    {UPLOAD_SOURCES.map((source) => (
                       <SelectItem key={source.value} value={source.value}>
                         <div className="flex items-center gap-2">
                           <source.icon className="h-4 w-4" />
@@ -451,7 +459,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                 <Checkbox
                   id="enable-ocr"
                   checked={enableOCR}
-                  onCheckedChange={setEnableOCR}
+                  onCheckedChange={(checked) => setEnableOCR(checked === true)}
                 />
                 <Label htmlFor="enable-ocr" className="text-sm">
                   Enable OCR processing
@@ -488,20 +496,15 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           <h3 className="text-lg font-medium mb-2">
             {isDragOver ? 'Drop files here' : 'Drag and drop files here'}
           </h3>
-          <p className="text-muted-foreground mb-4">
-            Or click to browse and select files
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            className="mb-2"
-          >
+          <p className="text-muted-foreground mb-4">Or click to browse and select files</p>
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="mb-2">
             Browse Files
           </Button>
           <p className="text-xs text-muted-foreground">
-            Supports: {allowedTypes.join(', ')} • Max size: {formatFileSize(maxFileSize)} • Max files: {maxFiles}
+            Supports: {allowedTypes.join(', ')} • Max size: {formatFileSize(maxFileSize)} • Max
+            files: {maxFiles}
           </p>
-          
+
           <input
             ref={fileInputRef}
             type="file"
@@ -516,9 +519,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="whitespace-pre-line">
-              {error}
-            </AlertDescription>
+            <AlertDescription className="whitespace-pre-line">{error}</AlertDescription>
           </Alert>
         )}
 
@@ -540,9 +541,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => files
-                      .filter(f => f.status === 'failed')
-                      .forEach(f => retryUpload(f.id))
+                    onClick={() =>
+                      files.filter((f) => f.status === 'failed').forEach((f) => retryUpload(f.id))
                     }
                   >
                     <RotateCcw className="h-4 w-4 mr-2" />
@@ -558,10 +558,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                   <div key={file.id} className="border rounded-lg p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div className="flex-shrink-0 mt-1">
-                          {getFileIcon(file.file.name)}
-                        </div>
-                        
+                        <div className="flex-shrink-0 mt-1">{getFileIcon(file.file.name)}</div>
+
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium truncate" title={file.file.name}>
                             {file.file.name}
@@ -572,29 +570,25 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                               {file.type.replace('-', ' ')}
                             </Badge>
                           </div>
-                          
+
                           <div className="flex items-center gap-2 mt-2">
                             {getStatusIcon(file)}
                             <span className="text-sm">{getStatusText(file)}</span>
                           </div>
-                          
+
                           {file.status === 'uploading' && (
                             <Progress value={file.progress} className="mt-2" />
                           )}
-                          
+
                           {file.status === 'processing' && file.ocrStatus === 'processing' && (
                             <Progress value={file.ocrProgress || 0} className="mt-2" />
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         {file.status === 'failed' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => retryUpload(file.id)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => retryUpload(file.id)}>
                             <RotateCcw className="h-4 w-4" />
                           </Button>
                         )}
@@ -621,7 +615,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
             <div className="text-sm text-muted-foreground">
               {files.length} file{files.length !== 1 ? 's' : ''} selected
             </div>
-            
+
             <div className="flex gap-2">
               {allCompleted ? (
                 <Button onClick={onClose}>
@@ -629,11 +623,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                   Done
                 </Button>
               ) : (
-                <Button
-                  onClick={handleUpload}
-                  disabled={!canUpload}
-                  className="min-w-32"
-                >
+                <Button onClick={handleUpload} disabled={!canUpload} className="min-w-32">
                   {isUploading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
