@@ -28,7 +28,7 @@
       "name": "Debug Frontend (Chrome)",
       "type": "chrome",
       "request": "launch",
-      "url": "http://localhost:3000",
+      "url": "http://localhost:3333",
       "webRoot": "${workspaceFolder}/client",
       "sourceMapPathOverrides": {
         "webpack:///src/*": "${webRoot}/*"
