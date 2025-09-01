@@ -12,6 +12,7 @@ import os
 
 from app.core.config import settings
 from app.core.database import engine, Base
+from app.core.redis import health_check_redis, cleanup_redis
 from app.api.v1.router import api_router
 
 # Configure structured logging
@@ -49,6 +50,7 @@ async def lifespan(app: FastAPI):
     
     # Cleanup
     logger.info("Shutting down Solicitor Brain API")
+    cleanup_redis()
     await engine.dispose()
 
 app = FastAPI(
@@ -91,15 +93,15 @@ async def readiness_check():
             from sqlalchemy import text
             await conn.execute(text("SELECT 1"))
         
-        # Check Redis (if needed)
-        # TODO: Add Redis check
+        # Check Redis
+        redis_ok = await health_check_redis()
         
         return {
             "status": "ready",
             "timestamp": datetime.utcnow().isoformat(),
             "checks": {
                 "database": "ok",
-                "redis": "ok"
+                "redis": "ok" if redis_ok else "error"
             }
         }
     except Exception as e:

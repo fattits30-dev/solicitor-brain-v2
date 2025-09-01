@@ -3067,27 +3067,22 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path4 from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { fileURLToPath } from "url";
+var __dirname = path4.dirname(fileURLToPath(import.meta.url));
 var vite_config_default = defineConfig({
   plugins: [
-    react(),
-    runtimeErrorOverlay(),
-    ...process.env.NODE_ENV !== "production" && process.env.REPL_ID !== void 0 ? [
-      await import("@replit/vite-plugin-cartographer").then(
-        (m) => m.cartographer()
-      )
-    ] : []
+    react()
   ],
   resolve: {
     alias: {
-      "@": path4.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path4.resolve(import.meta.dirname, "shared"),
-      "@assets": path4.resolve(import.meta.dirname, "attached_assets")
+      "@": path4.resolve(__dirname, "client", "src"),
+      "@shared": path4.resolve(__dirname, "shared"),
+      "@assets": path4.resolve(__dirname, "attached_assets")
     }
   },
-  root: path4.resolve(import.meta.dirname, "client"),
+  root: path4.resolve(__dirname, "client"),
   build: {
-    outDir: path4.resolve(import.meta.dirname, "dist/public"),
+    outDir: path4.resolve(__dirname, "dist/public"),
     emptyOutDir: true
   },
   server: {
