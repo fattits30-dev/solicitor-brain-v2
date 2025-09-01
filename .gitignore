@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 **/node_modules/
+package-lock.json.backup
+yarn.lock
+pnpm-lock.yaml
 
 # Python
 __pycache__/
@@ -12,6 +15,13 @@ venv/
 env/
 ENV/
 .venv
+**/venv/
+services/api/venv/
+*.whl
+*.egg
+*.egg-info/
+pip-log.txt
+pip-delete-this-directory.txt
 
 # IDE
 # .vscode/ - Keep VS Code settings for team collaboration
@@ -21,45 +31,77 @@ ENV/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+.Spotlight-V100
+.Trashes
 
 # Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+client.log
+server.log
+auth_test_output.log
+*.log.*
 
 # Build outputs
 dist/
 build/
-*.egg-info/
+out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
 
 # Environment variables
 .env
 .env.local
 .env.*.local
+.env.production
+.env.test
+.env.development
 
-# Uploads
+# Uploads & User Generated Content
 uploads/
 temp/
+tmp/
+/tmp/
+public/uploads/
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
+*.sql
+*.dump
+database.sqlite
 
 # Testing
 coverage/
 .coverage
+.coverage.*
 htmlcov/
 .pytest_cache/
 .tox/
+.nox/
+playwright-report/
+test-results/
+.nyc_output/
+*.lcov
 
 # Documentation
 docs/_build/
+docs/.vuepress/dist/
+site/
 
 # FastAPI/Python specific
 instance/
@@ -67,18 +109,111 @@ instance/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+.pyre/
+.pytype/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb_checkpoints
 
 # pyenv
 .python-version
 
-# celery beat schedule file
+# celery
 celerybeat-schedule
+celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
-# Test Reports
-playwright-report/
-test-results/
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*.swp
+*.swo
+temp-test.js
+*.traineddata
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Large binary files
+*.pdf
+*.docx
+*.xlsx
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.iso
+*.dmg
+*.pkg
+*.deb
+*.rpm
+
+# Media files (if not needed in repo)
+*.mp4
+*.avi
+*.mov
+*.mp3
+*.wav
+*.flac
+
+# Model files
+*.pth
+*.pkl
+*.h5
+*.onnx
+*.pt
+*.safetensors
+models/
+
+# BFG Repo Cleaner
+.git.backup
+..bfg-report/
+bfg.jar
+
+# Redis
+dump.rdb
+redis.log
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Secrets
+*.pem
+*.key
+*.crt
+*.cer
+secrets/
+credentials/
+
+# Ollama models
+.ollama/
+ollama_models/
+
+# Vector embeddings cache
+embeddings_cache/
+.vector_cache/
+
+# Session data
+sessions/
+session_store/
+
+# Generated files
+generated/
+output/
+
+# Lock files (optional - uncomment if you don't want to track)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
