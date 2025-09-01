@@ -403,7 +403,7 @@ class LegalResearchService {
     }
     
     // Build hierarchy array
-    for (const [level, cases] of casesByLevel.entries()) {
+    for (const [level, cases] of Array.from(casesByLevel.entries())) {
       hierarchy.push({
         level,
         cases,
@@ -599,7 +599,7 @@ class LegalResearchService {
     confidence += Math.min(statutes.length * 0.05, 0.15);
     
     // Increase confidence for binding authorities
-    const bindingCases = cases.filter(c => this.courtHierarchy[c.citation.courtLevel] <= 3);
+    const bindingCases = cases.filter((c: any) => this.courtHierarchy[c.citation.courtLevel as keyof typeof this.courtHierarchy] <= 3);
     confidence += Math.min(bindingCases.length * 0.05, 0.1);
     
     return Math.min(confidence, 1.0);

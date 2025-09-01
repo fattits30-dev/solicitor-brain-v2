@@ -222,7 +222,7 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
     const config = {
       pending: { variant: 'secondary' as const, icon: Clock, label: 'Pending' },
       processing: { variant: 'default' as const, icon: Zap, label: 'Processing' },
-      completed: { variant: 'success' as const, icon: CheckCircle, label: 'Complete' },
+      completed: { variant: 'secondary' as const, icon: CheckCircle, label: 'Complete' },
       failed: { variant: 'destructive' as const, icon: AlertCircle, label: 'Failed' }
     };
     
@@ -239,7 +239,7 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
     if (!metadata?.confidentialityLevel) return null;
     
     const config = {
-      public: { variant: 'success' as const, label: 'Public' },
+      public: { variant: 'secondary' as const, label: 'Public' },
       internal: { variant: 'default' as const, label: 'Internal' },
       confidential: { variant: 'secondary' as const, label: 'Confidential' },
       restricted: { variant: 'destructive' as const, label: 'Restricted' }
@@ -654,7 +654,7 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <span className="text-sm text-muted-foreground">Contains PII:</span>
-                      <Badge variant={metadata.containsPII ? 'destructive' : 'success'} className="ml-2">
+                      <Badge variant={metadata.containsPII ? 'destructive' : 'secondary'} className="ml-2">
                         {metadata.containsPII ? 'Yes' : 'No'}
                       </Badge>
                     </div>

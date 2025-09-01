@@ -498,7 +498,7 @@ export function MfaVerificationModal({
               <Checkbox
                 id="trust-device"
                 checked={trustDevice}
-                onCheckedChange={setTrustDevice}
+                onCheckedChange={(checked: boolean) => setTrustDevice(checked)}
               />
               <Label 
                 htmlFor="trust-device"

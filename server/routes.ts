@@ -69,10 +69,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create audit entry
       await storage.createAuditEntry({
-        actor: req.user?.username || 'system',
+        userId: req.user?.id || 'system',
         action: 'case_created',
-        target: newCase.id,
-        redactedFields: [],
+        resource: 'case',
+        resourceId: newCase.id,
       });
 
       res.status(201).json(newCase);
@@ -103,10 +103,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newDocument = await storage.createDocument(validatedData);
 
       await storage.createAuditEntry({
-        actor: 'system',
+        userId: 'system',
         action: 'document_uploaded',
-        target: newDocument.id,
-        redactedFields: [],
+        resource: 'document', 
+        resourceId: newDocument.id,
       });
 
       res.status(201).json(newDocument);
@@ -163,10 +163,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newDraft = await storage.createDraft(validatedData);
 
       await storage.createAuditEntry({
-        actor: 'system',
+        userId: 'system',
         action: 'draft_created',
-        target: newDraft.id,
-        redactedFields: [],
+        resource: 'draft',
+        resourceId: newDraft.id,
       });
 
       res.status(201).json(newDraft);
@@ -242,10 +242,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedMetadata = await storage.updateDocumentMetadata(req.params.id, req.body);
 
       await storage.createAuditEntry({
-        actor: req.user?.username || 'system',
+        userId: req.user?.id || 'system',
         action: 'document_metadata_updated',
-        target: req.params.id,
-        redactedFields: [],
+        resource: 'document',
+        resourceId: req.params.id,
       });
 
       res.json(updatedMetadata);
@@ -289,10 +289,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.startOCRProcessing(req.params.id);
 
       await storage.createAuditEntry({
-        actor: req.user?.username || 'system',
+        userId: req.user?.id || 'system',
         action: 'ocr_processing_started',
-        target: req.params.id,
-        redactedFields: [],
+        resource: 'document',
+        resourceId: req.params.id,
       });
 
       res.json(result);

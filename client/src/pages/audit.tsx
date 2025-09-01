@@ -93,7 +93,7 @@ export default function Audit() {
   };
 
   const filteredLogs = mockAuditLogs.filter(log => {
-    if (searchTerm && !log.redactedData.toLowerCase().includes(searchTerm.toLowerCase())) {
+    if (searchTerm && !log.redactedData?.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     if (actionFilter !== "all" && log.action !== actionFilter) {
@@ -244,7 +244,7 @@ export default function Audit() {
                             <div className="text-sm">
                               <span className="text-muted-foreground">Details: </span>
                               <span className="text-foreground" data-testid={`audit-metadata-${log.id}`}>
-                                {Object.entries(log.metadata).map(([key, value]) => (
+                                {Object.entries(log.metadata as Record<string, any>).map(([key, value]) => (
                                   `${key}: ${showPII ? value : '[REDACTED]'}`
                                 )).join(", ")}
                               </span>

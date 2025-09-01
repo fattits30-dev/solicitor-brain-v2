@@ -49,7 +49,7 @@ let emailTransporter: nodemailer.Transporter | null = null;
 let twilioClient: twilio.Twilio | null = null;
 
 if (EMAIL_CONFIG.host && EMAIL_CONFIG.auth.user) {
-  emailTransporter = nodemailer.createTransporter(EMAIL_CONFIG);
+  emailTransporter = nodemailer.createTransport(EMAIL_CONFIG);
 }
 
 if (TWILIO_CONFIG.accountSid && TWILIO_CONFIG.authToken) {
@@ -544,7 +544,7 @@ export class MfaService {
       ));
 
     await this.logMfaEvent(userId, 'trusted_device_removed', true, '', '');
-    return result.rowCount > 0;
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   /**

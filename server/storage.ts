@@ -6,6 +6,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 export interface IStorage {
   // Users
@@ -21,7 +22,15 @@ export interface IStorage {
   deleteCase(id: string): Promise<boolean>;
 
   // Documents
+  getAllDocuments(): Promise<Document[]>;
+  getDocument(id: string): Promise<Document | undefined>;
   getDocumentsByCase(caseId: string): Promise<Document[]>;
+  getDocumentMetadata(id: string): Promise<Partial<Document> | undefined>;
+  updateDocumentMetadata(id: string, metadata: Partial<Document>): Promise<Document | undefined>;
+  getDocumentFilePath(id: string): Promise<string | undefined>;
+  getDocumentOCRStatus(id: string): Promise<{ status: string; progress?: number } | undefined>;
+  startOCRProcessing(id: string): Promise<{ success: boolean; status: string }>;
+  addDocumentAnnotation(id: string, annotation: any): Promise<boolean>;
   createDocument(document: InsertDocument): Promise<Document>;
   updateDocumentOCR(id: string, ocrData: {
     extractedText?: string | null;
@@ -68,9 +77,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    const userWithId = { id: nanoid(), ...insertUser };
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values(userWithId)
       .returning();
     return user;
   }
@@ -106,8 +116,64 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount || 0) > 0;
   }
 
+  // Documents
+  async getAllDocuments(): Promise<Document[]> {
+    return await db.select().from(documents).orderBy(desc(documents.createdAt));
+  }
+
+  async getDocument(id: string): Promise<Document | undefined> {
+    const [document] = await db.select().from(documents).where(eq(documents.id, id)).limit(1);
+    return document;
+  }
+
   async getDocumentsByCase(caseId: string): Promise<Document[]> {
     return await db.select().from(documents).where(eq(documents.caseId, caseId));
+  }
+
+  async getDocumentMetadata(id: string): Promise<Partial<Document> | undefined> {
+    const document = await this.getDocument(id);
+    if (!document) return undefined;
+    
+    // Return metadata without file content
+    const { ocrText, ...metadata } = document;
+    return metadata;
+  }
+
+  async updateDocumentMetadata(id: string, metadata: Partial<Document>): Promise<Document | undefined> {
+    const [updated] = await db
+      .update(documents)
+      .set(metadata)
+      .where(eq(documents.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getDocumentFilePath(id: string): Promise<string | undefined> {
+    const document = await this.getDocument(id);
+    return document?.path;
+  }
+
+  async getDocumentOCRStatus(id: string): Promise<{ status: string; progress?: number } | undefined> {
+    const document = await this.getDocument(id);
+    if (!document) return undefined;
+    
+    return {
+      status: document.ocrText ? 'completed' : 'pending',
+      progress: document.ocrText ? 100 : 0,
+    };
+  }
+
+  async startOCRProcessing(id: string): Promise<{ success: boolean; status: string }> {
+    const document = await this.getDocument(id);
+    if (!document) return { success: false, status: 'Document not found' };
+    
+    // TODO: Implement actual OCR processing
+    return { success: true, status: 'OCR processing started' };
+  }
+
+  async addDocumentAnnotation(id: string, annotation: any): Promise<boolean> {
+    // TODO: Implement document annotation system
+    return true;
   }
 
   async createDocument(document: InsertDocument): Promise<Document> {

@@ -4,7 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Resizable } from '@/components/ui/resizable';
+import { 
+  ResizableHandle, 
+  ResizablePanel, 
+  ResizablePanelGroup 
+} from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Sheet,

@@ -7,6 +7,16 @@ declare global {
       mfaVerified?: boolean;
       deviceTrusted?: boolean;
       mfaRequired?: boolean;
+      session?: any;
+      user?: {
+        id: string;
+        username: string;
+        password: string;
+        name: string;
+        role: string;
+        createdAt: Date;
+        updatedAt: Date;
+      };
     }
   }
 }
@@ -80,13 +90,14 @@ export function requireMfaVerification(req: Request, res: Response, next: NextFu
     userAgent: req.get('User-Agent') || 'unknown',
   };
 
-  mfaService.isMfaEnabled(req.user.id).then(mfaEnabled => {
+  // Async function to handle MFA checks
+  const checkMfaRequirement = async () => {
+    const mfaEnabled = await mfaService.isMfaEnabled(req.user!.id);
     if (!mfaEnabled) {
       return next(); // MFA not enabled, proceed
     }
 
-    return mfaService.isDeviceTrusted(req.user.id, context);
-  }).then(deviceTrusted => {
+    const deviceTrusted = await mfaService.isDeviceTrusted(req.user!.id, context);
     if (deviceTrusted) {
       return next(); // Device is trusted, proceed
     }
@@ -96,7 +107,9 @@ export function requireMfaVerification(req: Request, res: Response, next: NextFu
       error: 'MFA verification required for this operation',
       mfaRequired: true,
     });
-  }).catch(error => {
+  };
+
+  checkMfaRequirement().catch((error: any) => {
     console.error('MFA verification check error:', error);
     res.status(500).json({ error: 'Failed to check MFA verification' });
   });

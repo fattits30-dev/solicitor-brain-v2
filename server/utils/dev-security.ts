@@ -9,7 +9,7 @@ import path from 'path';
 
 interface SensitivePattern {
   pattern: RegExp;
-  replacement: string;
+  replacement: string | ((match: string) => string);
   description: string;
 }
 
@@ -117,7 +117,7 @@ class DevelopmentSecurity {
       if (typeof replacement === 'string') {
         redacted = redacted.replace(pattern, replacement);
       } else {
-        redacted = redacted.replace(pattern, replacement as any);
+        redacted = redacted.replace(pattern, replacement);
       }
     }
 

@@ -39,8 +39,8 @@ export const getQueryFn: <T>(options: { on401: UnauthorizedBehavior }) => QueryF
 
     try {
       // Use our API client which handles JWT tokens automatically
-      const data = await apiClient.get<T>(endpoint);
-      return data;
+      const data = await apiClient.get<any>(endpoint);
+      return data as T;
     } catch (error: any) {
       if (unauthorizedBehavior === 'returnNull' && error.message?.includes('401')) {
         return null;

@@ -293,7 +293,7 @@ export default function Cases() {
                                   >
                                     {typeof event.data === 'string'
                                       ? event.data
-                                      : (JSON.stringify(event.data) as string)}
+                                      : String(JSON.stringify(event.data))}
                                   </p>
                                 )}
                               </div>

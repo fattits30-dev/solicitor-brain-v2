@@ -49,7 +49,7 @@ class OCRService {
       return {
         text: result.data.text,
         confidence: result.data.confidence,
-        language: result.data.language,
+        language: (result as any).data.language || 'en',
         processingTime: Date.now() - startTime,
       };
     } catch (error) {

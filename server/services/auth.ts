@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { nanoid } from "nanoid";
 import { db } from "../db.js";
 import { users } from "../../shared/schema.js";
 import { eq } from "drizzle-orm";
@@ -34,7 +35,8 @@ export class AuthService {
    * Generate a JWT token
    */
   static generateToken(payload: AuthPayload): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    const options: jwt.SignOptions = { expiresIn: JWT_EXPIRES_IN as string };
+    return jwt.sign(payload, JWT_SECRET as string, options);
   }
 
   /**
@@ -66,6 +68,7 @@ export class AuthService {
     const [newUser] = await db
       .insert(users)
       .values({
+        id: nanoid(),
         ...userData,
         password: hashedPassword,
       })

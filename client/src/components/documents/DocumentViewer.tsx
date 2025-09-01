@@ -270,7 +270,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         body: JSON.stringify(annotation),
       });
 
-      onAnnotationChange?.(updatedAnnotations);
+      _onAnnotationChange?.(updatedAnnotations);
     } catch (error) {
       console.error('Failed to save annotation:', error);
     }

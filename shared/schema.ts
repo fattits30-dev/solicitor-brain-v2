@@ -235,11 +235,10 @@ export const mfaRecoveryCodesRelations = relations(mfaRecoveryCodes, ({ one }) =
 }));
 
 // Schemas for validation
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  name: true,
-  role: true,
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertCaseSchema = createInsertSchema(cases).pick({
