@@ -1,0 +1,83 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+.next/
+**/.next/
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+venv/
+**/venv/
+*.py
+
+# Cache
+.cache/
+**/.cache/
+*.cache
+coverage/
+**/coverage/
+
+# Version control
+.git/
+**/.git/
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Database
+*.db
+*.sqlite
+*.sql
+
+# Media files
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.svg
+*.ico
+*.webp
+
+# Documents
+*.pdf
+*.doc
+*.docx
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Test files
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+
+# Generated files
+*.min.js
+*.min.css
+*.map
