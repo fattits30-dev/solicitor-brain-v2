@@ -1,0 +1,73 @@
+[
+  // GitHub Copilot Agent Mode Keybindings
+  {
+    "key": "ctrl+shift+i",
+    "command": "github.copilot.chat.open",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+enter",
+    "command": "github.copilot.generate",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "alt+\\",
+    "command": "editor.action.inlineSuggest.trigger",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+shift+a",
+    "command": "github.copilot.chat.explain",
+    "when": "editorHasSelection"
+  },
+  {
+    "key": "ctrl+shift+f",
+    "command": "github.copilot.chat.fix",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+shift+t",
+    "command": "github.copilot.chat.tests",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+shift+d",
+    "command": "github.copilot.chat.doc",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+shift+r",
+    "command": "github.copilot.chat.review",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+shift+o",
+    "command": "github.copilot.chat.optimize",
+    "when": "editorHasSelection"
+  },
+  {
+    "key": "ctrl+alt+enter",
+    "command": "github.copilot.acceptCursorPanelSolution",
+    "when": "github.copilot.activated && github.copilot.panelVisible"
+  },
+  {
+    "key": "ctrl+/",
+    "command": "github.copilot.terminal.suggestCommand",
+    "when": "terminalFocus && !terminalHasBeenCreated"
+  },
+  {
+    "key": "ctrl+shift+/",
+    "command": "github.copilot.terminal.explainTerminalSelection",
+    "when": "terminalFocus && terminalTextSelected"
+  },
+  {
+    "key": "ctrl+alt+i",
+    "command": "github.copilot.chat.inlineChat.start",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+k ctrl+i",
+    "command": "github.copilot.chat.commitMessage",
+    "when": "gitOpenRepositoryCount != 0"
+  }
+]
