@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const API_URL = 'http://localhost:3333';
-const APP_URL = 'http://localhost:5173';
+const APP_URL = 'http://localhost:3333';
 
 test.describe('Full Application Test Suite', () => {
   
