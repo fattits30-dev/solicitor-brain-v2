@@ -1,19 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,25 +9,43 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  FileText,
-  Search,
-  Filter,
-  MoreVertical,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  AlertCircle,
+  Calendar,
   Download,
   Eye,
-  Trash2,
   FileImage,
+  FileText,
   FileType,
-  Calendar,
-  User,
-  AlertCircle,
   Loader2,
+  MoreVertical,
   RefreshCw,
   SortAsc,
   SortDesc,
-  Upload
+  Trash2,
+  Upload,
+  User,
 } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 interface Document {
   id: string;
@@ -82,7 +85,7 @@ const DOCUMENT_TYPES = [
   { value: 'contract', label: 'Contracts' },
   { value: 'correspondence', label: 'Correspondence' },
   { value: 'evidence', label: 'Evidence' },
-  { value: 'court-filing', label: 'Court Filings' }
+  { value: 'court-filing', label: 'Court Filings' },
 ];
 
 const OCR_STATUS_FILTERS = [
@@ -90,7 +93,7 @@ const OCR_STATUS_FILTERS = [
   { value: 'pending', label: 'Pending OCR' },
   { value: 'processing', label: 'Processing' },
   { value: 'completed', label: 'OCR Complete' },
-  { value: 'failed', label: 'OCR Failed' }
+  { value: 'failed', label: 'OCR Failed' },
 ];
 
 export const DocumentList: React.FC<DocumentListProps> = ({
@@ -100,7 +103,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   selectedDocumentId,
   allowDelete = false,
   compact = false,
-  showCaseInfo = true
+  showCaseInfo = true,
 }) => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,7 +115,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; documentId: string | null }>({
     open: false,
-    documentId: null
+    documentId: null,
   });
 
   useEffect(() => {
@@ -123,14 +126,14 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
+
       const url = caseId ? `/api/cases/${caseId}/documents` : '/api/documents';
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to load documents: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setDocuments(data);
       setLoading(false);
@@ -146,28 +149,29 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(doc => 
-        doc.name.toLowerCase().includes(query) ||
-        doc.type.toLowerCase().includes(query) ||
-        doc.ocrText?.toLowerCase().includes(query) ||
-        doc.caseName?.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (doc) =>
+          doc.name.toLowerCase().includes(query) ||
+          doc.type.toLowerCase().includes(query) ||
+          doc.ocrText?.toLowerCase().includes(query) ||
+          doc.caseName?.toLowerCase().includes(query),
       );
     }
 
     // Apply type filter
     if (typeFilter !== 'all') {
-      filtered = filtered.filter(doc => doc.type.includes(typeFilter));
+      filtered = filtered.filter((doc) => doc.type.includes(typeFilter));
     }
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(doc => doc.ocrStatus === statusFilter);
+      filtered = filtered.filter((doc) => doc.ocrStatus === statusFilter);
     }
 
     // Apply sorting
     filtered.sort((a, b) => {
       let aValue: any, bValue: any;
-      
+
       switch (sortField) {
         case 'name':
           aValue = a.name.toLowerCase();
@@ -199,7 +203,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
       setSortDirection('asc');
@@ -209,16 +213,16 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   const handleDelete = async (documentId: string) => {
     try {
       const response = await fetch(`/api/documents/${documentId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       });
 
       if (!response.ok) {
         throw new Error('Failed to delete document');
       }
 
-      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
       setDeleteDialog({ open: false, documentId: null });
-    } catch (error) {
+    } catch {
       setError('Failed to delete document');
     }
   };
@@ -227,26 +231,26 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     try {
       const response = await fetch(`/api/documents/${document.id}/download`);
       if (!response.ok) throw new Error('Download failed');
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = window.document.createElement('a');
       link.href = url;
       link.download = document.name;
       link.click();
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch {
       setError('Failed to download document');
     }
   };
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
-    
+
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
@@ -260,19 +264,25 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     const config = {
       pending: { variant: 'secondary' as const, label: 'Pending' },
       processing: { variant: 'default' as const, label: 'Processing' },
-      completed: { variant: 'success' as const, label: 'Complete' },
-      failed: { variant: 'destructive' as const, label: 'Failed' }
+      completed: { variant: 'outline' as const, label: 'Complete' },
+      failed: { variant: 'destructive' as const, label: 'Failed' },
     };
-    
+
     const { variant, label } = config[status as keyof typeof config] || config.pending;
-    return <Badge variant={variant} className="text-xs">{label}</Badge>;
+    return (
+      <Badge variant={variant} className="text-xs">
+        {label}
+      </Badge>
+    );
   };
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return null;
-    return sortDirection === 'asc' ? 
-      <SortAsc className="h-4 w-4 ml-1" /> : 
-      <SortDesc className="h-4 w-4 ml-1" />;
+    return sortDirection === 'asc' ? (
+      <SortAsc className="h-4 w-4 ml-1" />
+    ) : (
+      <SortDesc className="h-4 w-4 ml-1" />
+    );
   };
 
   if (loading) {
@@ -294,12 +304,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
           {error}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={loadDocuments}
-            className="ml-2"
-          >
+          <Button variant="outline" size="sm" onClick={loadDocuments} className="ml-2">
             <RefreshCw className="h-4 w-4 mr-2" />
             Retry
           </Button>
@@ -311,22 +316,22 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   return (
     <>
       <Card className="h-full flex flex-col">
-        <CardHeader className={compact ? "pb-3" : "pb-4"}>
+        <CardHeader className={compact ? 'pb-3' : 'pb-4'}>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Documents
               <Badge variant="secondary">{filteredAndSortedDocuments.length}</Badge>
             </CardTitle>
-            
+
             {onDocumentUpload && (
-              <Button onClick={onDocumentUpload} size={compact ? "sm" : "default"}>
+              <Button onClick={onDocumentUpload} size={compact ? 'sm' : 'default'}>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload
               </Button>
             )}
           </div>
-          
+
           {/* Filters */}
           <div className="grid gap-3 mt-4">
             <div className="flex gap-2">
@@ -351,27 +356,27 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                 <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
-            
+
             <div className="flex gap-2">
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {DOCUMENT_TYPES.map(type => (
+                  {DOCUMENT_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              
+
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {OCR_STATUS_FILTERS.map(status => (
+                  {OCR_STATUS_FILTERS.map((status) => (
                     <SelectItem key={status.value} value={status.value}>
                       {status.label}
                     </SelectItem>
@@ -410,7 +415,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="flex-1 overflow-hidden p-0">
           <ScrollArea className="h-full">
             {filteredAndSortedDocuments.length === 0 ? (
@@ -420,8 +425,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                   <p className="text-muted-foreground mb-2">
                     {searchQuery || typeFilter !== 'all' || statusFilter !== 'all'
                       ? 'No documents match your filters'
-                      : 'No documents found'
-                    }
+                      : 'No documents found'}
                   </p>
                   {onDocumentUpload && (
                     <Button onClick={onDocumentUpload} variant="outline">
@@ -444,10 +448,8 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                     <CardContent className={`p-4 ${compact ? 'py-3' : ''}`}>
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <div className="flex-shrink-0 mt-0.5">
-                            {getFileIcon(document.type)}
-                          </div>
-                          
+                          <div className="flex-shrink-0 mt-0.5">{getFileIcon(document.type)}</div>
+
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="font-medium truncate" title={document.name}>
@@ -455,7 +457,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                               </h4>
                               {getStatusBadge(document.ocrStatus)}
                             </div>
-                            
+
                             <div className="flex items-center gap-4 text-sm text-muted-foreground mb-1">
                               <span className="capitalize">{document.type}</span>
                               <span>{formatFileSize(document.size)}</span>
@@ -464,25 +466,23 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                                 {new Date(document.uploadedAt).toLocaleDateString()}
                               </span>
                             </div>
-                            
+
                             {showCaseInfo && document.caseName && (
                               <p className="text-xs text-muted-foreground truncate">
                                 Case: {document.caseName}
                               </p>
                             )}
-                            
+
                             {document.uploadedBy && (
                               <p className="text-xs text-muted-foreground flex items-center gap-1">
                                 <User className="h-3 w-3" />
                                 {document.uploadedBy}
                               </p>
                             )}
-                            
+
                             {/* Document Stats */}
                             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                              {document.pageCount && (
-                                <span>{document.pageCount} pages</span>
-                              )}
+                              {document.pageCount && <span>{document.pageCount} pages</span>}
                               {document.entities && document.entities.length > 0 && (
                                 <span>{document.entities.length} entities</span>
                               )}
@@ -492,7 +492,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                             </div>
                           </div>
                         </div>
-                        
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -505,17 +505,21 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              onDocumentSelect?.(document);
-                            }}>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDocumentSelect?.(document);
+                              }}
+                            >
                               <Eye className="h-4 w-4 mr-2" />
                               View
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              handleDownload(document);
-                            }}>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownload(document);
+                              }}
+                            >
                               <Download className="h-4 w-4 mr-2" />
                               Download
                             </DropdownMenuItem>
@@ -546,16 +550,16 @@ export const DocumentList: React.FC<DocumentListProps> = ({
         </CardContent>
       </Card>
 
-      <AlertDialog 
-        open={deleteDialog.open} 
+      <AlertDialog
+        open={deleteDialog.open}
         onOpenChange={(open) => setDeleteDialog({ open, documentId: null })}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Document</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this document? This action cannot be undone.
-              All associated OCR text, entities, and annotations will also be deleted.
+              Are you sure you want to delete this document? This action cannot be undone. All
+              associated OCR text, entities, and annotations will also be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
