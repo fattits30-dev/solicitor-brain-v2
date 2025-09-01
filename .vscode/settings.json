@@ -1,33 +1,61 @@
 {
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "files.exclude": {
     "**/.git": true,
     "**/.DS_Store": true,
-    "**/node_modules": true,
-    "**/dist": true,
-    "**/.next": true
+    "**/node_modules": false,
+    "**/dist": false,
+    "**/.next": true,
+    "**/venv": true,
+    "**/__pycache__": true,
+    "**/*.pyc": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.hg/store/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.next/**": true,
+    "**/venv/**": true,
+    "**/__pycache__/**": true,
+    "**/*.pyc": true
   },
   "search.exclude": {
     "**/node_modules": true,
     "**/dist": true,
     "**/.next": true,
     "**/uploads": true,
-    "**/migrations/*.sql": true
+    "**/migrations/*.sql": true,
+    "**/venv": true,
+    "**/__pycache__": true
   },
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
   "eslint.alwaysShowStatus": true,
   "eslint.lintTask.enable": true,
+  "eslint.run": "onType",
+  "eslint.probe": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.workingDirectories": [{ "mode": "auto" }],
   "problems.autoReveal": true,
   "problems.decorations.enabled": true,
   "problems.showCurrentInStatus": true,
+  "problems.sortOrder": "severity",
   "typescript.tsserver.log": "verbose",
   "typescript.validate.enable": true,
+  "typescript.referencesCodeLens.enabled": true,
+  "typescript.implementationsCodeLens.enabled": true,
+  "typescript.inlayHints.parameterNames.enabled": "all",
+  "typescript.inlayHints.variableTypes.enabled": true,
   "javascript.validate.enable": true,
+  "javascript.suggest.autoImports": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
   "typescript.suggest.autoImports": true,
   "typescript.updateImportsOnFileMove.enabled": "always",
   "debug.javascript.autoAttachFilter": "smart",
@@ -51,6 +79,11 @@
   // Editor settings for better debugging
   "editor.glyphMargin": true,
   "editor.folding": true,
+  "editor.rulers": [80, 120],
+  "editor.renderWhitespace": "trailing",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "editor.stickyScroll.enabled": true,
   "terminal.integrated.env.linux": {
     "NODE_ENV": "development"
   },
@@ -61,15 +94,19 @@
     "NODE_ENV": "development"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.tabSize": 2
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.tabSize": 2
   },
   "[json]": {
-    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.tabSize": 2
   },
   "[markdown]": {
@@ -96,5 +133,26 @@
     "@": "${workspaceFolder}/client/src",
     "@shared": "${workspaceFolder}/shared",
     "@server": "${workspaceFolder}/server"
+  },
+  
+  // Security Settings
+  "security.workspace.trust.enabled": true,
+  "security.workspace.trust.untrustedFiles": "newWindow",
+  "security.workspace.trust.banner": "always",
+  "security.workspace.trust.startupPrompt": "always",
+  "security.workspace.trust.emptyWindow": false,
+  
+  // Git Security
+  "git.allowForcePush": false,
+  "git.allowNoVerifyCommit": false,
+  "git.confirmForcePush": true,
+  "git.confirmNoVerifyCommit": true,
+  
+  // Copilot Settings
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": true,
+    "plaintext": true,
+    "markdown": true
   }
 }
