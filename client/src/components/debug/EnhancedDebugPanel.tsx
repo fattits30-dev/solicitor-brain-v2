@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { 
-  Bug, X, Trash2, Download, RefreshCw, Activity, Database, Globe, Terminal,
-  Play, Pause, Radio, Settings, Save, Upload, Wifi, WifiOff, Clock
+  Bug, X, Trash2, Download, Globe, Terminal,
+  Play, Pause, Radio, Settings, Wifi, WifiOff, Clock
 } from 'lucide-react';
 import { useToast } from '../ui/use-toast';
 
@@ -165,7 +164,7 @@ export const EnhancedDebugPanel: React.FC = () => {
       });
       
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         setIsRecording(true);
       }
     } catch (error) {

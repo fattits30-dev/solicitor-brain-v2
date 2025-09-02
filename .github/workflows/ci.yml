@@ -74,6 +74,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit dependencies
+        run: |
+          echo "🔍 Running dependency audit..."
+          npm audit --audit-level high || true
+          echo "Note: Audit failures won't block CI but should be reviewed"
+
       - name: Lint
         run: npm run lint
 
