@@ -1,6 +1,6 @@
 import type { User } from '@shared/schema';
 import { NextFunction, Request, Response } from 'express';
-import { AuthService } from '../services/auth.js';
+import authStandalone from '../auth-standalone.js';
 
 // Extend Express Request type to include user
 declare global {
@@ -14,51 +14,9 @@ declare global {
 
 /**
  * Middleware to authenticate requests using JWT token
+ * Now uses the standalone auth system
  */
-export function authenticate(req: Request, res: Response, next: NextFunction) {
-  try {
-    // Get token from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'No authorization header' });
-    }
-
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      return res.status(401).json({ error: 'Invalid authorization format' });
-    }
-
-    const token = parts[1];
-
-    // Verify token
-    try {
-      const payload = AuthService.verifyToken(token);
-
-      // Get user from database - Fixed async handling
-      AuthService.getUserById(payload.userId)
-        .then((user) => {
-          if (!user) {
-            return res.status(401).json({ error: 'User not found' });
-          }
-
-          // Attach user and token to request
-          req.user = user;
-          req.token = token;
-          next();
-        })
-        .catch((error) => {
-          console.error('Auth middleware error:', error);
-          return res.status(500).json({ error: 'Authentication failed' });
-        });
-      return; // Prevent further execution while promise resolves
-    } catch {
-      return res.status(401).json({ error: 'Invalid or expired token' });
-    }
-  } catch (error) {
-    console.error('Auth middleware error:', error);
-    res.status(500).json({ error: 'Authentication failed' });
-  }
-}
+export const authenticate = authStandalone.requireAuth;
 
 /**
  * Middleware to check if user has required role
@@ -69,7 +27,8 @@ export function authorize(...allowedRoles: string[]) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    if (!AuthService.hasRole(req.user, allowedRoles)) {
+    // Simple role check
+    if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
@@ -95,24 +54,26 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction) {
   const token = parts[1];
 
   try {
-    const payload = AuthService.verifyToken(token);
-
-    AuthService.getUserById(payload.userId)
-      .then((user) => {
-        if (user) {
-          req.user = user;
-          req.token = token;
-        }
-        next();
-      })
-      .catch(() => {
-        next();
-      });
-    return; // Prevent further execution while promise resolves
+    const payload = authStandalone.verifyToken(token);
+    
+    if (payload && payload.exp && payload.exp > Date.now()) {
+      req.user = {
+        id: payload.userId,
+        username: payload.username,
+        role: payload.role,
+        email: payload.username, // Use username as email fallback
+        name: payload.username,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      } as User;
+      req.token = token;
+    }
+    next();
   } catch {
     next();
   }
 }
+
 // Aliases for backward compatibility and convenience
 export const requireAuth = authenticate;
 export const requireRole = authorize;
