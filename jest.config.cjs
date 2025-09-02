@@ -51,4 +51,20 @@ module.exports = {
       useESM: true,
     },
   },
+  // Coverage configuration
+  collectCoverage: false,
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
+  collectCoverageFrom: [
+    '**/*.{ts,tsx}',
+    '!**/node_modules/**',
+    '!**/dist/**',
+    '!**/*.d.ts',
+  ],
+  // Debugging improvements
+  verbose: true,
+  // Clear mocks between tests for better isolation
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
 };
