@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **CRITICAL**: Removed vulnerable auth-standalone.ts that logged sensitive data (passwords, tokens)
+- **CRITICAL**: Eliminated hardcoded credential acceptance ("password123")
+- Added comprehensive security test suite (13 tests) covering:
+  - Password hashing security with bcrypt
+  - JWT token generation and validation
+  - SQL injection protection
+  - Prevention of information leakage
+  - Session security with proper expiration
+- Integrated Trivy vulnerability scanner in CI pipeline
+- Added TruffleHog secret detection to prevent credential leaks
+- Implemented policy.yml for automated quality gates and security standards
+- Fixed broken authentication middleware imports
+
 ### Added
 
 - Initial setup of GitHub Actions workflows
@@ -17,15 +32,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security policy and vulnerability reporting process
 - GitHub Pages deployment workflow
 - Automated release workflow
+- Comprehensive policy enforcement framework (policy.yml)
+- Security scanning in CI/CD pipeline
 
 ### Changed
 
 - Updated README.md with comprehensive project information
 - Enhanced .gitignore with additional patterns
+- Standardized authentication to use secure AuthService with bcrypt + JWT
+- CI workflow enhanced with security scanning and E2E testing
 
 ### Fixed
 
 - Fixed lint errors in documentation files
+- Fixed Jest stripAnsi dependency conflict preventing test execution
+- Fixed broken auth middleware imports that prevented server startup
+- Fixed TypeScript errors in auth routes
+- Added missing email field to Drizzle users schema
+- Synchronized database schema with actual PostgreSQL structure
 
 ## [2.0.0] - 2025-01-01
 

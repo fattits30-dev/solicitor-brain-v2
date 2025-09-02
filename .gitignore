@@ -217,3 +217,7 @@ output/
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+# Test results and status reports
+API_TEST_RESULTS.md
+APP_STATUS_REPORT.md
+PROJECT_STATUS.md
