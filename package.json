@@ -164,7 +164,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "husky": "^9.1.7",
     "jest": "^30.1.1",
-    "lint-staged": "^16.1.5",
+    "lint-staged": "^16.1.6",
     "playwright": "^1.55.0",
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",
