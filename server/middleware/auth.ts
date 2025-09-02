@@ -1,6 +1,6 @@
 import type { User } from '@shared/schema';
 import { NextFunction, Request, Response } from 'express';
-import authStandalone from '../auth-standalone.js';
+import { AuthService } from '../services/auth.js';
 
 // Extend Express Request type to include user
 declare global {
@@ -14,9 +14,37 @@ declare global {
 
 /**
  * Middleware to authenticate requests using JWT token
- * Now uses the standalone auth system
  */
-export const authenticate = authStandalone.requireAuth;
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+    
+    const token = authHeader.substring(7);
+    
+    try {
+      const payload = AuthService.verifyToken(token);
+      
+      // Get full user data
+      const user = await AuthService.getUserById(payload.userId);
+      
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' });
+      }
+      
+      req.user = user;
+      req.token = token;
+      next();
+    } catch (error) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+  } catch (error) {
+    return res.status(401).json({ error: 'Authentication failed' });
+  }
+};
 
 /**
  * Middleware to check if user has required role
@@ -39,7 +67,7 @@ export function authorize(...allowedRoles: string[]) {
 /**
  * Optional authentication - doesn't fail if no token provided
  */
-export function optionalAuth(req: Request, res: Response, next: NextFunction) {
+export async function optionalAuth(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -54,22 +82,18 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction) {
   const token = parts[1];
 
   try {
-    const payload = authStandalone.verifyToken(token);
+    const payload = AuthService.verifyToken(token);
     
-    if (payload && payload.exp && payload.exp > Date.now()) {
-      req.user = {
-        id: payload.userId,
-        username: payload.username,
-        role: payload.role,
-        email: payload.username, // Use username as email fallback
-        name: payload.username,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as User;
+    // Get full user data
+    const user = await AuthService.getUserById(payload.userId);
+    
+    if (user) {
+      req.user = user;
       req.token = token;
     }
     next();
   } catch {
+    // Silent fail for optional auth
     next();
   }
 }
