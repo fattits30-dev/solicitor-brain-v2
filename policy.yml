@@ -1,0 +1,114 @@
+version: 1
+name: 'Solicitor Brain Security & Quality Policy'
+description: 'Automated quality gates and security standards for Solicitor Brain v2'
+
+rules:
+  - name: 'test-coverage'
+    description: 'Require minimum test coverage'
+    check: 'npm run test -- --coverage --coverageReporters=json-summary'
+    threshold: 70
+    required: true
+
+  - name: 'security-scan'
+    description: 'Run security vulnerability scan'
+    check: 'npm audit --audit-level high'
+    required: true
+
+  - name: 'lint-check'
+    description: 'Ensure code follows style guidelines'
+    check: 'npm run lint'
+    required: true
+
+  - name: 'type-check'
+    description: 'Ensure TypeScript types are correct'
+    check: 'npm run typecheck'
+    required: true
+
+  - name: 'no-secrets'
+    description: 'Ensure no secrets in code'
+    patterns:
+      - "password\\s*=\\s*['\"][^'\"]+['\"]"
+      - "apikey\\s*=\\s*['\"][^'\"]+['\"]"
+      - "secret\\s*=\\s*['\"][^'\"]+['\"]"
+    exclude:
+      - '*.test.ts'
+      - '*.spec.ts'
+      - '.env.example'
+    required: true
+
+  - name: 'max-file-size'
+    description: "Ensure files don't exceed size limit"
+    max_size_kb: 500
+    exclude:
+      - 'package-lock.json'
+      - '*.min.js'
+      - 'dist/**'
+    required: false
+
+  - name: 'commit-message-format'
+    description: 'Ensure commit messages follow conventional format'
+    pattern: "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\\(.+\\))?: .+$"
+    required: false
+
+security:
+  - name: 'dependency-check'
+    description: 'Check for vulnerable dependencies'
+    check: 'npm audit'
+    fail_on: 'critical'
+
+  - name: 'auth-test-required'
+    description: 'Ensure auth changes have tests'
+    paths:
+      - 'server/services/auth.ts'
+      - 'server/middleware/auth.ts'
+      - 'server/routes/auth.ts'
+    test_paths:
+      - 'server/tests/auth*.test.ts'
+    required: true
+
+  - name: 'pii-protection'
+    description: 'Ensure PII is properly protected'
+    forbidden_logs:
+      - 'console.log.*password'
+      - 'console.log.*token'
+      - 'console.log.*email'
+      - 'console.log.*ssn'
+    required: true
+
+quality:
+  - name: 'pr-size-limit'
+    description: 'Keep PRs small and focused'
+    max_lines: 300
+    warning_at: 200
+
+  - name: 'documentation-required'
+    description: 'Ensure critical functions are documented'
+    paths:
+      - 'server/services/**/*.ts'
+      - 'server/middleware/**/*.ts'
+    pattern: "^\\/\\*\\*[\\s\\S]*?\\*\\/$"
+
+  - name: 'test-file-required'
+    description: 'Ensure all service files have tests'
+    source_pattern: 'server/services/**/*.ts'
+    test_pattern: 'server/tests/**/*.test.ts'
+
+ci_requirements:
+  pre_commit:
+    - 'npm run lint'
+    - 'npm run typecheck'
+
+  pre_push:
+    - 'npm test'
+
+  pr_checks:
+    - 'test-coverage'
+    - 'security-scan'
+    - 'lint-check'
+    - 'type-check'
+    - 'no-secrets'
+
+  merge_requirements:
+    - all_checks_pass: true
+    - min_approvals: 1
+    - test_coverage_threshold: 70
