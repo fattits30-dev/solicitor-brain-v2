@@ -2,6 +2,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { EnhancedDebugPanel } from '@/components/debug/EnhancedDebugPanel';
 import { AuthProvider } from '@/contexts/AuthContext';
 import Login from '@/pages/Login';
 import NotFound from '@/pages/not-found';
@@ -132,6 +133,7 @@ function App() {
           <AuthProvider>
             <Toaster />
             <Router />
+            <EnhancedDebugPanel />
           </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>

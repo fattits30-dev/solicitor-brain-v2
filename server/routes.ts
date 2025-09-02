@@ -17,9 +17,21 @@ import authRoutes from './routes/auth.js';
 import mfaRoutes from './routes/mfa.js';
 import searchRoutes from './routes/search.js';
 import uploadRoutes from './routes/upload.js';
+import debugRoutes from './routes/debug.js';
 import { storage } from './storage';
+import { DebugLogger } from './utils/debug.js';
+import { networkInterceptor, devToolsIntegration } from './middleware/debug-interceptor.js';
+import { debugWebSocket } from './services/debug-websocket.js';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize debug logging
+  DebugLogger.info('Registering routes', { environment: process.env.NODE_ENV });
+  
+  // Add debug middleware in development
+  if (process.env.NODE_ENV !== 'production') {
+    app.use(networkInterceptor);
+    app.use(devToolsIntegration());
+  }
   // Health check endpoint (public)
   app.get('/api/health', (req, res) => {
     res.json({
@@ -32,7 +44,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes (public)
   app.use('/api/auth', authRoutes);
   
-  // Simple auth routes (public) - for testing
+  // Debug routes (development only)
+  if (process.env.NODE_ENV !== 'production') {
+    app.use('/api/debug', debugRoutes);
+  }
 
   // MFA routes (semi-protected - requires basic auth but not MFA completion)
   app.use('/api/mfa', mfaRoutes);
@@ -364,5 +379,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Initialize WebSocket debugging in development
+  if (process.env.NODE_ENV !== 'production') {
+    debugWebSocket.initialize(httpServer);
+    DebugLogger.info('Debug WebSocket service initialized', undefined, 'WEBSOCKET');
+  }
+  
   return httpServer;
 }
