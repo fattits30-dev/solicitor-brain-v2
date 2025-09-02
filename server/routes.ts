@@ -1,19 +1,23 @@
-import type { Express } from 'express';
-import { createServer, type Server } from 'http';
-import { storage } from './storage';
 import {
   insertCaseSchema,
   insertDocumentSchema,
-  insertEventSchema,
   insertDraftSchema,
+  insertEventSchema,
 } from '@shared/schema';
+import type { Express } from 'express';
+import { createServer, type Server } from 'http';
 import { z } from 'zod';
-import authRoutes from './routes/auth.js';
-import uploadRoutes from './routes/upload.js';
-import aiRoutes from './routes/ai.js';
-import mfaRoutes from './routes/mfa.js';
+import { logDataModification, logError } from './middleware/audit.js';
 import { authenticate } from './middleware/auth.js';
 import { checkMfaRequirement } from './middleware/mfa.js';
+import agentRoutes from './routes/agents.js';
+import aiRoutes from './routes/ai.js';
+import auditRoutes from './routes/audit.js';
+import authRoutes from './routes/auth.js';
+import mfaRoutes from './routes/mfa.js';
+import searchRoutes from './routes/search.js';
+import uploadRoutes from './routes/upload.js';
+import { storage } from './storage';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint (public)
@@ -39,6 +43,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // AI routes (protected) - Real Ollama integration
   app.use('/api/ai', aiRoutes);
+
+  // Agent routes (protected) - Multi-agent system
+  app.use('/api', agentRoutes);
+
+  // Audit routes (protected) - Comprehensive audit system
+  app.use('/api/audit', auditRoutes);
+
+  // Search routes (protected) - Vector and text search
+  app.use('/api', searchRoutes);
 
   // Cases endpoints (protected)
   app.get('/api/cases', authenticate, async (req, res) => {
@@ -67,16 +80,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertCaseSchema.parse(req.body);
       const newCase = await storage.createCase(validatedData);
 
-      // Create audit entry
-      await storage.createAuditEntry({
-        actor: req.user?.username || 'system',
-        action: 'case_created',
-        target: newCase.id,
-        redactedFields: [],
-      });
+      // Enhanced audit logging with data modification tracking
+      logDataModification(req, 'CREATE', 'cases', newCase.id, undefined, newCase);
 
       res.status(201).json(newCase);
     } catch (_error) {
+      logError(req, _error as Error, { operation: 'create_case', data: req.body });
       if (_error instanceof z.ZodError) {
         return res.status(400).json({ error: 'Invalid case data', details: _error.errors });
       }
@@ -103,10 +112,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newDocument = await storage.createDocument(validatedData);
 
       await storage.createAuditEntry({
-        actor: 'system',
+        userId: 'system',
         action: 'document_uploaded',
-        target: newDocument.id,
-        redactedFields: [],
+        resource: 'document',
+        resourceId: newDocument.id,
       });
 
       res.status(201).json(newDocument);
@@ -163,10 +172,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newDraft = await storage.createDraft(validatedData);
 
       await storage.createAuditEntry({
-        actor: 'system',
+        userId: 'system',
         action: 'draft_created',
-        target: newDraft.id,
-        redactedFields: [],
+        resource: 'draft',
+        resourceId: newDraft.id,
       });
 
       res.status(201).json(newDraft);
@@ -242,10 +251,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedMetadata = await storage.updateDocumentMetadata(req.params.id, req.body);
 
       await storage.createAuditEntry({
-        actor: req.user?.username || 'system',
+        userId: req.user?.id || 'system',
         action: 'document_metadata_updated',
-        target: req.params.id,
-        redactedFields: [],
+        resource: 'document',
+        resourceId: req.params.id,
       });
 
       res.json(updatedMetadata);
@@ -289,10 +298,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.startOCRProcessing(req.params.id);
 
       await storage.createAuditEntry({
-        actor: req.user?.username || 'system',
+        userId: req.user?.id || 'system',
         action: 'ocr_processing_started',
-        target: req.params.id,
-        redactedFields: [],
+        resource: 'document',
+        resourceId: req.params.id,
       });
 
       res.json(result);

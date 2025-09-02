@@ -1,59 +1,26 @@
 {
   "recommendations": [
-    // AI Assistants
-    "anthropic.claude-code",
-    "andrepimenta.claude-code-chat",
-    "github.copilot",
-    "github.copilot-chat",
-    
-    // Essential for this project
-    "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
     "bradlc.vscode-tailwindcss",
     "ms-vscode.vscode-typescript-next",
-    
-    // Database
-    "mtxr.sqltools",
-    "mtxr.sqltools-driver-pg",
-    
-    // Testing
-    "playwright.playwright-vscode",
+    "ms-vscode.vscode-js-debug",
     "orta.vscode-jest",
-    
-    // Git
     "eamodio.gitlens",
     "mhutchie.git-graph",
-    
-    // Better DX
+    "playwright.playwright-vscode",
+    "dsznajder.es7-react-js-snippets",
+    "infeng.vscode-react-typescript",
     "usernamehw.errorlens",
     "streetsidesoftware.code-spell-checker",
     "christian-kohler.path-intellisense",
     "formulahendry.auto-rename-tag",
-    "naumovs.color-highlight",
-    "wayou.vscode-todo-highlight",
-    "gruntfuggly.todo-tree",
-    
-    // React/TypeScript
-    "dsznajder.es7-react-js-snippets",
-    "infeng.vscode-react-typescript",
-    
-    // Productivity
-    "visualstudioexptteam.vscodeintellicode",
-    "visualstudioexptteam.intellicode-api-usage-examples",
-    "aaron-bond.better-comments",
-    "oderwat.indent-rainbow",
-    
-    // Docker
     "ms-azuretools.vscode-docker",
-    
-    // Environment
     "mikestead.dotenv",
-    
-    // Markdown
     "yzhang.markdown-all-in-one",
     "davidanson.vscode-markdownlint"
   ],
   "unwantedRecommendations": [
-    "sonarsource.sonarlint-vscode" // Disable if Java issues persist
+    "sonarsource.sonarlint-vscode"
   ]
 }

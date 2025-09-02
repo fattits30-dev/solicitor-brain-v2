@@ -270,7 +270,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         body: JSON.stringify(annotation),
       });
 
-      onAnnotationChange?.(updatedAnnotations);
+      _onAnnotationChange?.(updatedAnnotations);
     } catch (error) {
       console.error('Failed to save annotation:', error);
     }
@@ -278,12 +278,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
-  };
-
-  const viewerStyles = {
-    transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-    transition: 'transform 0.3s ease',
-    transformOrigin: 'center center',
   };
 
   const getFileIcon = () => {
@@ -444,8 +438,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                         <iframe
                           ref={iframeRef}
                           src={documentUrl || `/api/documents/${documentId}/view`}
-                          className="w-full h-full min-h-[600px] bg-white rounded shadow-lg border-0"
-                          style={viewerStyles}
+                          className="w-full h-full min-h-[600px] bg-white rounded shadow-lg border-0 viewer-transform"
+                          style={{ transform: `scale(${zoom / 100}) rotate(${rotation}deg)` }}
                           title={documentName}
                           loading="lazy"
                         />
@@ -454,8 +448,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                           <img
                             src={documentUrl || `/api/documents/${documentId}/view`}
                             alt={documentName}
-                            className="max-w-full h-auto rounded shadow-lg"
-                            style={viewerStyles}
+                            className="max-w-full h-auto rounded shadow-lg viewer-transform"
+                            style={{ transform: `scale(${zoom / 100}) rotate(${rotation}deg)` }}
                           />
                         </div>
                       ) : (

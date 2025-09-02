@@ -1,412 +1,49 @@
 {
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "explicit"
   },
+  "editor.tabSize": 2,
+  "editor.formatOnPaste": true,
+
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.validate.enable": true,
+  "typescript.suggest.autoImports": true,
+
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.run": "onSave",
+
+  "prettier.requireConfig": true,
+
   "files.exclude": {
     "**/.git": true,
-    "**/.DS_Store": true,
-    "**/node_modules": false,
-    "**/dist": false,
-    "**/.next": true,
-    "**/venv": true,
-    "**/__pycache__": true,
-    "**/*.pyc": true
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.next": true
   },
   "files.watcherExclude": {
-    "**/.git/objects/**": true,
-    "**/.git/subtree-cache/**": true,
     "**/node_modules/**": true,
-    "**/.hg/store/**": true,
     "**/dist/**": true,
-    "**/build/**": true,
-    "**/.next/**": true,
-    "**/venv/**": true,
-    "**/__pycache__/**": true,
-    "**/*.pyc": true
+    "**/.git/**": true
   },
   "search.exclude": {
     "**/node_modules": true,
     "**/dist": true,
-    "**/.next": true,
-    "**/uploads": true,
-    "**/migrations/*.sql": true,
-    "**/venv": true,
-    "**/__pycache__": true
-  },
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
-  "eslint.alwaysShowStatus": true,
-  "eslint.lintTask.enable": true,
-  "eslint.run": "onType",
-  "eslint.probe": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
-  "eslint.workingDirectories": [{ "mode": "auto" }],
-  "problems.autoReveal": true,
-  "problems.decorations.enabled": true,
-  "problems.showCurrentInStatus": true,
-  "problems.sortOrder": "severity",
-  "typescript.tsserver.log": "off",
-  "typescript.validate.enable": true,
-  "typescript.referencesCodeLens.enabled": true,
-  "typescript.implementationsCodeLens.enabled": true,
-  "typescript.inlayHints.parameterNames.enabled": "literals",
-  "typescript.inlayHints.variableTypes.enabled": false,
-  "javascript.validate.enable": true,
-  "javascript.suggest.autoImports": true,
-  "javascript.updateImportsOnFileMove.enabled": "always",
-  "typescript.suggest.autoImports": true,
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "debug.javascript.autoAttachFilter": "smart",
-  "debug.node.autoAttach": "on",
-  "debug.terminal.clearBeforeReusing": true,
-
-  // Debug panel visibility settings
-  "debug.showInlineBreakpointCandidates": true,
-  "debug.showBreakpointsInOverviewRuler": true,
-  "debug.toolBarLocation": "docked",
-  "debug.openDebug": "openOnDebugBreak",
-  "debug.internalConsoleOptions": "openOnSessionStart",
-  "debug.console.fontSize": 14,
-  "debug.showSubSessionsInToolBar": true,
-  "debug.focusWindowOnBreak": true,
-  "debug.onTaskErrors": "debugAnyway",
-  "debug.allowBreakpointsEverywhere": true,
-  "debug.showReturnValue": true,
-  "debug.autoExpandLazyVariables": "on",
-
-  // Editor settings for better debugging
-  "editor.glyphMargin": true,
-  "editor.folding": true,
-  "editor.rulers": [80, 120],
-  "editor.renderWhitespace": "trailing",
-  "editor.bracketPairColorization.enabled": true,
-  "editor.guides.bracketPairs": true,
-  "editor.stickyScroll.enabled": true,
-  "terminal.integrated.env.linux": {
-    "NODE_ENV": "development"
-  },
-  "terminal.integrated.env.osx": {
-    "NODE_ENV": "development"
-  },
-  "terminal.integrated.env.windows": {
-    "NODE_ENV": "development"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.tabSize": 2
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.tabSize": 2
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.tabSize": 2
-  },
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.tabSize": 2
-  },
-  "[markdown]": {
-    "editor.wordWrap": "on",
-    "editor.quickSuggestions": {
-      "comments": "off",
-      "strings": "off",
-      "other": "off"
-    }
-  },
-  "tailwindCSS.includeLanguages": {
-    "typescript": "javascript",
-    "typescriptreact": "javascript"
-  },
-  "tailwindCSS.experimental.classRegex": [
-    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
-    ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
-    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
-  ],
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.preferences.quoteStyle": "double",
-  "javascript.preferences.quoteStyle": "double",
-  "path-intellisense.mappings": {
-    "@": "${workspaceFolder}/client/src",
-    "@shared": "${workspaceFolder}/shared",
-    "@server": "${workspaceFolder}/server"
+    "**/.next": true
   },
 
-  // Security Settings
-  "security.workspace.trust.enabled": true,
-  "security.workspace.trust.untrustedFiles": "newWindow",
-  "security.workspace.trust.banner": "always",
-  "security.workspace.trust.startupPrompt": "always",
-  "security.workspace.trust.emptyWindow": false,
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.inheritEnv": true,
 
-  // Git Security & SSH Integration
-  "git.allowForcePush": false,
-  "git.allowNoVerifyCommit": false,
-  "git.confirmForcePush": true,
-  "git.confirmNoVerifyCommit": true,
-  "git.autofetch": true,
-  "git.autofetchPeriod": 180,
-  "git.autoStash": true,
-  "git.branchProtection": ["main", "master", "production"],
-  "git.confirmSync": false,
-  "git.enableSmartCommit": true,
-  "git.fetchOnPull": true,
-  "git.followTagsWhenSync": true,
-  "git.pruneOnFetch": true,
-  "git.rebaseWhenSync": true,
-  "git.showProgress": true,
-  "git.terminalAuthentication": true,
-  "git.useCommitInputAsStashMessage": true,
-
-  // GitHub Integration Settings
-  "github.gitAuthentication": true,
-  "github.gitProtocol": "ssh",
-  "github.branchProtection": true,
-  "github.assignRequestDefaultUser": "fattits30-dev",
-  "github.remoteName": "origin",
-  "github.repositoryActivationPolicy": "auto",
-  "github.showPullRequestNamesInRemoteBranchLabel": true,
-  "github.useSSHClone": true,
-  "github.copilot.chat.workspaceContext.enabled": true,
-  "github.repositorySync.enabled": true,
-  
-  // Pull Request & Issues
-  "githubPullRequests.pullBranch": "never",
-  "githubPullRequests.workingTree": "never",
-  "githubPullRequests.autoMergeMethod": "merge",
-  "githubPullRequests.defaultCreateOption": "createDraft",
-  "githubPullRequests.defaultMergeMethod": "merge",
-  "githubPullRequests.showPullRequestNumberInTree": true,
-  "githubIssues.assignWhenWorking": true,
-  "githubIssues.workingIssueFormatScm": "${issueNumber}: ${issueTitle}",
-
-  // Copilot Settings - Full Agent Mode Configuration
-  "github.copilot.enable": {
-    "*": true,
-    "yaml": true,
-    "plaintext": true,
-    "markdown": true,
-    "typescript": true,
-    "typescriptreact": true,
-    "javascript": true,
-    "javascriptreact": true,
-    "json": true,
-    "jsonc": true,
-    "css": true,
-    "scss": true,
-    "html": true,
-    "sql": true,
-    "dockerfile": true,
-    "shellscript": true,
-    "dotenv": true
-  },
-
-  // Copilot Chat & Agent Settings
-  "github.copilot.editor.enableAutoCompletions": true,
-  "github.copilot.editor.enableCodeActions": true,
-  "github.copilot.advanced": {
-    "inlineSuggest.enable": true,
-    "listCount": 10,
-    "length": 500,
-    "temperature": 0.1,
-    "top_p": 1,
-    "stops": {
-      "*": ["\\n\\n\\n"],
-      "python": ["\\ndef ", "\\nclass ", "\\nif ", "\\n#"],
-      "javascript": ["\\nfunction ", "\\nclass ", "\\nif ", "\\n//"],
-      "typescript": ["\\nfunction ", "\\nclass ", "\\ninterface ", "\\nif ", "\\n//"]
-    },
-    "indentationMode": {
-      "*": "client"
-    },
-    "inlineSuggestCount": 3,
-    "secretScanning": true,
-    "authProvider": "github"
-  },
-
-  // Copilot Chat Settings for Agent Mode
-  "github.copilot.chat.welcomeMessage": "agent",
-  "github.copilot.chat.localeOverride": "en",
-  "github.copilot.chat.runCommand.enabled": true,
-  "github.copilot.chat.terminalChatLocation": "terminal",
-  "github.copilot.chat.followUps": "always",
-
-  // Copilot Agent Capabilities
-  "github.copilot.renameSuggestions.triggerAutomatically": true,
-  "github.copilot.inlineSuggest.enableColorization": true,
-  "github.copilot.inlineSuggest.suppressSuggestions": false,
-
-  // Copilot Workspace Commands
-  "github.copilot.workspaceCommands.enabled": true,
-  "github.copilot.workspaceCommands.suggestions": true,
-
-  // Copilot Fix & Refactor Settings
-  "github.copilot.editor.iterativeFixing": true,
-  "github.copilot.editor.enableRefactoring": true,
-  "github.copilot.editor.enableDocumentation": true,
-  "github.copilot.editor.enableTests": true,
-
-  // Claude Code Chat Settings
-  "claudeCodeChat.permissions.yoloMode": true,
-
-  // SonarLint Settings - Fix Java Runtime Error
-  "sonarlint.ls.javaHome": "",
-  "sonarlint.disableTelemetry": true,
-  "sonarlint.rules": {
-    "typescript:S1186": {
-      "level": "off"
-    }
-  },
-  "sonarlint.connectedMode.connections.sonarcloud": [],
-  "sonarlint.output.showAnalyzerLogs": false,
-  "sonarlint.output.showVerboseLogs": false,
-
-  // Performance Optimizations
-  "typescript.tsserver.maxTsServerMemory": 4096,
-  "typescript.tsserver.watchOptions": {
-    "watchFile": "useFsEvents",
-    "watchDirectory": "useFsEvents",
-    "fallbackPolling": "dynamicPriority",
-    "synchronousWatchDirectory": true,
-    "excludeDirectories": ["**/node_modules", "**/dist", "**/.git"]
-  },
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
 
-  // Better IntelliSense
-  "editor.suggestSelection": "first",
-  "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
-  "editor.acceptSuggestionOnCommitCharacter": true,
-  "editor.snippetSuggestions": "inline",
-  "editor.suggest.showKeywords": true,
-  "editor.suggest.maxVisibleSuggestions": 12,
-  "editor.quickSuggestions": {
-    "other": true,
-    "comments": false,
-    "strings": true
-  },
+  "jest.runMode": "on-demand",
 
-  // Auto-save and formatting
-  "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 1000,
-  "editor.formatOnPaste": true,
-  "editor.formatOnType": false,
-
-  // Better terminal experience
-  "terminal.integrated.defaultProfile.linux": "bash",
-  "terminal.integrated.enableMultiLinePasteWarning": false,
-  "terminal.integrated.scrollback": 10000,
-  "terminal.integrated.persistentSessionReviveProcess": "never",
-
-  // Error lens for inline errors
-  "errorLens.enabled": true,
-  "errorLens.enabledDiagnosticLevels": ["error", "warning"],
-  "errorLens.excludeBySource": ["eslint(react/prop-types)"],
-
-  // Better bracket matching
-  "bracket-pair-colorizer-2.depreciation-notice": false,
-  "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
-
-  // Testing
-  "jest.autoRun": "off",
-  "jest.showCoverageOnLoad": false,
-
-  // Copilot Workspace Agent Settings
-  "github.copilot.chat.codeGeneration.instructions": [
-    "Follow TypeScript best practices",
-    "Use Zod for validation",
-    "Add proper error handling",
-    "Include JSDoc comments",
-    "Follow project conventions"
-  ],
-  "github.copilot.chat.testGeneration.instructions": [
-    "Use Playwright for E2E tests",
-    "Use Jest for unit tests",
-    "Test edge cases",
-    "Mock external dependencies",
-    "Aim for 80% coverage"
-  ],
-  "github.copilot.chat.commitMessage.instructions": [
-    "Use conventional commits format",
-    "Be specific and concise",
-    "Reference issue numbers when applicable"
-  ],
-
-  // Copilot Custom Snippets
-  "snippets.snippetsLocation": ".vscode/copilot-snippets.json",
-
-  // Claude MCP Servers Configuration
-  "claude.mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/home/mine",
-        "/home/mine/ai/claude-home",
-        "/media/mine/AI-DEV",
-        "/home/mine/.config",
-        "/usr/local/bin"
-      ]
-    },
-    "memory-keeper": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-memory-keeper"
-      ],
-      "env": {
-        "MCP_DATA_DIR": "/home/mine/mcp-data"
-      }
-    },
-    "git": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@cyanheads/git-mcp-server@latest"
-      ],
-      "env": {
-        "GIT_REPO_PATH": "/home/mine/ai/claude-home/projects/solicitor-brain-v2"
-      }
-    },
-    "fetch": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@kazuph/mcp-fetch@latest"
-      ]
-    },
-    "github": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "github-mcp-custom@latest"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "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"
-      }
-    },
-    "postgres": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@henkey/postgres-mcp-server@latest"
-      ],
-      "env": {
-        "DATABASE_URL": "postgresql://solicitor:development_secure_2024@localhost:5433/solicitor_brain_v2"
-      }
-    },
-    "docker": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "docker-mcp@latest"
-      ]
-    }
-  },
-  "chat.mcp.assisted.nuget.enabled": true
+  "editor.codeActionsOnSaveTimeout": 750
 }

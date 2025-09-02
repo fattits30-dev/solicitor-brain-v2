@@ -1,23 +1,28 @@
-import speakeasy from 'speakeasy';
-import QRCode from 'qrcode';
-import nodemailer from 'nodemailer';
-import twilio from 'twilio';
-import { db } from '../db';
-import { 
-  mfaSettings, 
-  trustedDevices, 
-  mfaAttempts, 
-  mfaRecoveryCodes,
+import {
   auditLog,
-  type MfaSettings,
-  type InsertMfaSettings,
-  type InsertTrustedDevice,
+  mfaAttempts,
+  mfaRecoveryCodes,
+  mfaSettings,
+  trustedDevices,
+  type InsertAuditLog,
   type InsertMfaAttempt,
   type InsertMfaRecoveryCode,
-  type InsertAuditLog
+  type InsertTrustedDevice,
+  type MfaSettings,
 } from '@shared/schema';
-import { encrypt, decrypt, hashData, generateSecureCode, generateDeviceFingerprint } from './crypto';
-import { eq, and, gte, lt, count } from 'drizzle-orm';
+import { and, count, eq, gte } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
+import QRCode from 'qrcode';
+import speakeasy from 'speakeasy';
+import twilio from 'twilio';
+import { db } from '../db';
+import {
+  decrypt,
+  encrypt,
+  generateDeviceFingerprint,
+  generateSecureCode,
+  hashData,
+} from './crypto';
 
 // Configuration from environment
 const EMAIL_CONFIG = {
@@ -49,7 +54,7 @@ let emailTransporter: nodemailer.Transporter | null = null;
 let twilioClient: twilio.Twilio | null = null;
 
 if (EMAIL_CONFIG.host && EMAIL_CONFIG.auth.user) {
-  emailTransporter = nodemailer.createTransporter(EMAIL_CONFIG);
+  emailTransporter = nodemailer.createTransport(EMAIL_CONFIG);
 }
 
 if (TWILIO_CONFIG.accountSid && TWILIO_CONFIG.authToken) {
@@ -81,7 +86,8 @@ export class MfaService {
    * Check if MFA is enabled for a user
    */
   async isMfaEnabled(userId: string): Promise<boolean> {
-    const settings = await db.select()
+    const settings = await db
+      .select()
       .from(mfaSettings)
       .where(eq(mfaSettings.userId, userId))
       .limit(1);
@@ -93,7 +99,8 @@ export class MfaService {
    * Check if user is in MFA grace period
    */
   async isInGracePeriod(userId: string): Promise<boolean> {
-    const settings = await db.select()
+    const settings = await db
+      .select()
       .from(mfaSettings)
       .where(eq(mfaSettings.userId, userId))
       .limit(1);
@@ -121,13 +128,13 @@ export class MfaService {
     const qrCode = await QRCode.toDataURL(secret.otpauth_url!);
 
     // Generate backup codes
-    const backupCodes = Array.from({ length: MFA_CONFIG.backupCodesCount }, () => 
-      generateSecureCode(8)
+    const backupCodes = Array.from({ length: MFA_CONFIG.backupCodesCount }, () =>
+      generateSecureCode(8),
     );
 
     // Encrypt sensitive data
     const encryptedSecret = encrypt(secret.base32!);
-    const encryptedBackupCodes = backupCodes.map(code => encrypt(code));
+    const encryptedBackupCodes = backupCodes.map((code) => encrypt(code));
     const encryptedEmail = encrypt(userEmail);
 
     // Calculate grace period end
@@ -135,26 +142,29 @@ export class MfaService {
     gracePeriodEnd.setDate(gracePeriodEnd.getDate() + MFA_CONFIG.gracePeriodDays);
 
     // Store in database
-    await db.insert(mfaSettings).values({
-      userId,
-      isEnabled: false, // Will be enabled after verification
-      totpSecret: JSON.stringify(encryptedSecret),
-      backupCodes: JSON.stringify(encryptedBackupCodes),
-      emailAddress: JSON.stringify(encryptedEmail),
-      gracePeriodEnd,
-    }).onConflictDoUpdate({
-      target: mfaSettings.userId,
-      set: {
+    await db
+      .insert(mfaSettings)
+      .values({
+        userId,
+        isEnabled: false, // Will be enabled after verification
         totpSecret: JSON.stringify(encryptedSecret),
         backupCodes: JSON.stringify(encryptedBackupCodes),
         emailAddress: JSON.stringify(encryptedEmail),
         gracePeriodEnd,
-        updatedAt: new Date(),
-      },
-    });
+      })
+      .onConflictDoUpdate({
+        target: mfaSettings.userId,
+        set: {
+          totpSecret: JSON.stringify(encryptedSecret),
+          backupCodes: JSON.stringify(encryptedBackupCodes),
+          emailAddress: JSON.stringify(encryptedEmail),
+          gracePeriodEnd,
+          updatedAt: new Date(),
+        },
+      });
 
     // Store backup codes separately for tracking usage
-    const recoveryCodeInserts: InsertMfaRecoveryCode[] = backupCodes.map(code => ({
+    const recoveryCodeInserts: InsertMfaRecoveryCode[] = backupCodes.map((code) => ({
       userId,
       codeHash: hashData(code),
       used: false,
@@ -177,7 +187,11 @@ export class MfaService {
   /**
    * Verify TOTP setup and enable MFA
    */
-  async verifyTotpSetup(userId: string, token: string, context: VerificationContext): Promise<boolean> {
+  async verifyTotpSetup(
+    userId: string,
+    token: string,
+    context: VerificationContext,
+  ): Promise<boolean> {
     const settings = await this.getUserMfaSettings(userId);
     if (!settings || !settings.totpSecret) {
       await this.logMfaEvent(userId, 'totp', false, context.ipAddress, context.userAgent);
@@ -196,17 +210,30 @@ export class MfaService {
 
     if (verified) {
       // Enable MFA
-      await db.update(mfaSettings)
-        .set({ 
-          isEnabled: true, 
+      await db
+        .update(mfaSettings)
+        .set({
+          isEnabled: true,
           updatedAt: new Date(),
           gracePeriodEnd: null, // Remove grace period
         })
         .where(eq(mfaSettings.userId, userId));
 
-      await this.logMfaEvent(userId, 'totp_setup_completed', true, context.ipAddress, context.userAgent);
+      await this.logMfaEvent(
+        userId,
+        'totp_setup_completed',
+        true,
+        context.ipAddress,
+        context.userAgent,
+      );
     } else {
-      await this.logMfaEvent(userId, 'totp_setup_failed', false, context.ipAddress, context.userAgent);
+      await this.logMfaEvent(
+        userId,
+        'totp_setup_failed',
+        false,
+        context.ipAddress,
+        context.userAgent,
+      );
     }
 
     return verified;
@@ -267,7 +294,8 @@ export class MfaService {
     const encryptedPhone = encrypt(phoneNumber);
     const encryptedCode = encrypt(code);
 
-    await db.update(mfaSettings)
+    await db
+      .update(mfaSettings)
       .set({
         smsPhoneNumber: JSON.stringify({
           ...encryptedPhone,
@@ -297,7 +325,11 @@ export class MfaService {
   /**
    * Verify SMS code
    */
-  async verifySmsCode(userId: string, code: string, context: VerificationContext): Promise<boolean> {
+  async verifySmsCode(
+    userId: string,
+    code: string,
+    context: VerificationContext,
+  ): Promise<boolean> {
     if (await this.isRateLimited(userId)) {
       await this.logMfaEvent(userId, 'sms', false, context.ipAddress, context.userAgent);
       return false;
@@ -310,7 +342,7 @@ export class MfaService {
     }
 
     const smsData = JSON.parse(settings.smsPhoneNumber);
-    
+
     // Check if code has expired
     if (new Date() > new Date(smsData.expiresAt)) {
       await this.logMfaEvent(userId, 'sms', false, context.ipAddress, context.userAgent);
@@ -322,7 +354,8 @@ export class MfaService {
 
     if (verified) {
       // Clear the used code
-      await db.update(mfaSettings)
+      await db
+        .update(mfaSettings)
         .set({
           smsPhoneNumber: JSON.stringify({
             iv: smsData.iv,
@@ -364,7 +397,8 @@ export class MfaService {
 
     const encryptedCode = encrypt(code);
 
-    await db.update(mfaSettings)
+    await db
+      .update(mfaSettings)
       .set({
         emailAddress: JSON.stringify({
           ...encryptedEmail,
@@ -400,7 +434,11 @@ export class MfaService {
   /**
    * Verify email code
    */
-  async verifyEmailCode(userId: string, code: string, context: VerificationContext): Promise<boolean> {
+  async verifyEmailCode(
+    userId: string,
+    code: string,
+    context: VerificationContext,
+  ): Promise<boolean> {
     if (await this.isRateLimited(userId)) {
       await this.logMfaEvent(userId, 'email', false, context.ipAddress, context.userAgent);
       return false;
@@ -413,7 +451,7 @@ export class MfaService {
     }
 
     const emailData = JSON.parse(settings.emailAddress);
-    
+
     if (!emailData.code || !emailData.expiresAt) {
       await this.logMfaEvent(userId, 'email', false, context.ipAddress, context.userAgent);
       return false;
@@ -431,7 +469,8 @@ export class MfaService {
     if (verified) {
       // Clear the used code
       const { code: _, expiresAt: __, ...cleanEmailData } = emailData;
-      await db.update(mfaSettings)
+      await db
+        .update(mfaSettings)
         .set({
           emailAddress: JSON.stringify(cleanEmailData),
           updatedAt: new Date(),
@@ -446,22 +485,29 @@ export class MfaService {
   /**
    * Verify backup code
    */
-  async verifyBackupCode(userId: string, code: string, context: VerificationContext): Promise<boolean> {
+  async verifyBackupCode(
+    userId: string,
+    code: string,
+    context: VerificationContext,
+  ): Promise<boolean> {
     if (await this.isRateLimited(userId)) {
       await this.logMfaEvent(userId, 'backup', false, context.ipAddress, context.userAgent);
       return false;
     }
 
     const codeHash = hashData(code);
-    
+
     // Find unused backup code
-    const recoveryCode = await db.select()
+    const recoveryCode = await db
+      .select()
       .from(mfaRecoveryCodes)
-      .where(and(
-        eq(mfaRecoveryCodes.userId, userId),
-        eq(mfaRecoveryCodes.codeHash, codeHash),
-        eq(mfaRecoveryCodes.used, false)
-      ))
+      .where(
+        and(
+          eq(mfaRecoveryCodes.userId, userId),
+          eq(mfaRecoveryCodes.codeHash, codeHash),
+          eq(mfaRecoveryCodes.used, false),
+        ),
+      )
       .limit(1);
 
     if (recoveryCode.length === 0) {
@@ -470,7 +516,8 @@ export class MfaService {
     }
 
     // Mark code as used
-    await db.update(mfaRecoveryCodes)
+    await db
+      .update(mfaRecoveryCodes)
       .set({ used: true, usedAt: new Date() })
       .where(eq(mfaRecoveryCodes.id, recoveryCode[0].id));
 
@@ -482,14 +529,16 @@ export class MfaService {
    * Add trusted device
    */
   async addTrustedDevice(
-    userId: string, 
-    context: VerificationContext, 
-    options: TrustedDeviceOptions = {}
+    userId: string,
+    context: VerificationContext,
+    options: TrustedDeviceOptions = {},
   ): Promise<string> {
     const deviceFingerprint = generateDeviceFingerprint(context.userAgent, context.ipAddress);
-    
+
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + (options.expirationDays || MFA_CONFIG.trustedDeviceDays));
+    expiresAt.setDate(
+      expiresAt.getDate() + (options.expirationDays || MFA_CONFIG.trustedDeviceDays),
+    );
 
     const deviceData: InsertTrustedDevice = {
       userId,
@@ -501,7 +550,13 @@ export class MfaService {
     };
 
     await db.insert(trustedDevices).values(deviceData);
-    await this.logMfaEvent(userId, 'trusted_device_added', true, context.ipAddress, context.userAgent);
+    await this.logMfaEvent(
+      userId,
+      'trusted_device_added',
+      true,
+      context.ipAddress,
+      context.userAgent,
+    );
 
     return deviceFingerprint;
   }
@@ -511,22 +566,26 @@ export class MfaService {
    */
   async isDeviceTrusted(userId: string, context: VerificationContext): Promise<boolean> {
     const deviceFingerprint = generateDeviceFingerprint(context.userAgent, context.ipAddress);
-    
-    const trustedDevice = await db.select()
+
+    const trustedDevice = await db
+      .select()
       .from(trustedDevices)
-      .where(and(
-        eq(trustedDevices.userId, userId),
-        eq(trustedDevices.deviceFingerprint, deviceFingerprint),
-        gte(trustedDevices.expiresAt, new Date())
-      ))
+      .where(
+        and(
+          eq(trustedDevices.userId, userId),
+          eq(trustedDevices.deviceFingerprint, deviceFingerprint),
+          gte(trustedDevices.expiresAt, new Date()),
+        ),
+      )
       .limit(1);
 
     if (trustedDevice.length > 0) {
       // Update last used timestamp
-      await db.update(trustedDevices)
+      await db
+        .update(trustedDevices)
         .set({ lastUsed: new Date() })
         .where(eq(trustedDevices.id, trustedDevice[0].id));
-      
+
       return true;
     }
 
@@ -537,11 +596,9 @@ export class MfaService {
    * Remove trusted device
    */
   async removeTrustedDevice(userId: string, deviceId: string): Promise<boolean> {
-    const result = await db.delete(trustedDevices)
-      .where(and(
-        eq(trustedDevices.userId, userId),
-        eq(trustedDevices.id, deviceId)
-      ));
+    const result = await db
+      .delete(trustedDevices)
+      .where(and(eq(trustedDevices.userId, userId), eq(trustedDevices.id, deviceId)));
 
     await this.logMfaEvent(userId, 'trusted_device_removed', true, '', '');
     return result.rowCount > 0;
@@ -551,26 +608,25 @@ export class MfaService {
    * Get user's trusted devices
    */
   async getTrustedDevices(userId: string) {
-    return await db.select({
-      id: trustedDevices.id,
-      deviceName: trustedDevices.deviceName,
-      lastUsed: trustedDevices.lastUsed,
-      createdAt: trustedDevices.createdAt,
-      expiresAt: trustedDevices.expiresAt,
-    })
-    .from(trustedDevices)
-    .where(and(
-      eq(trustedDevices.userId, userId),
-      gte(trustedDevices.expiresAt, new Date())
-    ))
-    .orderBy(trustedDevices.lastUsed);
+    return await db
+      .select({
+        id: trustedDevices.id,
+        deviceName: trustedDevices.deviceName,
+        lastUsed: trustedDevices.lastUsed,
+        createdAt: trustedDevices.createdAt,
+        expiresAt: trustedDevices.expiresAt,
+      })
+      .from(trustedDevices)
+      .where(and(eq(trustedDevices.userId, userId), gte(trustedDevices.expiresAt, new Date())))
+      .orderBy(trustedDevices.lastUsed);
   }
 
   /**
    * Disable MFA for a user (emergency use)
    */
   async disableMfa(userId: string, adminUserId: string): Promise<void> {
-    await db.update(mfaSettings)
+    await db
+      .update(mfaSettings)
       .set({ isEnabled: false, updatedAt: new Date() })
       .where(eq(mfaSettings.userId, userId));
 
@@ -591,14 +647,15 @@ export class MfaService {
    * Generate new backup codes
    */
   async generateNewBackupCodes(userId: string): Promise<string[]> {
-    const backupCodes = Array.from({ length: MFA_CONFIG.backupCodesCount }, () => 
-      generateSecureCode(8)
+    const backupCodes = Array.from({ length: MFA_CONFIG.backupCodesCount }, () =>
+      generateSecureCode(8),
     );
 
-    const encryptedBackupCodes = backupCodes.map(code => encrypt(code));
+    const encryptedBackupCodes = backupCodes.map((code) => encrypt(code));
 
     // Update settings
-    await db.update(mfaSettings)
+    await db
+      .update(mfaSettings)
       .set({
         backupCodes: JSON.stringify(encryptedBackupCodes),
         updatedAt: new Date(),
@@ -607,8 +664,8 @@ export class MfaService {
 
     // Clear existing recovery codes and insert new ones
     await db.delete(mfaRecoveryCodes).where(eq(mfaRecoveryCodes.userId, userId));
-    
-    const recoveryCodeInserts: InsertMfaRecoveryCode[] = backupCodes.map(code => ({
+
+    const recoveryCodeInserts: InsertMfaRecoveryCode[] = backupCodes.map((code) => ({
       userId,
       codeHash: hashData(code),
       used: false,
@@ -625,25 +682,21 @@ export class MfaService {
    */
   async getMfaStatus(userId: string) {
     const settings = await this.getUserMfaSettings(userId);
-    const trustedDevicesCount = await db.select({ count: count() })
+    const trustedDevicesCount = await db
+      .select({ count: count() })
       .from(trustedDevices)
-      .where(and(
-        eq(trustedDevices.userId, userId),
-        gte(trustedDevices.expiresAt, new Date())
-      ));
+      .where(and(eq(trustedDevices.userId, userId), gte(trustedDevices.expiresAt, new Date())));
 
-    const unusedBackupCodes = await db.select({ count: count() })
+    const unusedBackupCodes = await db
+      .select({ count: count() })
       .from(mfaRecoveryCodes)
-      .where(and(
-        eq(mfaRecoveryCodes.userId, userId),
-        eq(mfaRecoveryCodes.used, false)
-      ));
+      .where(and(eq(mfaRecoveryCodes.userId, userId), eq(mfaRecoveryCodes.used, false)));
 
     return {
       enabled: settings?.isEnabled || false,
-      hasTotp: !!(settings?.totpSecret),
-      hasSms: !!(settings?.smsPhoneNumber),
-      hasEmail: !!(settings?.emailAddress),
+      hasTotp: !!settings?.totpSecret,
+      hasSms: !!settings?.smsPhoneNumber,
+      hasEmail: !!settings?.emailAddress,
       inGracePeriod: await this.isInGracePeriod(userId),
       gracePeriodEnd: settings?.gracePeriodEnd,
       trustedDevicesCount: trustedDevicesCount[0].count,
@@ -655,7 +708,8 @@ export class MfaService {
    * Private helper methods
    */
   private async getUserMfaSettings(userId: string): Promise<MfaSettings | null> {
-    const settings = await db.select()
+    const settings = await db
+      .select()
       .from(mfaSettings)
       .where(eq(mfaSettings.userId, userId))
       .limit(1);
@@ -665,23 +719,21 @@ export class MfaService {
 
   private async isRateLimited(userId: string): Promise<boolean> {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    
-    const attempts = await db.select({ count: count() })
+
+    const attempts = await db
+      .select({ count: count() })
       .from(mfaAttempts)
-      .where(and(
-        eq(mfaAttempts.userId, userId),
-        gte(mfaAttempts.attemptedAt, oneHourAgo)
-      ));
+      .where(and(eq(mfaAttempts.userId, userId), gte(mfaAttempts.attemptedAt, oneHourAgo)));
 
     return attempts[0].count >= MFA_CONFIG.maxAttemptsPerHour;
   }
 
   private async logMfaEvent(
-    userId: string, 
-    method: string, 
-    success: boolean, 
-    ipAddress: string, 
-    userAgent: string
+    userId: string,
+    method: string,
+    success: boolean,
+    ipAddress: string,
+    userAgent: string,
   ): Promise<void> {
     const attemptData: InsertMfaAttempt = {
       userId,

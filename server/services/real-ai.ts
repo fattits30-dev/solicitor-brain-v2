@@ -1,14 +1,17 @@
 import { Ollama } from 'ollama';
-import type { ChatResponse, EmbeddingsResponse } from 'ollama';
 
 export class RealAIService {
   private ollama: Ollama;
-  private embedModel = 'nomic-embed-text:latest';
-  private chatModel = 'llama3.2:latest';
-  
+  private model: string;
+  private embedModel: string;
+
   constructor() {
+    // Single model configuration from environment
+    this.model = process.env.OLLAMA_MODEL || 'llama3.2';
+    this.embedModel = process.env.EMBEDDING_MODEL || 'nomic-embed-text';
+    
     this.ollama = new Ollama({
-      host: process.env.OLLAMA_HOST || 'http://localhost:11434'
+      host: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
     });
   }
 
@@ -16,22 +19,27 @@ export class RealAIService {
     try {
       const systemPrompt = this.getSystemPrompt(context?.mode);
       const contextualMessage = this.buildContextualMessage(message, context);
-      
+
       const response = await this.ollama.chat({
-        model: context?.model === 'mistral' ? 'mistral:7b' : this.chatModel,
+        model: this.model,
         messages: [
           {
             role: 'system',
-            content: systemPrompt
+            content: systemPrompt,
           },
           {
             role: 'user',
-            content: contextualMessage
-          }
+            content: contextualMessage,
+          },
         ],
-        stream: false
+        stream: false,
+        options: {
+          num_gpu: 99, // Use all available GPU layers
+          temperature: 0.7,
+          top_p: 0.9,
+        },
       });
-      
+
       return response.message.content;
     } catch (error) {
       console.error('Ollama chat error:', error);
@@ -43,21 +51,26 @@ export class RealAIService {
     try {
       const systemPrompt = this.getSystemPrompt(context?.mode);
       const contextualMessage = this.buildContextualMessage(message, context);
-      
+
       let fullResponse = '';
       const response = await this.ollama.chat({
-        model: context?.model === 'mistral' ? 'mistral:7b' : this.chatModel,
+        model: this.model,
         messages: [
           {
             role: 'system',
-            content: systemPrompt
+            content: systemPrompt,
           },
           {
             role: 'user',
-            content: contextualMessage
-          }
+            content: contextualMessage,
+          },
         ],
-        stream: true
+        stream: true,
+        options: {
+          num_gpu: 99, // Use all available GPU layers
+          temperature: 0.7,
+          top_p: 0.9,
+        },
       });
 
       for await (const part of response) {
@@ -67,7 +80,7 @@ export class RealAIService {
           context.onChunk(chunk);
         }
       }
-      
+
       return fullResponse;
     } catch (error) {
       console.error('Ollama streaming chat error:', error);
@@ -75,14 +88,86 @@ export class RealAIService {
     }
   }
 
-  private getSystemPrompt(mode?: string): string {
-    const basePrompt = 'You are a helpful legal assistant specializing in UK law. Provide accurate, professional advice while being empathetic to clients.';
+  async generateEmbedding(text: string): Promise<number[]> {
+    try {
+      const response = await this.ollama.embeddings({
+        model: this.embedModel,
+        prompt: text,
+      });
+      return response.embedding;
+    } catch (error) {
+      console.error('Ollama embedding error:', error);
+      throw new Error('Embedding service temporarily unavailable');
+    }
+  }
+
+  async analyzeDocument(content: string): Promise<any> {
+    const prompt = `Analyze this legal document and provide:
+1. Document type and purpose
+2. Key parties involved  
+3. Main legal issues or terms
+4. Important dates and deadlines
+5. Potential risks or concerns
+
+Document:
+${content.substring(0, 4000)}`;
+
+    const analysis = await this.chat(prompt, { mode: 'legal' });
     
+    return {
+      analysis,
+      timestamp: new Date().toISOString(),
+      model: this.model,
+    };
+  }
+
+  async generateDraft(template: string, data: any): Promise<string> {
+    const prompt = `Generate a professional legal document based on this template and data.
+Use trauma-informed language and ensure clarity.
+
+Template: ${template}
+Data: ${JSON.stringify(data)}
+
+Generate the complete document:`;
+
+    return await this.chat(prompt, { mode: 'draft' });
+  }
+
+  async summarize(text: string): Promise<string> {
+    const prompt = `Provide a concise summary of the following text, highlighting key legal points:
+
+${text.substring(0, 4000)}`;
+
+    return await this.chat(prompt);
+  }
+
+  async listModels(): Promise<any[]> {
+    try {
+      const response = await this.ollama.list();
+      return response.models || [];
+    } catch (error) {
+      console.error('Ollama list models error:', error);
+      return [];
+    }
+  }
+
+  private getSystemPrompt(mode?: string): string {
+    const basePrompt = `You are a helpful legal assistant specializing in UK law. 
+Provide accurate, professional advice while being empathetic to clients.
+Be concise and clear in your responses.`;
+
     switch (mode) {
       case 'legal':
-        return `${basePrompt} Focus on providing detailed legal analysis, identifying relevant statutes, case law, and procedural requirements. Always include confidence levels and suggest when professional legal advice should be sought.`;
+        return `${basePrompt}
+Focus on providing detailed legal analysis, identifying relevant statutes, case law, and procedural requirements.
+Always include confidence levels and suggest when professional legal advice should be sought.`;
+      
       case 'draft':
-        return `${basePrompt} Focus on drafting professional legal documents, letters, and correspondence. Use appropriate legal language while maintaining clarity. Include standard legal disclaimers and ensure trauma-informed language.`;
+        return `${basePrompt}
+Focus on drafting professional legal documents, letters, and correspondence.
+Use appropriate legal language while maintaining clarity.
+Include standard legal disclaimers and ensure trauma-informed language.`;
+      
       default:
         return basePrompt;
     }
@@ -90,124 +175,24 @@ export class RealAIService {
 
   private buildContextualMessage(message: string, context?: any): string {
     let contextualMessage = message;
-    
+
     if (context?.caseId) {
       contextualMessage = `[Case ID: ${context.caseId}] ${contextualMessage}`;
     }
-    
+
     if (context?.documentId) {
       contextualMessage = `[Document Context Available] ${contextualMessage}`;
     }
-    
-    if (context?.attachedFiles && context.attachedFiles.length > 0) {
-      const fileList = context.attachedFiles.map((f: any) => f.name).join(', ');
-      contextualMessage = `[Attached Files: ${fileList}] ${contextualMessage}`;
+
+    if (context?.citations) {
+      contextualMessage += `\n\nRelevant citations:\n${context.citations.map((c: any) => 
+        `- ${c.source} (page ${c.page}): ${c.text}`
+      ).join('\n')}`;
     }
-    
-    if (context?.previousMessages && context.previousMessages.length > 0) {
-      const recentContext = context.previousMessages
-        .slice(-3)
-        .map((msg: any) => `${msg.role}: ${msg.content.slice(0, 200)}`)
-        .join('\n');
-      contextualMessage = `[Recent conversation context:\n${recentContext}]\n\n${contextualMessage}`;
-    }
-    
+
     return contextualMessage;
-  }
-
-  async generateEmbedding(text: string): Promise<number[]> {
-    try {
-      const response = await this.ollama.embeddings({
-        model: this.embedModel,
-        prompt: text
-      });
-      
-      return response.embedding;
-    } catch (error) {
-      console.error('Ollama embedding error:', error);
-      throw new Error('Embedding generation failed');
-    }
-  }
-
-  async analyzeDocument(content: string): Promise<any> {
-    try {
-      const prompt = `Analyze this legal document and extract:
-1. Key parties involved
-2. Important dates
-3. Main legal issues
-4. Risk assessment (high/medium/low)
-5. Recommended actions
-
-Document:
-${content.substring(0, 3000)}`;
-
-      const response = await this.ollama.chat({
-        model: this.chatModel,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        stream: false
-      });
-      
-      return {
-        analysis: response.message.content,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('Document analysis error:', error);
-      throw new Error('Document analysis failed');
-    }
-  }
-
-  async generateDraft(template: string, data: any): Promise<string> {
-    try {
-      const prompt = `Generate a professional legal document based on this template and data:
-
-Template: ${template}
-Data: ${JSON.stringify(data)}
-
-Create a complete, properly formatted document.`;
-
-      const response = await this.ollama.chat({
-        model: this.chatModel,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        stream: false
-      });
-      
-      return response.message.content;
-    } catch (error) {
-      console.error('Draft generation error:', error);
-      throw new Error('Draft generation failed');
-    }
-  }
-
-  async summarize(text: string): Promise<string> {
-    try {
-      const response = await this.ollama.chat({
-        model: this.chatModel,
-        messages: [
-          {
-            role: 'user',
-            content: `Summarize this legal text in 3-5 bullet points:\n\n${text.substring(0, 2000)}`
-          }
-        ],
-        stream: false
-      });
-      
-      return response.message.content;
-    } catch (error) {
-      console.error('Summarization error:', error);
-      throw new Error('Summarization failed');
-    }
   }
 }
 
+// Export singleton instance
 export const aiService = new RealAIService();

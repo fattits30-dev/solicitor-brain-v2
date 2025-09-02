@@ -62,18 +62,16 @@ export default function QuickActions() {
           {actions.map((action) => {
             if (action.href) {
               return (
-                <Link key={action.label} href={action.href}>
-                  <a className={`flex flex-col items-center p-6 ${action.iconBg} rounded-lg border ${action.borderColor} transition-colors cursor-pointer`} data-testid={action.testId}>
-                    <div className={`w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-3`}>
-                      <i className={`${action.icon} ${action.iconColor} text-xl`}></i>
-                    </div>
-                    <span className="text-sm font-medium text-foreground" data-testid={`${action.testId}-label`}>
-                      {action.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground mt-1" data-testid={`${action.testId}-subtitle`}>
-                      {action.subtitle}
-                    </span>
-                  </a>
+                <Link key={action.label} href={action.href} className={`flex flex-col items-center p-6 ${action.iconBg} rounded-lg border ${action.borderColor} transition-colors cursor-pointer`} data-testid={action.testId}>
+                  <div className={`w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-3`}>
+                    <i className={`${action.icon} ${action.iconColor} text-xl`}></i>
+                  </div>
+                  <span className="text-sm font-medium text-foreground" data-testid={`${action.testId}-label`}>
+                    {action.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground mt-1" data-testid={`${action.testId}-subtitle`}>
+                    {action.subtitle}
+                  </span>
                 </Link>
               );
             } else {

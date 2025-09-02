@@ -1,153 +1,271 @@
-# GitHub Copilot Agent Instructions
+# GitHub Copilot Instructions for Solicitor Brain v2
 
-## Project Context
+## Project Overview
+Solicitor Brain v2 is a trauma-informed UK legal case management system built with TypeScript, React, and Express.js. The application helps UK solicitors manage cases, documents, and client communications with built-in AI assistance.
 
-This is Solicitor Brain v2 - a trauma-informed UK legal case management system built with:
+## Tech Stack
+- **Frontend**: React + TypeScript + Vite + shadcn/ui + Tailwind CSS
+- **Backend**: Express.js + TypeScript
+- **Database**: PostgreSQL with pgvector extension + Redis
+- **AI/ML**: Ollama (local LLMs) + Tesseract.js (OCR)
+- **Auth**: JWT + bcrypt + role-based access control
+- **Testing**: Jest + Playwright
 
-- Frontend: React + TypeScript + Vite + shadcn/ui + Tailwind CSS
-- Backend: Express.js + TypeScript (migrating to FastAPI)
-- Database: PostgreSQL with pgvector + Redis
-- AI: Ollama for local LLMs + Tesseract.js for OCR
+## Code Style Guidelines
 
-## Agent Mode Instructions
+### TypeScript/JavaScript
+- Use TypeScript for all new code
+- Prefer `const` over `let`, never use `var`
+- Use async/await over promises
+- Use optional chaining `?.` and nullish coalescing `??`
+- Export types separately from implementations
+- Use type inference where possible, explicit types for function parameters
 
-### Code Style
-
-- Use TypeScript with strict typing
-- Follow existing patterns in the codebase
-- Use async/await instead of callbacks
-- Prefer functional components with hooks in React
-- Use Zod for validation schemas
-
-### Testing
-
-- Write tests for all new features
-- Use Playwright for E2E tests
-- Use Jest for unit tests
-- Test files should be co-located with source files
-
-### Security
-
-- Never expose sensitive data in logs
-- Always sanitize user inputs
-- Use parameterized queries for database operations
-- Implement proper authentication checks
-- Follow OWASP security guidelines
-
-### Fix Mode Guidelines
-
-When fixing code:
-
-1. Preserve existing functionality
-2. Add type safety where missing
-3. Fix ESLint/TypeScript errors
-4. Improve error handling
-5. Add appropriate logging
-
-### Refactoring Guidelines
-
-When refactoring:
-
-1. Extract reusable components/functions
-2. Reduce complexity (max 20 lines per function preferred)
-3. Improve naming for clarity
-4. Add JSDoc comments for complex logic
-5. Use design patterns where appropriate
-
-### Documentation Guidelines
-
-When documenting:
-
-1. Use JSDoc for all exported functions
-2. Include parameter types and return types
-3. Add examples for complex functions
-4. Document edge cases and assumptions
-5. Keep comments concise and valuable
-
-### Test Generation Guidelines
-
-When generating tests:
-
-1. Test happy path and edge cases
-2. Test error conditions
-3. Use descriptive test names
-4. Mock external dependencies
-5. Aim for 80% coverage minimum
-
-### Performance Optimization
-
-When optimizing:
-
-1. Use React.memo for expensive components
-2. Implement proper caching strategies
-3. Optimize database queries
-4. Use lazy loading where appropriate
-5. Profile before and after changes
-
-## Specific Instructions
-
-### Database Operations
-
-- Always use transactions for multi-table operations
-- Implement proper connection pooling
-- Use pgvector for semantic search operations
-- Cache frequently accessed data in Redis
+### React Components
+- Use functional components with hooks
+- Place component files in `/client/src/components/`
+- Use shadcn/ui components from `@/components/ui/`
+- Follow this structure:
+```typescript
+import statements
+type/interface definitions
+export const ComponentName: React.FC<Props> = ({ props }) => {
+  // hooks
+  // state
+  // effects
+  // handlers
+  // render
+};
+```
 
 ### API Endpoints
+- RESTful naming: `/api/resource` for collections, `/api/resource/:id` for items
+- Use proper HTTP methods: GET, POST, PUT, PATCH, DELETE
+- Always validate input with Zod schemas
+- Return consistent error formats: `{ error: string, details?: any }`
+- Include authentication middleware for protected routes
 
-- Follow RESTful conventions
-- Return consistent error responses
-- Implement rate limiting
-- Use proper HTTP status codes
-- Validate all inputs with Zod
+### Database Queries
+- Use parameterized queries to prevent SQL injection
+- Transaction wrapper for multi-step operations
+- Include proper error handling and rollback
+- Follow schema in `/shared/schema.ts`
 
-### Frontend Components
+## Security Requirements
+- **Never** log sensitive data (passwords, tokens, PII)
+- Always hash passwords with bcrypt
+- Validate and sanitize all user inputs
+- Use parameterized SQL queries
+- Apply rate limiting to auth endpoints
+- Redact PII in audit logs
 
-- Use shadcn/ui components as base
-- Follow accessibility guidelines (WCAG 2.2 AA)
-- Implement proper loading states
-- Handle errors gracefully
-- Use React Query for data fetching
+## UK Legal Domain Context
+- Use UK legal terminology (solicitor, barrister, tribunal)
+- Reference UK legislation (DWP, HMCTS, Companies House)
+- Date format: DD/MM/YYYY
+- Phone format: UK (+44)
+- Postcode validation: UK format
 
-### AI Integration
+## Component Patterns
 
-- Use Ollama for local LLM operations
-- Implement proper prompt engineering
-- Handle AI failures gracefully
-- Provide fallback options
-- Monitor token usage
+### Form Handling
+```typescript
+const [formData, setFormData] = useState<FormType>(initialValues);
+const [errors, setErrors] = useState<ErrorType>({});
+const [loading, setLoading] = useState(false);
 
-## Forbidden Actions
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    const validated = schema.parse(formData);
+    await api.submit(validated);
+    toast.success('Success message');
+  } catch (error) {
+    handleError(error);
+  } finally {
+    setLoading(false);
+  }
+};
+```
 
-- Never commit secrets or API keys
-- Never bypass authentication
-- Never log sensitive user data
-- Never use eval() or similar
-- Never disable security features
-- Never use synchronous file operations in production
+### API Calls
+```typescript
+// Use the fetch wrapper with auth headers
+const response = await fetch('/api/endpoint', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify(data)
+});
 
-## Common Tasks
+if (!response.ok) {
+  throw new Error(`API error: ${response.status}`);
+}
 
-### Fix TypeScript Errors
+const result = await response.json();
+```
 
-@workspace /fix #typescript-errors Focus on type safety and proper interface definitions
+### Error Handling
+```typescript
+try {
+  // operation
+} catch (error) {
+  console.error('Context-specific error message:', error);
+  
+  if (error instanceof ZodError) {
+    // Handle validation errors
+    return res.status(400).json({ 
+      error: 'Validation failed', 
+      details: error.errors 
+    });
+  }
+  
+  // Generic error response
+  res.status(500).json({ 
+    error: 'Internal server error' 
+  });
+}
+```
 
-### Generate Tests
+## Testing Guidelines
+- Write tests for all new features
+- Test file naming: `*.test.ts` or `*.test.tsx`
+- Mock external dependencies
+- Test both success and error cases
+- Include edge cases
 
-@workspace /tests #missing-coverage Generate comprehensive test suites for untested code
+## Accessibility Requirements
+- WCAG 2.2 AA compliance
+- All interactive elements must be keyboard accessible
+- Proper ARIA labels and roles
+- Focus management for modals and navigation
+- Alt text for images
+- Semantic HTML structure
 
-### Optimize Performance
+## AI Integration Patterns
+```typescript
+// AI chat integration
+const response = await fetch('/api/ai/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    message: userInput,
+    context: { caseId, documentId },
+    model: 'llama3.2'
+  })
+});
 
-@workspace /optimize #performance Identify and fix performance bottlenecks
+// Document analysis
+const analysis = await fetch('/api/ai/analyze', {
+  method: 'POST',
+  body: formData // includes file
+});
+```
 
-### Security Audit
+## Database Schema Key Tables
+- `users` - Authentication and roles
+- `cases` - Legal cases
+- `persons` - Clients, opponents, staff  
+- `documents` - File metadata
+- `events` - Case timeline
+- `drafts` - AI-generated content
+- `audit_log` - Security audit trail
+- `embeddings` - Vector search data
 
-@workspace /audit #security Review code for security vulnerabilities
+## Environment Variables
+Required in `.env`:
+- `DATABASE_URL` - PostgreSQL connection
+- `REDIS_URL` - Redis connection
+- `JWT_SECRET` - JWT signing secret
+- `SESSION_SECRET` - Session encryption
+- `OLLAMA_BASE_URL` - Local AI server
 
-### Refactor Complex Code
+## Common Commands
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm test            # Run tests
+npm run lint        # Lint code
+npm run e2e         # Run E2E tests
+```
 
-@workspace /refactor #complexity Simplify complex functions and components
+## Do's and Don'ts
 
-### Add Documentation
+### DO:
+- ✅ Follow TypeScript best practices
+- ✅ Use shadcn/ui components
+- ✅ Handle errors gracefully
+- ✅ Validate all inputs
+- ✅ Write clear commit messages
+- ✅ Test authentication flows
+- ✅ Use semantic HTML
+- ✅ Follow RESTful conventions
 
-@workspace /doc #missing-docs Add JSDoc comments and update README
+### DON'T:
+- ❌ Store sensitive data in localStorage
+- ❌ Log PII or passwords
+- ❌ Use `any` type without justification
+- ❌ Commit `.env` files
+- ❌ Skip input validation
+- ❌ Ignore accessibility
+- ❌ Use inline styles
+- ❌ Make synchronous API calls
+
+## Trauma-Informed UX Principles
+1. Use clear, non-judgmental language
+2. Provide user control with clear consent
+3. Show progress indicators for all operations
+4. Offer undo/cancel options
+5. Use warm, supportive error messages
+6. Avoid sudden changes or auto-actions
+7. Provide clear data retention information
+
+## File Structure
+```
+/client/src/
+  /components/     # React components
+  /hooks/          # Custom hooks
+  /lib/            # Utilities
+  /pages/          # Page components
+/server/
+  /routes/         # API routes
+  /services/       # Business logic
+  /middleware/     # Express middleware
+  /utils/          # Utilities
+/shared/           # Shared types/schemas
+```
+
+## Git Commit Format
+```
+type: brief description
+
+- Detailed point 1
+- Detailed point 2
+
+Fixes #issue
+```
+
+Types: feat, fix, docs, style, refactor, test, chore
+
+## Performance Guidelines
+- Lazy load heavy components
+- Use React.memo for expensive renders
+- Implement pagination for lists
+- Cache API responses where appropriate
+- Optimize images and assets
+- Use database indexes on frequently queried columns
+
+## When Suggesting Code:
+1. Consider UK legal context
+2. Ensure accessibility compliance
+3. Include error handling
+4. Add TypeScript types
+5. Follow existing patterns in codebase
+6. Consider security implications
+7. Include necessary imports
+8. Add helpful comments for complex logic
+
+Remember: This is a legal application handling sensitive data. Security, privacy, and compliance are paramount.

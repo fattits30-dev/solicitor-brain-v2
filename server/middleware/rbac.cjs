@@ -213,6 +213,61 @@ function getRbacService() {
   return rbacService;
 }
 
+// Create RBAC middleware with JWT support
+async function createRBACMiddleware(db, jwtSecret) {
+  const jwt = require('jsonwebtoken');
+  initializeRbacMiddleware(db);
+  
+  return {
+    requirePermission: function(permission) {
+      const [resource, action] = permission.split(':');
+      
+      return async (req, res, next) => {
+        try {
+          // Extract JWT token from Authorization header
+          const authHeader = req.headers.authorization;
+          if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Invalid authorization format' });
+          }
+          
+          const token = authHeader.substring(7);
+          
+          try {
+            const decoded = jwt.verify(token, jwtSecret);
+            req.user = {
+              id: decoded.userId,
+              username: decoded.username,
+              role: decoded.role
+            };
+          } catch (jwtError) {
+            return res.status(401).json({ error: 'Invalid or expired token' });
+          }
+          
+          // Now check permission
+          if (!req.user) {
+            return res.status(401).json({ error: 'Authentication required' });
+          }
+          
+          const hasPermission = await rbacService.hasPermission(req.user.id, resource, action);
+          
+          if (!hasPermission) {
+            await rbacService.logAction('access_denied', req.user.id, null, null, null, resource, null, `Action: ${action}`);
+            return res.status(403).json({ 
+              error: 'Permission denied',
+              required: `${resource}:${action}`
+            });
+          }
+          
+          next();
+        } catch (error) {
+          console.error('RBAC middleware error:', error);
+          res.status(500).json({ error: 'Permission check failed' });
+        }
+      };
+    }
+  };
+}
+
 module.exports = {
   initializeRbacMiddleware,
   requirePermission,
@@ -221,5 +276,6 @@ module.exports = {
   loadUserPermissions,
   requireAnyPermission,
   requireAllPermissions,
-  getRbacService
+  getRbacService,
+  createRBACMiddleware
 };

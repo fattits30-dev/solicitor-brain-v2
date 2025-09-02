@@ -1,5 +1,9 @@
-import { existsSync, mkdirSync, appendFileSync } from 'fs';
+import { auditLog as auditLogTable, type InsertAuditLog } from '@shared/schema';
+import { sql } from 'drizzle-orm';
+import { appendFileSync, existsSync, mkdirSync, renameSync, statSync } from 'fs';
 import path from 'path';
+import { db } from '../db';
+import { piiRedactor } from '../services/pii-redactor';
 import { devSecurity } from './dev-security';
 
 export enum AuditEventType {
@@ -66,6 +70,10 @@ interface AuditEntry {
   details?: Record<string, any>;
   errorMessage?: string;
   stackTrace?: string;
+  metadata?: Record<string, any>;
+  beforeState?: Record<string, any>;
+  afterState?: Record<string, any>;
+  correlationId?: string;
 }
 
 class AuditLogger {
@@ -73,9 +81,16 @@ class AuditLogger {
   private readonly maxFileSize = 10 * 1024 * 1024; // 10MB
   private buffer: AuditEntry[] = [];
   private flushInterval: NodeJS.Timeout | null = null;
+  private readonly enableDatabase: boolean;
+  private readonly enableFiles: boolean;
 
-  constructor() {
-    this.ensureAuditDirectory();
+  constructor(options: { enableDatabase?: boolean; enableFiles?: boolean } = {}) {
+    this.enableDatabase = options.enableDatabase ?? true;
+    this.enableFiles = options.enableFiles ?? true;
+
+    if (this.enableFiles) {
+      this.ensureAuditDirectory();
+    }
     this.startFlushInterval();
   }
 
@@ -87,8 +102,8 @@ class AuditLogger {
 
   private startFlushInterval(): void {
     // Flush buffer every 5 seconds
-    this.flushInterval = setInterval(() => {
-      this.flushBuffer();
+    this.flushInterval = setInterval(async () => {
+      await this.flushBuffer();
     }, 5000);
   }
 
@@ -101,38 +116,51 @@ class AuditLogger {
     const logFile = this.getCurrentLogFile();
 
     if (existsSync(logFile)) {
-      const stats = require('fs').statSync(logFile);
+      const stats = statSync(logFile);
 
       if (stats.size > this.maxFileSize) {
         const timestamp = Date.now();
         const rotatedFile = logFile.replace('.jsonl', `-${timestamp}.jsonl`);
-        require('fs').renameSync(logFile, rotatedFile);
+        renameSync(logFile, rotatedFile);
       }
     }
   }
 
   private sanitizeEntry(entry: AuditEntry): AuditEntry {
-    // Redact sensitive data
+    // Redact sensitive data using PII redactor
     const sanitized = { ...entry };
 
+    // Apply PII redaction to entry details
+    if (sanitized.details) {
+      const { redacted } = piiRedactor.redactObject(sanitized.details, 'audit-logger');
+      sanitized.details = redacted;
+    }
+
+    // Redact error messages
+    if (sanitized.errorMessage) {
+      const result = piiRedactor.redact(sanitized.errorMessage, 'audit-logger');
+      sanitized.errorMessage = result.redactedText;
+    }
+
+    // Redact stack traces
+    if (sanitized.stackTrace) {
+      const result = piiRedactor.redact(sanitized.stackTrace, 'audit-logger');
+      sanitized.stackTrace = result.redactedText;
+    }
+
+    // Also apply legacy redaction for additional security patterns
     if (sanitized.details) {
       const detailsStr = JSON.stringify(sanitized.details);
-      const redacted = devSecurity.redactSensitiveData(detailsStr);
-      sanitized.details = JSON.parse(redacted);
-    }
-
-    if (sanitized.errorMessage) {
-      sanitized.errorMessage = devSecurity.redactSensitiveData(sanitized.errorMessage);
-    }
-
-    if (sanitized.stackTrace) {
-      sanitized.stackTrace = devSecurity.redactSensitiveData(sanitized.stackTrace);
+      const legacyRedacted = devSecurity.redactSensitiveData(detailsStr);
+      sanitized.details = JSON.parse(legacyRedacted);
     }
 
     return sanitized;
   }
 
   private writeToFile(entry: AuditEntry): void {
+    if (!this.enableFiles) return;
+
     this.rotateLogFileIfNeeded();
 
     const logFile = this.getCurrentLogFile();
@@ -142,19 +170,75 @@ class AuditLogger {
     try {
       appendFileSync(logFile, line, 'utf-8');
     } catch (error) {
-      console.error('Failed to write audit log:', error);
+      console.error('Failed to write audit log to file:', error);
     }
   }
 
-  private flushBuffer(): void {
+  private async writeToDatabase(entry: AuditEntry): Promise<void> {
+    if (!this.enableDatabase) return;
+
+    try {
+      const sanitized = this.sanitizeEntry(entry);
+
+      // Map audit entry to database schema
+      const dbEntry: InsertAuditLog = {
+        userId: sanitized.userId && sanitized.userId !== 'anonymous' ? sanitized.userId : null,
+        action: `${sanitized.eventType}:${sanitized.action || 'unknown'}`,
+        resource: sanitized.resource || 'system',
+        resourceId: sanitized.details?.resourceId || sanitized.details?.id || 'unknown',
+        metadata: {
+          eventType: sanitized.eventType,
+          severity: sanitized.severity,
+          result: sanitized.result,
+          sessionId: sanitized.sessionId,
+          ipAddress: sanitized.ipAddress,
+          userAgent: sanitized.userAgent,
+          correlationId: sanitized.correlationId,
+          beforeState: sanitized.beforeState,
+          afterState: sanitized.afterState,
+          details: sanitized.details,
+          errorMessage: sanitized.errorMessage,
+          stackTrace: sanitized.stackTrace,
+          timestamp: sanitized.timestamp,
+        },
+        redactedData: sanitized.details ? JSON.stringify(sanitized.details) : null,
+      };
+
+      await db.insert(auditLogTable).values(dbEntry);
+    } catch (error) {
+      console.error('Failed to write audit log to database:', error);
+      // Fallback to file logging if database fails
+      if (this.enableFiles) {
+        this.writeToFile(entry);
+      }
+    }
+  }
+
+  private async flushBuffer(): Promise<void> {
     if (this.buffer.length === 0) return;
 
     const entries = [...this.buffer];
     this.buffer = [];
 
-    for (const entry of entries) {
-      this.writeToFile(entry);
-    }
+    // Process entries in parallel for better performance
+    const promises = entries.map(async (entry) => {
+      try {
+        // Try database first, then file as backup
+        if (this.enableDatabase) {
+          await this.writeToDatabase(entry);
+        } else if (this.enableFiles) {
+          this.writeToFile(entry);
+        }
+      } catch (error) {
+        console.error('Failed to flush audit entry:', error);
+        // Fallback to file if database fails
+        if (this.enableFiles && this.enableDatabase) {
+          this.writeToFile(entry);
+        }
+      }
+    });
+
+    await Promise.allSettled(promises);
   }
 
   public log(
@@ -168,6 +252,7 @@ class AuditLogger {
       eventType,
       severity,
       result,
+      correlationId: details?.correlationId || this.generateCorrelationId(),
       ...details,
     };
 
@@ -176,13 +261,17 @@ class AuditLogger {
 
     // Immediate flush for critical events
     if (severity === AuditSeverity.CRITICAL) {
-      this.flushBuffer();
+      this.flushBuffer().catch(console.error);
     }
 
     // Console output in development
     if (process.env.NODE_ENV === 'development') {
       this.logToConsole(entry);
     }
+  }
+
+  private generateCorrelationId(): string {
+    return `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   private logToConsole(entry: AuditEntry): void {
@@ -274,39 +363,222 @@ class AuditLogger {
   }
 
   public async generateAuditReport(
-    _startDate: Date,
-    _endDate: Date,
-    _filters?: {
+    startDate: Date,
+    endDate: Date,
+    filters?: {
       userId?: string;
       eventType?: AuditEventType;
       severity?: AuditSeverity;
+      resource?: string;
+      result?: 'SUCCESS' | 'FAILURE';
     },
-  ): Promise<AuditEntry[]> {
-    // This would read from log files and generate a report
-    // For now, return empty array
-    return [];
+  ): Promise<{
+    entries: any[];
+    summary: {
+      total: number;
+      byEventType: Record<string, number>;
+      bySeverity: Record<string, number>;
+      byResult: Record<string, number>;
+      byUser: Record<string, number>;
+    };
+  }> {
+    if (!this.enableDatabase) {
+      throw new Error('Database audit logging must be enabled for report generation');
+    }
+
+    try {
+      // Build dynamic WHERE clause based on filters
+      let whereConditions = sql`${auditLogTable.timestamp} BETWEEN ${startDate.toISOString()} AND ${endDate.toISOString()}`;
+
+      if (filters?.userId) {
+        whereConditions = sql`${whereConditions} AND ${auditLogTable.userId} = ${filters.userId}`;
+      }
+
+      if (filters?.resource) {
+        whereConditions = sql`${whereConditions} AND ${auditLogTable.resource} = ${filters.resource}`;
+      }
+
+      if (filters?.eventType) {
+        whereConditions = sql`${whereConditions} AND ${auditLogTable.action} LIKE ${`%${filters.eventType}%`}`;
+      }
+
+      // Fetch audit entries
+      const entries = await db
+        .select()
+        .from(auditLogTable)
+        .where(whereConditions)
+        .orderBy(sql`${auditLogTable.timestamp} DESC`);
+
+      // Generate summary statistics
+      const summary = {
+        total: entries.length,
+        byEventType: {} as Record<string, number>,
+        bySeverity: {} as Record<string, number>,
+        byResult: {} as Record<string, number>,
+        byUser: {} as Record<string, number>,
+      };
+
+      entries.forEach((entry) => {
+        const metadata = entry.metadata as any;
+        if (metadata) {
+          // Count by event type
+          const eventType = metadata.eventType || 'unknown';
+          summary.byEventType[eventType] = (summary.byEventType[eventType] || 0) + 1;
+
+          // Count by severity
+          const severity = metadata.severity || 'unknown';
+          summary.bySeverity[severity] = (summary.bySeverity[severity] || 0) + 1;
+
+          // Count by result
+          const result = metadata.result || 'unknown';
+          summary.byResult[result] = (summary.byResult[result] || 0) + 1;
+        }
+
+        // Count by user
+        if (entry.userId) {
+          summary.byUser[entry.userId] = (summary.byUser[entry.userId] || 0) + 1;
+        }
+      });
+
+      return { entries, summary };
+    } catch (error) {
+      console.error('Failed to generate audit report:', error);
+      throw error;
+    }
   }
 
-  public shutdown(): void {
+  public async shutdown(): Promise<void> {
     if (this.flushInterval) {
       clearInterval(this.flushInterval);
       this.flushInterval = null;
     }
 
-    this.flushBuffer();
+    await this.flushBuffer();
+  }
+
+  // Enhanced logging methods for comprehensive audit trail
+
+  public logApiRequest(req: any, res: any, duration: number): void {
+    const eventType =
+      req.method === 'GET'
+        ? AuditEventType.DATA_READ
+        : req.method === 'POST'
+          ? AuditEventType.DATA_CREATE
+          : req.method === 'PUT' || req.method === 'PATCH'
+            ? AuditEventType.DATA_UPDATE
+            : req.method === 'DELETE'
+              ? AuditEventType.DATA_DELETE
+              : AuditEventType.DATA_READ;
+
+    this.log(
+      eventType,
+      res.statusCode >= 400 ? AuditSeverity.WARNING : AuditSeverity.INFO,
+      res.statusCode < 400 ? 'SUCCESS' : 'FAILURE',
+      {
+        userId: req.user?.id || 'anonymous',
+        sessionId: req.sessionID || req.headers['x-session-id'],
+        ipAddress: this.getClientIP(req),
+        userAgent: req.headers['user-agent'],
+        resource: req.route?.path || req.path,
+        action: req.method,
+        details: {
+          url: req.url,
+          method: req.method,
+          statusCode: res.statusCode,
+          duration,
+          bodySize: JSON.stringify(req.body || {}).length,
+          query: req.query,
+          params: req.params,
+        },
+      },
+    );
+  }
+
+  public logDataModification(
+    userId: string,
+    action: 'CREATE' | 'UPDATE' | 'DELETE',
+    resource: string,
+    resourceId: string,
+    beforeState?: any,
+    afterState?: any,
+    metadata?: Record<string, any>,
+  ): void {
+    const eventType = {
+      CREATE: AuditEventType.DATA_CREATE,
+      UPDATE: AuditEventType.DATA_UPDATE,
+      DELETE: AuditEventType.DATA_DELETE,
+    }[action];
+
+    this.log(eventType, AuditSeverity.INFO, 'SUCCESS', {
+      userId,
+      resource,
+      action,
+      beforeState,
+      afterState,
+      details: {
+        resourceId,
+        ...metadata,
+      },
+    });
+  }
+
+  public logExport(
+    userId: string,
+    exportType: string,
+    resourceIds: string[],
+    format: string,
+    includesPII: boolean,
+  ): void {
+    this.log(
+      AuditEventType.DATA_EXPORT,
+      includesPII ? AuditSeverity.WARNING : AuditSeverity.INFO,
+      'SUCCESS',
+      {
+        userId,
+        resource: 'export',
+        action: 'EXPORT',
+        details: {
+          exportType,
+          resourceIds,
+          format,
+          includesPII,
+          resourceCount: resourceIds.length,
+        },
+      },
+    );
+  }
+
+  private getClientIP(req: any): string {
+    return (
+      req.ip ||
+      req.connection?.remoteAddress ||
+      req.socket?.remoteAddress ||
+      (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+      'unknown'
+    );
   }
 }
 
-// Export singleton instance
-export const auditLogger = new AuditLogger();
-
-// Ensure clean shutdown
-process.on('SIGINT', () => {
-  auditLogger.shutdown();
+// Export singleton instance with default configuration
+export const auditLogger = new AuditLogger({
+  enableDatabase: process.env.AUDIT_ENABLE_DATABASE !== 'false',
+  enableFiles: process.env.AUDIT_ENABLE_FILES !== 'false',
 });
 
-process.on('SIGTERM', () => {
-  auditLogger.shutdown();
+// Ensure clean shutdown
+process.on('SIGINT', async () => {
+  await auditLogger.shutdown();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await auditLogger.shutdown();
+  process.exit(0);
+});
+
+process.on('SIGQUIT', async () => {
+  await auditLogger.shutdown();
+  process.exit(0);
 });
 
 export default auditLogger;

@@ -1,190 +1,45 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "npm: dev",
-      "type": "npm",
-      "script": "dev",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "problemMatcher": {
-        "owner": "typescript",
-        "pattern": {
-          "regexp": "^([^\\s].*)\\((\\d+|\\d+,\\d+|\\d+,\\d+,\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
-          "file": 1,
-          "location": 2,
-          "severity": 3,
-          "code": 4,
-          "message": 5
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "^.*Starting development server.*",
-          "endsPattern": "^.*Server running at.*|^.*Ready in.*"
-        }
-      },
-      "isBackground": true,
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "npm: build",
-      "type": "npm",
-      "script": "build",
-      "group": "build",
-      "problemMatcher": ["$tsc"]
-    },
-    {
-      "label": "npm: check",
-      "type": "npm",
-      "script": "check",
-      "group": "test",
-      "problemMatcher": ["$tsc"]
-    },
-    {
-      "label": "Docker: Start Services",
-      "type": "shell",
-      "command": "make docker-up",
-      "group": "none",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "Docker: Stop Services",
-      "type": "shell",
-      "command": "make docker-down",
-      "group": "none",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "Database: Setup",
-      "type": "shell",
-      "command": "make db-setup",
-      "group": "none",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "Database: Seed",
-      "type": "shell",
-      "command": "make db-seed",
-      "group": "none",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "Full Setup",
-      "type": "shell",
-      "command": "make setup",
-      "group": "none",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Watch TypeScript",
-      "type": "npm",
-      "script": "check",
-      "args": ["--watch"],
-      "isBackground": true,
-      "problemMatcher": "$tsc-watch",
-      "group": {
-        "kind": "build",
-        "isDefault": false
-      }
-    },
-    {
-      "label": "Git: Create PR",
-      "type": "shell",
-      "command": "gh pr create --draft --title '${input:prTitle}' --body '${input:prBody}'",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Git: Push and Create PR",
-      "type": "shell",
-      "command": "git push -u origin HEAD && gh pr create --draft",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Git: Sync with Main",
-      "type": "shell",
-      "command": "git fetch origin main && git rebase origin/main",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "NPM: Install from GitHub SSH",
-      "type": "shell",
-      "command": "npm install git+ssh://git@github.com/${input:repoOwner}/${input:repoName}.git",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    }
-  ],
-  "inputs": [
-    {
-      "id": "prTitle",
-      "description": "Pull Request Title",
-      "default": "feat: ",
-      "type": "promptString"
-    },
-    {
-      "id": "prBody",
-      "description": "Pull Request Body",
-      "default": "## Summary\n\n## Changes\n\n## Testing",
-      "type": "promptString"
-    },
-    {
-      "id": "repoOwner",
-      "description": "GitHub Repository Owner/Username",
-      "default": "fattits30-dev",
-      "type": "promptString"
-    },
-    {
-      "id": "repoName",
-      "description": "Repository Name",
-      "default": "",
-      "type": "promptString"
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Dev: Start client",
+			"type": "shell",
+			"command": "npm run dev",
+			"group": "build",
+			"isBackground": true
+		},
+		{
+			"label": "Dev: Start server (inspect)",
+			"type": "shell",
+			"command": "npm run dev:debug",
+			"group": "build",
+			"isBackground": true
+		},
+		{
+			"label": "DB: Setup",
+			"type": "shell",
+			"command": "make db-setup",
+			"group": "none"
+		},
+		{
+			"label": "DB: Seed",
+			"type": "shell",
+			"command": "make db-seed",
+			"group": "none"
+		}
+	],
+	"inputs": [
+		{
+			"id": "prTitle",
+			"description": "Pull Request Title",
+			"default": "feat: ",
+			"type": "promptString"
+		},
+		{
+			"id": "prBody",
+			"description": "Pull Request Body",
+			"default": "## Summary\n\n## Changes\n\n## Testing",
+			"type": "promptString"
+		}
+	]
 }

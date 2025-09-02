@@ -20,6 +20,14 @@ const { requireMfa, checkMfaStatus, initializeMfaMiddleware } = require('./middl
 const { createRBACMiddleware } = require('./middleware/rbac.cjs');
 const { createRBACRoutes } = require('./routes/rbac.cjs');
 
+// Import Agent Workflow routes (will be transpiled)
+let agentWorkflowRoutes;
+try {
+  agentWorkflowRoutes = require('./routes/agent-workflow-routes').default;
+} catch (err) {
+  console.log('Agent workflow routes not yet compiled');
+}
+
 const app = express();
 const PORT = process.env.PORT || 3333;
 
@@ -1335,6 +1343,11 @@ setTimeout(() => {
 
 // Apply MFA middleware to protected routes (excluding auth and mfa endpoints)
 app.use('/api', checkMfaStatus);
+
+// Agent Workflow routes
+const agentSystemRoutes = require('./routes/agent-system.cjs');
+app.use('/api/agents', agentSystemRoutes);
+console.log('✅ Agent workflow routes initialized');
 
 // Serve static files
 const publicPath = path.join(__dirname, '..', 'dist', 'public');

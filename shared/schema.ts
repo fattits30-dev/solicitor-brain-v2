@@ -1,155 +1,206 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, jsonb, vector, boolean, uuid } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
+import { relations, sql } from 'drizzle-orm';
+import {
+  boolean,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  vector,
+} from 'drizzle-orm/pg-core';
+import { createInsertSchema } from 'drizzle-zod';
+import { z } from 'zod';
 
 // Users table (existing - matches actual database structure)
-export const users = pgTable("users", {
-  id: text("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  name: text("name").notNull(),
-  role: text("role").notNull().default("solicitor"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const users = pgTable('users', {
+  id: text('id').primaryKey(),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  name: text('name').notNull(),
+  role: text('role').notNull().default('solicitor'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Cases table
-export const cases = pgTable("cases", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  title: text("title").notNull(),
-  clientRef: text("client_ref"),
-  status: text("status").notNull().default("active"),
-  riskLevel: text("risk_level").notNull().default("medium"),
-  description: text("description"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const cases = pgTable('cases', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  title: text('title').notNull(),
+  clientRef: text('client_ref'),
+  status: text('status').notNull().default('active'),
+  riskLevel: text('risk_level').notNull().default('medium'),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Persons table
-export const persons = pgTable("persons", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  role: text("role").notNull(), // client, solicitor, opponent, staff
-  name: text("name").notNull(),
-  contacts: jsonb("contacts"),
-  notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const persons = pgTable('persons', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  role: text('role').notNull(), // client, solicitor, opponent, staff
+  name: text('name').notNull(),
+  contacts: jsonb('contacts'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Documents table
-export const documents = pgTable("documents", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  caseId: uuid("case_id").references(() => cases.id).notNull(),
-  type: text("type").notNull(),
-  source: text("source").notNull(),
-  path: text("path").notNull(),
-  hash: text("hash").notNull(),
-  ocrText: text("ocr_text"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const documents = pgTable('documents', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  caseId: uuid('case_id')
+    .references(() => cases.id)
+    .notNull(),
+  type: text('type').notNull(),
+  source: text('source').notNull(),
+  path: text('path').notNull(),
+  hash: text('hash').notNull(),
+  ocrText: text('ocr_text'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Events table
-export const events = pgTable("events", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  caseId: uuid("case_id").references(() => cases.id).notNull(),
-  kind: text("kind").notNull(), // hearing, letter, email, call, task
-  happenedAt: timestamp("happened_at").notNull(),
-  data: jsonb("data"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const events = pgTable('events', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  caseId: uuid('case_id')
+    .references(() => cases.id)
+    .notNull(),
+  kind: text('kind').notNull(), // hearing, letter, email, call, task
+  happenedAt: timestamp('happened_at').notNull(),
+  data: jsonb('data'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Drafts table
-export const drafts = pgTable("drafts", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  caseId: uuid("case_id").references(() => cases.id).notNull(),
-  title: text("title").notNull(),
-  bodyMd: text("body_md").notNull(),
-  tone: text("tone").notNull().default("professional"),
-  status: text("status").notNull().default("draft"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const drafts = pgTable('drafts', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  caseId: uuid('case_id')
+    .references(() => cases.id)
+    .notNull(),
+  title: text('title').notNull(),
+  bodyMd: text('body_md').notNull(),
+  tone: text('tone').notNull().default('professional'),
+  status: text('status').notNull().default('draft'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Audit log table
-export const auditLog = pgTable("audit_log", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").references(() => users.id).notNull(),
-  action: text("action").notNull(),
-  resource: text("resource").notNull(),
-  resourceId: text("resource_id").notNull(),
-  metadata: jsonb("metadata"),
-  redactedData: text("redacted_data"),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
+export const auditLog = pgTable('audit_log', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id').references(() => users.id),
+  action: text('action').notNull(),
+  resource: text('resource').notNull(),
+  resourceId: text('resource_id').notNull(),
+  metadata: jsonb('metadata'),
+  redactedData: text('redacted_data'),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
 });
 
 // Consents table
-export const consents = pgTable("consents", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  personId: uuid("person_id").references(() => persons.id).notNull(),
-  scope: text("scope").notNull(),
-  grantedAt: timestamp("granted_at").defaultNow().notNull(),
-  revokedAt: timestamp("revoked_at"),
+export const consents = pgTable('consents', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  personId: uuid('person_id')
+    .references(() => persons.id)
+    .notNull(),
+  scope: text('scope').notNull(),
+  grantedAt: timestamp('granted_at').defaultNow().notNull(),
+  revokedAt: timestamp('revoked_at'),
 });
 
 // Embeddings table (for RAG)
-export const embeddings = pgTable("embeddings", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  documentId: uuid("document_id").references(() => documents.id).notNull(),
-  chunkIx: integer("chunk_ix").notNull(),
-  vector: vector("vector", { dimensions: 384 }),
-  meta: jsonb("meta"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const embeddings = pgTable('embeddings', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  documentId: uuid('document_id')
+    .references(() => documents.id)
+    .notNull(),
+  chunkIx: integer('chunk_ix').notNull(),
+  vector: vector('vector', { dimensions: 384 }),
+  meta: jsonb('meta'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // MFA Settings table
-export const mfaSettings = pgTable("mfa_settings", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").references(() => users.id).notNull().unique(),
-  isEnabled: boolean("is_enabled").default(false).notNull(),
-  totpSecret: text("totp_secret"), // encrypted
-  backupCodes: jsonb("backup_codes"), // array of encrypted codes
-  smsPhoneNumber: text("sms_phone_number"), // encrypted
-  emailAddress: text("email_address"), // encrypted
-  gracePeriodEnd: timestamp("grace_period_end"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const mfaSettings = pgTable('mfa_settings', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull()
+    .unique(),
+  isEnabled: boolean('is_enabled').default(false).notNull(),
+  totpSecret: text('totp_secret'), // encrypted
+  backupCodes: jsonb('backup_codes'), // array of encrypted codes
+  smsPhoneNumber: text('sms_phone_number'), // encrypted
+  emailAddress: text('email_address'), // encrypted
+  gracePeriodEnd: timestamp('grace_period_end'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Trusted Devices table
-export const trustedDevices = pgTable("trusted_devices", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").references(() => users.id).notNull(),
-  deviceFingerprint: text("device_fingerprint").notNull(),
-  deviceName: text("device_name"),
-  userAgent: text("user_agent"),
-  ipAddress: text("ip_address"),
-  lastUsed: timestamp("last_used").defaultNow().notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const trustedDevices = pgTable('trusted_devices', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  deviceFingerprint: text('device_fingerprint').notNull(),
+  deviceName: text('device_name'),
+  userAgent: text('user_agent'),
+  ipAddress: text('ip_address'),
+  lastUsed: timestamp('last_used').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // MFA Attempts table (for rate limiting)
-export const mfaAttempts = pgTable("mfa_attempts", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").references(() => users.id).notNull(),
-  method: text("method").notNull(), // totp, sms, email, backup
-  success: boolean("success").notNull(),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  attemptedAt: timestamp("attempted_at").defaultNow().notNull(),
+export const mfaAttempts = pgTable('mfa_attempts', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  method: text('method').notNull(), // totp, sms, email, backup
+  success: boolean('success').notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  attemptedAt: timestamp('attempted_at').defaultNow().notNull(),
 });
 
 // MFA Recovery Codes table
-export const mfaRecoveryCodes = pgTable("mfa_recovery_codes", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").references(() => users.id).notNull(),
-  codeHash: text("code_hash").notNull(),
-  used: boolean("used").default(false).notNull(),
-  usedAt: timestamp("used_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const mfaRecoveryCodes = pgTable('mfa_recovery_codes', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  codeHash: text('code_hash').notNull(),
+  used: boolean('used').default(false).notNull(),
+  usedAt: timestamp('used_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Relations
@@ -242,16 +293,18 @@ export const insertUserSchema = createInsertSchema(users).pick({
   role: true,
 });
 
-export const insertCaseSchema = createInsertSchema(cases).pick({
-  title: true,
-  clientRef: true,
-  status: true,
-  riskLevel: true,
-  description: true,
-}).extend({
-  clientRef: z.string().optional(),
-  description: z.string().optional(),
-});
+export const insertCaseSchema = createInsertSchema(cases)
+  .pick({
+    title: true,
+    clientRef: true,
+    status: true,
+    riskLevel: true,
+    description: true,
+  })
+  .extend({
+    clientRef: z.string().optional(),
+    description: z.string().optional(),
+  });
 
 export const insertPersonSchema = createInsertSchema(persons).pick({
   role: true,
@@ -289,14 +342,18 @@ export const insertConsentSchema = createInsertSchema(consents).pick({
   scope: true,
 });
 
-export const insertAuditLogSchema = createInsertSchema(auditLog).pick({
-  userId: true,
-  action: true,
-  resource: true,
-  resourceId: true,
-  metadata: true,
-  redactedData: true,
-});
+export const insertAuditLogSchema = createInsertSchema(auditLog)
+  .pick({
+    userId: true,
+    action: true,
+    resource: true,
+    resourceId: true,
+    metadata: true,
+    redactedData: true,
+  })
+  .extend({
+    userId: z.string().uuid().nullable(),
+  });
 
 export const insertMfaSettingsSchema = createInsertSchema(mfaSettings).pick({
   userId: true,
@@ -373,43 +430,59 @@ export type InsertMfaRecoveryCode = z.infer<typeof insertMfaRecoveryCodeSchema>;
 // ============ RBAC TABLES ============
 
 // Roles table
-export const roles = pgTable("roles", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull().unique(),
-  description: text("description"),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const roles = pgTable('roles', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: text('name').notNull().unique(),
+  description: text('description'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Permissions table
-export const permissions = pgTable("permissions", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull().unique(),
-  resource: text("resource").notNull(),
-  action: text("action").notNull(),
-  description: text("description"),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const permissions = pgTable('permissions', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: text('name').notNull().unique(),
+  resource: text('resource').notNull(),
+  action: text('action').notNull(),
+  description: text('description'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Role-Permission junction table
-export const rolePermissions = pgTable("role_permissions", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  roleId: uuid("role_id").references(() => roles.id, { onDelete: "cascade" }).notNull(),
-  permissionId: uuid("permission_id").references(() => permissions.id, { onDelete: "cascade" }).notNull(),
-  grantedAt: timestamp("granted_at").defaultNow().notNull(),
-  grantedBy: text("granted_by").references(() => users.id),
+export const rolePermissions = pgTable('role_permissions', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  roleId: uuid('role_id')
+    .references(() => roles.id, { onDelete: 'cascade' })
+    .notNull(),
+  permissionId: uuid('permission_id')
+    .references(() => permissions.id, { onDelete: 'cascade' })
+    .notNull(),
+  grantedAt: timestamp('granted_at').defaultNow().notNull(),
+  grantedBy: text('granted_by').references(() => users.id),
 });
 
 // User-Role junction table
-export const userRoles = pgTable("user_roles", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  roleId: uuid("role_id").references(() => roles.id, { onDelete: "cascade" }).notNull(),
-  assignedAt: timestamp("assigned_at").defaultNow().notNull(),
-  assignedBy: text("assigned_by").references(() => users.id),
-  expiresAt: timestamp("expires_at"),
+export const userRoles = pgTable('user_roles', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: text('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  roleId: uuid('role_id')
+    .references(() => roles.id, { onDelete: 'cascade' })
+    .notNull(),
+  assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+  assignedBy: text('assigned_by').references(() => users.id),
+  expiresAt: timestamp('expires_at'),
 });
 
 // RBAC Relations
