@@ -16,6 +16,7 @@ import { z } from 'zod';
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
   username: text('username').notNull().unique(),
+  email: text('email').notNull().unique(),
   password: text('password').notNull(),
   name: text('name').notNull(),
   role: text('role').notNull().default('solicitor'),

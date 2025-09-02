@@ -1,28 +1,8 @@
 import { Router } from "express";
-import { z } from "zod";
-import { AuthService } from "../services/auth.js";
-import { authenticate } from "../middleware/auth.js";
-import { auditLog } from "../services/audit.js";
+import { AuthService } from "../services/auth";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
-
-// Validation schemas
-const registerSchema = z.object({
-  username: z.string().min(3).max(50),
-  password: z.string().min(8).max(100),
-  name: z.string().min(1).max(100),
-  role: z.enum(["solicitor", "admin", "paralegal", "client"]).default("solicitor"),
-});
-
-const loginSchema = z.object({
-  username: z.string(),
-  password: z.string(),
-});
-
-const changePasswordSchema = z.object({
-  currentPassword: z.string(),
-  newPassword: z.string().min(8).max(100),
-});
 
 /**
  * POST /api/auth/register
@@ -30,36 +10,29 @@ const changePasswordSchema = z.object({
  */
 router.post("/register", async (req, res) => {
   try {
-    const data = registerSchema.parse(req.body);
+    const { username, password, email, name, role = "paralegal" } = req.body;
     
-    const result = await AuthService.register(data);
+    if (!username || !password || !email || !name) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
     
-    // Log registration
-    await auditLog({
-      userId: result.user.id,
-      action: "user.register",
-      resource: "user",
-      resourceId: result.user.id,
-      metadata: { username: result.user.username, role: result.user.role },
+    const result = await AuthService.register({
+      username,
+      password,
+      email,
+      name,
+      role,
     });
     
-    res.status(201).json({
-      user: result.user,
+    res.json({
+      success: true,
       token: result.token,
+      user: result.user,
     });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid input", details: error.errors });
+  } catch (error: any) {
+    if (error.message === "Username already exists") {
+      return res.status(409).json({ error: error.message });
     }
-    
-    if (error instanceof Error) {
-      if (error.message === "Username already exists") {
-        return res.status(409).json({ error: error.message });
-      }
-      console.error("Registration error:", error);
-      return res.status(500).json({ error: "Registration failed" });
-    }
-    
     res.status(500).json({ error: "Registration failed" });
   }
 });
@@ -70,37 +43,21 @@ router.post("/register", async (req, res) => {
  */
 router.post("/login", async (req, res) => {
   try {
-    const data = loginSchema.parse(req.body);
+    const { username, password } = req.body;
     
-    const result = await AuthService.login(data.username, data.password);
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password required" });
+    }
     
-    // Log login
-    await auditLog({
-      userId: result.user.id,
-      action: "user.login",
-      resource: "session",
-      resourceId: result.user.id,
-      metadata: { username: result.user.username },
-    });
+    const result = await AuthService.login(username, password);
     
     res.json({
-      user: result.user,
+      success: true,
       token: result.token,
+      user: result.user,
     });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid input", details: error.errors });
-    }
-    
-    if (error instanceof Error) {
-      if (error.message === "Invalid credentials") {
-        return res.status(401).json({ error: error.message });
-      }
-      console.error("Login error:", error);
-      return res.status(500).json({ error: "Login failed" });
-    }
-    
-    res.status(500).json({ error: "Login failed" });
+  } catch (error: any) {
+    res.status(401).json({ error: "Invalid credentials" });
   }
 });
 
@@ -108,86 +65,35 @@ router.post("/login", async (req, res) => {
  * POST /api/auth/logout
  * Logout a user (client-side token removal)
  */
-router.post("/logout", authenticate, async (req, res) => {
-  try {
-    // Log logout
-    await auditLog({
-      userId: req.user!.id,
-      action: "user.logout",
-      resource: "session",
-      resourceId: req.user!.id,
-      metadata: { username: req.user!.username },
-    });
-    
-    res.json({ message: "Logged out successfully" });
-  } catch (error) {
-    console.error("Logout error:", error);
-    res.status(500).json({ error: "Logout failed" });
-  }
+router.post("/logout", authenticate, async (req: any, res) => {
+  res.json({ message: "Logged out successfully" });
 });
 
 /**
  * GET /api/auth/me
  * Get current user
  */
-router.get("/me", authenticate, (req, res) => {
-  res.json({ user: req.user });
-});
-
-/**
- * POST /api/auth/change-password
- * Change user password
- */
-router.post("/change-password", authenticate, async (req, res) => {
+router.get("/me", authenticate, async (req: any, res) => {
   try {
-    const data = changePasswordSchema.parse(req.body);
-    
-    // Verify current password
-    const isValid = await AuthService.login(req.user!.username, data.currentPassword);
-    if (!isValid) {
-      return res.status(401).json({ error: "Current password is incorrect" });
+    const user = await AuthService.getUserById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
-    
-    // Update password
-    await AuthService.updatePassword(req.user!.id, data.newPassword);
-    
-    // Log password change
-    await auditLog({
-      userId: req.user!.id,
-      action: "user.change_password",
-      resource: "user",
-      resourceId: req.user!.id,
-      metadata: { username: req.user!.username },
-    });
-    
-    res.json({ message: "Password changed successfully" });
+    res.json({ user });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid input", details: error.errors });
-    }
-    
-    console.error("Change password error:", error);
-    res.status(500).json({ error: "Failed to change password" });
+    res.status(500).json({ error: "Failed to get user" });
   }
 });
 
 /**
- * POST /api/auth/refresh
- * Refresh authentication token
+ * GET /api/auth/health
+ * Check auth system health
  */
-router.post("/refresh", authenticate, async (req, res) => {
-  try {
-    const token = AuthService.generateToken({
-      userId: req.user!.id,
-      username: req.user!.username,
-      role: req.user!.role,
-    });
-    
-    res.json({ token });
-  } catch (error) {
-    console.error("Token refresh error:", error);
-    res.status(500).json({ error: "Failed to refresh token" });
-  }
+router.get("/health", (req, res) => {
+  res.json({ 
+    status: "Auth system operational",
+    timestamp: new Date().toISOString()
+  });
 });
 
 export default router;
