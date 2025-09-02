@@ -512,6 +512,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
             accept={allowedTypes.join(',')}
             onChange={(e) => e.target.files && handleFileSelection(Array.from(e.target.files))}
             className="hidden"
+            aria-label="Select files to upload"
+            title="Select files to upload"
           />
         </div>
 

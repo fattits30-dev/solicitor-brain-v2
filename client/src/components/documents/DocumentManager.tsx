@@ -1,11 +1,13 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Resizable } from '@/components/ui/resizable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Sheet,
   SheetContent,
@@ -14,32 +16,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { DocumentViewer } from './DocumentViewer';
+import { Eye, FileText, Grid, Info, List, PanelLeftOpen, RotateCcw, Upload } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { DocumentList } from './DocumentList';
-import { DocumentUpload } from './DocumentUpload';
 import { DocumentMetadata } from './DocumentMetadata';
-import {
-  FileText,
-  Upload,
-  Search,
-  Settings,
-  Grid,
-  List,
-  Eye,
-  Info,
-  PanelLeftOpen,
-  PanelRightOpen,
-  Maximize,
-  Minimize,
-  RotateCcw
-} from 'lucide-react';
+import { DocumentUpload } from './DocumentUpload';
+import { DocumentViewer } from './DocumentViewer';
 
 interface Document {
   id: string;
@@ -78,7 +60,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   showCaseInfo = true,
   defaultView = 'list',
   compact = false,
-  height = 'calc(100vh - 200px)'
+  height = 'calc(100vh - 200px)',
 }) => {
   // State management
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -88,7 +70,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showMetadataSheet, setShowMetadataSheet] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
 
   // Panel sizes (for responsive layout)
   const [listPanelSize, setListPanelSize] = useState(40);
@@ -106,11 +88,11 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
       setLoading(true);
       const url = caseId ? `/api/cases/${caseId}/documents` : '/api/documents';
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error('Failed to load documents');
       }
-      
+
       const data = await response.json();
       setDocuments(data);
     } catch (err: any) {
@@ -120,39 +102,48 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
     }
   }, [caseId]);
 
-  const handleDocumentSelect = useCallback((document: Document) => {
-    setSelectedDocument(document);
-    if (compact || window.innerWidth < 768) {
-      setPanelLayout('viewer-only');
-    }
-  }, [compact]);
+  const handleDocumentSelect = useCallback(
+    (document: Document) => {
+      setSelectedDocument(document);
+      if (compact || window.innerWidth < 768) {
+        setPanelLayout('viewer-only');
+      }
+    },
+    [compact],
+  );
 
-  const handleUploadComplete = useCallback((uploadedDocuments: any[]) => {
-    setShowUploadDialog(false);
-    loadDocuments(); // Refresh the document list
-    
-    // Auto-select first uploaded document
-    if (uploadedDocuments.length > 0 && !compact) {
-      setTimeout(() => {
-        const firstDoc = documents.find(d => d.id === uploadedDocuments[0].id);
-        if (firstDoc) {
-          setSelectedDocument(firstDoc);
-        }
-      }, 1000);
-    }
-  }, [documents, compact, loadDocuments]);
+  const handleUploadComplete = useCallback(
+    (uploadedDocuments: any[]) => {
+      setShowUploadDialog(false);
+      loadDocuments(); // Refresh the document list
 
-  const handleMetadataUpdate = useCallback((metadata: any) => {
-    // Update the document in the list
-    setDocuments(prev => 
-      prev.map(doc => doc.id === metadata.id ? { ...doc, ...metadata } : doc)
-    );
-    
-    // Update selected document if it matches
-    if (selectedDocument?.id === metadata.id) {
-      setSelectedDocument(prev => prev ? { ...prev, ...metadata } : null);
-    }
-  }, [selectedDocument]);
+      // Auto-select first uploaded document
+      if (uploadedDocuments.length > 0 && !compact) {
+        setTimeout(() => {
+          const firstDoc = documents.find((d) => d.id === uploadedDocuments[0].id);
+          if (firstDoc) {
+            setSelectedDocument(firstDoc);
+          }
+        }, 1000);
+      }
+    },
+    [documents, compact, loadDocuments],
+  );
+
+  const handleMetadataUpdate = useCallback(
+    (metadata: any) => {
+      // Update the document in the list
+      setDocuments((prev) =>
+        prev.map((doc) => (doc.id === metadata.id ? { ...doc, ...metadata } : doc)),
+      );
+
+      // Update selected document if it matches
+      if (selectedDocument?.id === metadata.id) {
+        setSelectedDocument((prev) => (prev ? { ...prev, ...metadata } : null));
+      }
+    },
+    [selectedDocument],
+  );
 
   const togglePanelLayout = useCallback(() => {
     if (panelLayout === 'split') {
@@ -171,12 +162,15 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   }, []);
 
   // Responsive layout helpers
-  const isFullScreen = panelLayout === 'viewer-only' || panelLayout === 'list-only';
+  const _isFullScreen = panelLayout === 'viewer-only' || panelLayout === 'list-only';
   const showList = panelLayout !== 'viewer-only';
   const showViewer = panelLayout !== 'list-only' && selectedDocument;
 
   return (
-    <div className="w-full" style={{ height }}>
+    <div
+      className={`w-full ${height === 'calc(100vh - 200px)' ? 'document-manager-container' : ''}`}
+      style={height !== 'calc(100vh - 200px)' ? { height } : undefined}
+    >
       <Card className="h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
@@ -228,7 +222,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                 {panelLayout === 'list-only' && <List className="h-4 w-4" />}
                 {panelLayout === 'viewer-only' && <Eye className="h-4 w-4" />}
               </Button>
-              
+
               {panelLayout === 'split' && (
                 <Button
                   variant="ghost"
@@ -254,9 +248,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                 <SheetContent side="right" className="w-[600px] sm:max-w-[600px]">
                   <SheetHeader>
                     <SheetTitle>Document Details</SheetTitle>
-                    <SheetDescription>
-                      View and edit document metadata
-                    </SheetDescription>
+                    <SheetDescription>View and edit document metadata</SheetDescription>
                   </SheetHeader>
                   <div className="mt-4 h-full">
                     <DocumentMetadata
@@ -299,10 +291,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
           {panelLayout === 'split' ? (
             // Split Layout with Resizable Panels
             <div className="flex h-full">
-              <div 
-                className="border-r overflow-hidden"
-                style={{ width: `${listPanelSize}%` }}
-              >
+              <div className="border-r overflow-hidden" style={{ width: `${listPanelSize}%` }}>
                 <DocumentList
                   caseId={caseId}
                   onDocumentSelect={handleDocumentSelect}
@@ -312,11 +301,8 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                   showCaseInfo={showCaseInfo}
                 />
               </div>
-              
-              <div 
-                className="flex-1 overflow-hidden"
-                style={{ width: `${viewerPanelSize}%` }}
-              >
+
+              <div className="flex-1 overflow-hidden" style={{ width: `${viewerPanelSize}%` }}>
                 {selectedDocument ? (
                   <DocumentViewer
                     documentId={selectedDocument.id}
@@ -348,7 +334,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                   showCaseInfo={showCaseInfo}
                 />
               )}
-              
+
               {showViewer && selectedDocument && (
                 <DocumentViewer
                   documentId={selectedDocument.id}
@@ -370,9 +356,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <span>{documents.length} documents</span>
-              {selectedDocument && (
-                <span>Selected: {selectedDocument.name}</span>
-              )}
+              {selectedDocument && <span>Selected: {selectedDocument.name}</span>}
               {loading && (
                 <span className="flex items-center gap-1">
                   <div className="animate-spin rounded-full h-3 w-3 border-b border-primary"></div>
@@ -380,7 +364,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center gap-4">
               {caseId && <span>Case: {caseId}</span>}
               <span>Layout: {panelLayout}</span>

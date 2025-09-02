@@ -13,17 +13,20 @@ jest.mock('@/hooks/use-toast', () => ({
 global.fetch = jest.fn();
 
 describe('AIChatPanel', () => {
+  const mockOnDocumentAnalyze = jest.fn();
+  
   beforeEach(() => {
     (fetch as jest.Mock).mockReset();
+    mockOnDocumentAnalyze.mockReset();
   });
 
   it('renders AI chat panel with correct title', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     expect(screen.getByText('AI Legal Assistant')).toBeInTheDocument();
   });
 
   it('shows different modes correctly', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     // Check mode tabs
     expect(screen.getByText('General')).toBeInTheDocument();
@@ -32,7 +35,7 @@ describe('AIChatPanel', () => {
   });
 
   it('displays quick actions when no messages', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     // Check for quick action buttons
     expect(screen.getByText('Summarize Case')).toBeInTheDocument();
@@ -40,7 +43,7 @@ describe('AIChatPanel', () => {
   });
 
   it('allows typing in message input', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     const textArea = screen.getByPlaceholderText(/How can I help with your legal work today/);
     fireEvent.change(textArea, { target: { value: 'Test message' } });
@@ -49,7 +52,7 @@ describe('AIChatPanel', () => {
   });
 
   it('enables send button when message is typed', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     const textArea = screen.getByPlaceholderText(/How can I help with your legal work today/);
     const sendButton = screen.getByText('Send');
@@ -61,7 +64,7 @@ describe('AIChatPanel', () => {
   });
 
   it('handles quick action clicks', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     const summarizeCaseButton = screen.getByText('Summarize Case');
     fireEvent.click(summarizeCaseButton);
@@ -72,7 +75,7 @@ describe('AIChatPanel', () => {
   });
 
   it('changes mode correctly', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     // Click on Legal Analysis tab
     const legalTab = screen.getByText('Legal Analysis');
@@ -83,37 +86,37 @@ describe('AIChatPanel', () => {
   });
 
   it('shows conversation history button', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     const historyButton = screen.getByTitle('Conversation history');
     expect(historyButton).toBeInTheDocument();
   });
 
   it('shows settings button', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     const settingsButton = screen.getByTitle('Chat settings');
     expect(settingsButton).toBeInTheDocument();
   });
 
   it('handles file attachment', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     const attachButton = screen.getByText('Attach');
     expect(attachButton).toBeInTheDocument();
   });
 
   it('shows correct disclaimer', () => {
-    render(<AIChatPanel />);
+    render(<AIChatPanel onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     expect(screen.getByText(/AI responses are for guidance only/)).toBeInTheDocument();
   });
 
   it('handles prop changes correctly', () => {
-    const { rerender } = render(<AIChatPanel caseId="123" />);
+    const { rerender } = render(<AIChatPanel caseId="123" onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     // Re-render with documentId
-    rerender(<AIChatPanel caseId="123" documentId="doc-456" />);
+    rerender(<AIChatPanel caseId="123" documentId="doc-456" onDocumentAnalyze={mockOnDocumentAnalyze} />);
     
     // Component should handle the prop changes without errors
     expect(screen.getByText('AI Legal Assistant')).toBeInTheDocument();

@@ -1,46 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  FileText,
-  Calendar,
-  User,
-  Hash,
-  HardDrive,
-  Eye,
-  Edit3,
-  Save,
-  X,
   AlertCircle,
   CheckCircle,
   Clock,
-  Zap,
-  Search,
+  Edit3,
+  FileText,
+  Hash,
+  Save,
   Tag,
-  FileType,
-  Download,
-  Share2
+  X,
+  Zap,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
-interface DocumentMetadata {
+interface DocumentMetadataType {
   id: string;
   name: string;
   originalName?: string;
@@ -57,13 +46,13 @@ interface DocumentMetadata {
   description?: string;
   tags?: string[];
   priority?: 'low' | 'normal' | 'high';
-  
+
   // OCR Data
   ocrStatus: 'pending' | 'processing' | 'completed' | 'failed';
   ocrText?: string;
   ocrProgress?: number;
   ocrProcessedAt?: string;
-  
+
   // Document Analysis
   pageCount?: number;
   wordCount?: number;
@@ -73,7 +62,7 @@ interface DocumentMetadata {
     confidence: number;
     page: number;
   }>;
-  
+
   // Annotations
   annotations?: Array<{
     id: string;
@@ -83,7 +72,7 @@ interface DocumentMetadata {
     createdAt: string;
     page: number;
   }>;
-  
+
   // Privacy & Security
   containsPII?: boolean;
   confidentialityLevel?: 'public' | 'internal' | 'confidential' | 'restricted';
@@ -98,22 +87,29 @@ interface DocumentMetadata {
 
 interface DocumentMetadataProps {
   documentId: string;
-  onUpdate?: (metadata: DocumentMetadata) => void;
+  onUpdate?: (metadata: DocumentMetadataType) => void;
   onClose?: () => void;
   readOnly?: boolean;
   compact?: boolean;
 }
 
 const DOCUMENT_TYPES = [
-  'contract', 'correspondence', 'evidence', 'court-filing', 
-  'invoice', 'statement', 'report', 'photo', 'other'
+  'contract',
+  'correspondence',
+  'evidence',
+  'court-filing',
+  'invoice',
+  'statement',
+  'report',
+  'photo',
+  'other',
 ];
 
 const CONFIDENTIALITY_LEVELS = [
   { value: 'public', label: 'Public', description: 'No restrictions' },
   { value: 'internal', label: 'Internal', description: 'Internal use only' },
   { value: 'confidential', label: 'Confidential', description: 'Restricted access' },
-  { value: 'restricted', label: 'Restricted', description: 'Highly sensitive' }
+  { value: 'restricted', label: 'Restricted', description: 'Highly sensitive' },
 ];
 
 export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
@@ -121,14 +117,14 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
   onUpdate,
   onClose,
   readOnly = false,
-  compact = false
+  compact = false,
 }) => {
-  const [metadata, setMetadata] = useState<DocumentMetadata | null>(null);
+  const [metadata, setMetadata] = useState<DocumentMetadataType | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState<Partial<DocumentMetadata>>({});
+  const [editForm, setEditForm] = useState<Partial<DocumentMetadataType>>({});
   const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
@@ -139,12 +135,12 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch(`/api/documents/${documentId}/metadata`);
       if (!response.ok) {
         throw new Error(`Failed to load metadata: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setMetadata(data);
       setEditForm(data);
@@ -157,10 +153,10 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
 
   const saveChanges = async () => {
     if (!editForm || !metadata) return;
-    
+
     try {
       setSaving(true);
-      
+
       const response = await fetch(`/api/documents/${documentId}/metadata`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -170,14 +166,14 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
           description: editForm.description,
           tags: editForm.tags,
           priority: editForm.priority,
-          confidentialityLevel: editForm.confidentialityLevel
-        })
+          confidentialityLevel: editForm.confidentialityLevel,
+        }),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to save changes');
       }
-      
+
       const updatedMetadata = await response.json();
       setMetadata(updatedMetadata);
       setIsEditing(false);
@@ -191,17 +187,17 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
 
   const addTag = () => {
     if (!newTag.trim() || !editForm.tags) return;
-    
+
     const tags = [...editForm.tags, newTag.trim()];
-    setEditForm(prev => ({ ...prev, tags }));
+    setEditForm((prev) => ({ ...prev, tags }));
     setNewTag('');
   };
 
   const removeTag = (tagToRemove: string) => {
     if (!editForm.tags) return;
-    
-    const tags = editForm.tags.filter(tag => tag !== tagToRemove);
-    setEditForm(prev => ({ ...prev, tags }));
+
+    const tags = editForm.tags.filter((tag) => tag !== tagToRemove);
+    setEditForm((prev) => ({ ...prev, tags }));
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -218,14 +214,14 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
 
   const getOCRStatusBadge = () => {
     if (!metadata) return null;
-    
+
     const config = {
       pending: { variant: 'secondary' as const, icon: Clock, label: 'Pending' },
       processing: { variant: 'default' as const, icon: Zap, label: 'Processing' },
-      completed: { variant: 'success' as const, icon: CheckCircle, label: 'Complete' },
-      failed: { variant: 'destructive' as const, icon: AlertCircle, label: 'Failed' }
+      completed: { variant: 'outline' as const, icon: CheckCircle, label: 'Complete' },
+      failed: { variant: 'destructive' as const, icon: AlertCircle, label: 'Failed' },
     };
-    
+
     const { variant, icon: Icon, label } = config[metadata.ocrStatus];
     return (
       <Badge variant={variant} className="text-xs">
@@ -237,16 +233,20 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
 
   const getConfidentialityBadge = () => {
     if (!metadata?.confidentialityLevel) return null;
-    
+
     const config = {
-      public: { variant: 'success' as const, label: 'Public' },
+      public: { variant: 'outline' as const, label: 'Public' },
       internal: { variant: 'default' as const, label: 'Internal' },
       confidential: { variant: 'secondary' as const, label: 'Confidential' },
-      restricted: { variant: 'destructive' as const, label: 'Restricted' }
+      restricted: { variant: 'destructive' as const, label: 'Restricted' },
     };
-    
+
     const { variant, label } = config[metadata.confidentialityLevel];
-    return <Badge variant={variant} className="text-xs">{label}</Badge>;
+    return (
+      <Badge variant={variant} className="text-xs">
+        {label}
+      </Badge>
+    );
   };
 
   if (loading) {
@@ -288,7 +288,7 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
           <div className="flex items-center gap-2">
             {!readOnly && (
               <Button
-                variant={isEditing ? "default" : "outline"}
+                variant={isEditing ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => {
                   if (isEditing) {
@@ -339,27 +339,31 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                         <Input
                           id="filename"
                           value={editForm.name || ''}
-                          onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, name: e.target.value }))
+                          }
                         />
                       ) : (
                         <p className="text-sm font-medium py-2">{metadata.name}</p>
                       )}
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="type">Document Type</Label>
                       {isEditing ? (
-                        <Select 
-                          value={editForm.type} 
-                          onValueChange={(value) => setEditForm(prev => ({ ...prev, type: value }))}
+                        <Select
+                          value={editForm.type}
+                          onValueChange={(value: string) =>
+                            setEditForm((prev) => ({ ...prev, type: value }))
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {DOCUMENT_TYPES.map(type => (
+                            {DOCUMENT_TYPES.map((type) => (
                               <SelectItem key={type} value={type}>
-                                {type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                {type.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -383,7 +387,9 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                       <Textarea
                         id="description"
                         value={editForm.description || ''}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({ ...prev, description: e.target.value }))
+                        }
                         placeholder="Add a description..."
                         className="mt-1"
                       />
@@ -398,9 +404,14 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                     <div>
                       <Label htmlFor="priority">Priority</Label>
                       {isEditing ? (
-                        <Select 
-                          value={editForm.priority || 'normal'} 
-                          onValueChange={(value) => setEditForm(prev => ({ ...prev, priority: value as any }))}
+                        <Select
+                          value={editForm.priority || 'normal'}
+                          onValueChange={(value: string) =>
+                            setEditForm((prev) => ({
+                              ...prev,
+                              priority: value as 'low' | 'normal' | 'high',
+                            }))
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -412,7 +423,16 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                           </SelectContent>
                         </Select>
                       ) : (
-                        <Badge variant={metadata.priority === 'high' ? 'destructive' : metadata.priority === 'low' ? 'secondary' : 'default'} className="mt-2">
+                        <Badge
+                          variant={
+                            metadata.priority === 'high'
+                              ? 'destructive'
+                              : metadata.priority === 'low'
+                                ? 'secondary'
+                                : 'default'
+                          }
+                          className="mt-2"
+                        >
                           {metadata.priority || 'Normal'}
                         </Badge>
                       )}
@@ -421,15 +441,24 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                     <div>
                       <Label htmlFor="confidentiality">Confidentiality</Label>
                       {isEditing ? (
-                        <Select 
-                          value={editForm.confidentialityLevel || 'internal'} 
-                          onValueChange={(value) => setEditForm(prev => ({ ...prev, confidentialityLevel: value as any }))}
+                        <Select
+                          value={editForm.confidentialityLevel || 'internal'}
+                          onValueChange={(value: string) =>
+                            setEditForm((prev) => ({
+                              ...prev,
+                              confidentialityLevel: value as
+                                | 'public'
+                                | 'internal'
+                                | 'confidential'
+                                | 'restricted',
+                            }))
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {CONFIDENTIALITY_LEVELS.map(level => (
+                            {CONFIDENTIALITY_LEVELS.map((level) => (
                               <SelectItem key={level.value} value={level.value}>
                                 {level.label}
                               </SelectItem>
@@ -454,9 +483,11 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                         <Tag className="h-3 w-3 mr-1" />
                         {tag}
                         {isEditing && (
-                          <button 
+                          <button
                             onClick={() => removeTag(tag)}
                             className="ml-1 hover:bg-destructive hover:text-destructive-foreground rounded-full p-0.5"
+                            aria-label={`Remove tag: ${tag}`}
+                            title={`Remove tag: ${tag}`}
                           >
                             <X className="h-2 w-2" />
                           </button>
@@ -534,13 +565,13 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                     <h4 className="font-medium">OCR Processing</h4>
                     {getOCRStatusBadge()}
                   </div>
-                  
+
                   {metadata.ocrProcessedAt && (
                     <p className="text-sm text-muted-foreground mb-2">
                       Processed: {formatDate(metadata.ocrProcessedAt)}
                     </p>
                   )}
-                  
+
                   {metadata.ocrText && (
                     <div className="bg-gray-50 p-3 rounded-lg">
                       <p className="text-sm font-mono whitespace-pre-wrap max-h-32 overflow-y-auto">
@@ -591,7 +622,10 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                       <h4 className="font-medium mb-2">Extracted Entities</h4>
                       <div className="space-y-2 max-h-48 overflow-y-auto">
                         {metadata.entities.slice(0, 10).map((entity, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                          >
                             <div>
                               <Badge variant="outline" className="text-xs mr-2">
                                 {entity.type}
@@ -654,7 +688,10 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <span className="text-sm text-muted-foreground">Contains PII:</span>
-                      <Badge variant={metadata.containsPII ? 'destructive' : 'success'} className="ml-2">
+                      <Badge
+                        variant={metadata.containsPII ? 'destructive' : 'outline'}
+                        className="ml-2"
+                      >
                         {metadata.containsPII ? 'Yes' : 'No'}
                       </Badge>
                     </div>
@@ -691,10 +728,15 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
                     <h4 className="font-medium mb-2">Access Log</h4>
                     <div className="space-y-2">
                       {metadata.accessLog.map((entry, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                        >
                           <div>
                             <span className="text-sm font-medium capitalize">{entry.action}</span>
-                            <span className="text-sm text-muted-foreground ml-2">by {entry.user}</span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              by {entry.user}
+                            </span>
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {formatDate(entry.timestamp)}

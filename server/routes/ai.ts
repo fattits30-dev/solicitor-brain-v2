@@ -1,57 +1,49 @@
 import { Router } from 'express';
-import { aiService } from '../services/real-ai.js';
 import { authenticate } from '../middleware/auth.js';
+import { aiService } from '../services/real-ai.js';
 
 const router = Router();
 
 // Enhanced AI Chat endpoint with streaming support
 router.post('/chat', authenticate, async (req, res) => {
   try {
-    const { 
-      message, 
-      context, 
-      model = 'llama3', 
-      mode = 'general', 
-      stream = false 
-    } = req.body;
-    
+    const { message, context, mode = 'general', stream = false } = req.body;
+
     const startTime = Date.now();
-    
+
     if (stream) {
       // Set headers for streaming
       res.writeHead(200, {
         'Content-Type': 'text/plain',
         'Transfer-Encoding': 'chunked',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': '*'
+        'Access-Control-Allow-Headers': '*',
       });
 
-      const response = await aiService.chatStream(message, {
+      const _response = await aiService.chatStream(message, {
         ...context,
-        model,
         mode,
         onChunk: (chunk: string) => {
           res.write(chunk);
-        }
+        },
       });
-      
+
       res.end();
     } else {
       const response = await aiService.chat(message, {
         ...context,
-        model,
-        mode
+        mode,
       });
-      
+
       const processingTime = Date.now() - startTime;
-      
-      res.json({ 
-        response, 
+
+      res.json({
+        response,
         content: response,
-        model: model === 'llama3' ? 'llama3.2' : model,
-        confidence: 0.85, // Mock confidence for now
+        model: process.env.OLLAMA_MODEL || 'llama3.2',
+        confidence: 0.85,
         processingTime,
-        timestamp: new Date().toISOString() 
+        timestamp: new Date().toISOString(),
       });
     }
   } catch (error: any) {
@@ -77,9 +69,9 @@ router.post('/generate-draft', authenticate, async (req, res) => {
   try {
     const { template, data } = req.body;
     const draft = await aiService.generateDraft(template, data);
-    res.json({ 
+    res.json({
       content: draft,
-      timestamp: new Date().toISOString() 
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     console.error('Draft generation error:', error);
@@ -92,13 +84,27 @@ router.post('/summarize', authenticate, async (req, res) => {
   try {
     const { text } = req.body;
     const summary = await aiService.summarize(text);
-    res.json({ 
+    res.json({
       summary,
-      timestamp: new Date().toISOString() 
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     console.error('Summarization error:', error);
     res.status(500).json({ error: error.message || 'Summarization failed' });
+  }
+});
+
+// List available AI models
+router.get('/models', authenticate, async (req, res) => {
+  try {
+    const models = await aiService.listModels();
+    res.json({
+      models,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('List models error:', error);
+    res.status(500).json({ error: error.message || 'Failed to list models' });
   }
 });
 

@@ -1,13 +1,13 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { db } from "../db.js";
-import { users } from "../../shared/schema.js";
-import { eq } from "drizzle-orm";
-import type { User, InsertUser } from "../../shared/schema.js";
+import type { InsertUser, User } from '@shared/schema';
+import { users } from '@shared/schema';
+import bcrypt from 'bcryptjs';
+import { eq } from 'drizzle-orm';
+import jwt from 'jsonwebtoken';
+import { db } from '../db';
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev-jwt-secret";
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
-const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || "10");
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '10');
 
 export interface AuthPayload {
   userId: string;
@@ -34,7 +34,7 @@ export class AuthService {
    * Generate a JWT token
    */
   static generateToken(payload: AuthPayload): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
   }
 
   /**
@@ -56,7 +56,7 @@ export class AuthService {
       .limit(1);
 
     if (existingUser.length > 0) {
-      throw new Error("Username already exists");
+      throw new Error('Username already exists');
     }
 
     // Hash the password
@@ -66,6 +66,7 @@ export class AuthService {
     const [newUser] = await db
       .insert(users)
       .values({
+        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         ...userData,
         password: hashedPassword,
       })
@@ -92,20 +93,16 @@ export class AuthService {
    */
   static async login(username: string, password: string): Promise<{ user: User; token: string }> {
     // Find user by username
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.username, username))
-      .limit(1);
+    const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
 
     if (!user) {
-      throw new Error("Invalid credentials");
+      throw new Error('Invalid credentials');
     }
 
     // Verify password
     const isValid = await this.verifyPassword(password, user.password);
     if (!isValid) {
-      throw new Error("Invalid credentials");
+      throw new Error('Invalid credentials');
     }
 
     // Generate token
@@ -128,11 +125,7 @@ export class AuthService {
    * Get user by ID
    */
   static async getUserById(userId: string): Promise<User | null> {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!user) {
       return null;
@@ -148,12 +141,12 @@ export class AuthService {
    */
   static async updatePassword(userId: string, newPassword: string): Promise<void> {
     const hashedPassword = await this.hashPassword(newPassword);
-    
+
     await db
       .update(users)
-      .set({ 
+      .set({
         password: hashedPassword,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
   }

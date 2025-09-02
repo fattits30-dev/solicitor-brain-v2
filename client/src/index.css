@@ -152,3 +152,27 @@
   background-size: 200% 200%;
   animation: gradient 3s ease infinite;
 }
+
+/* Document viewer styles */
+.viewer-transform {
+  transition: transform 0.3s ease;
+  transform-origin: center center;
+}
+
+/* Document manager styles */
+.document-manager-container {
+  height: calc(100vh - 200px);
+}
+
+/* AI Chat Panel styles */
+.bounce-delay-0 {
+  animation-delay: 0ms;
+}
+
+.bounce-delay-150 {
+  animation-delay: 150ms;
+}
+
+.bounce-delay-300 {
+  animation-delay: 300ms;
+}

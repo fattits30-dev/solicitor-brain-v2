@@ -1,7 +1,8 @@
-import express, { type Request, Response, NextFunction } from 'express';
-import { registerRoutes } from './routes';
-import { setupVite, serveStatic, log } from './vite';
 import dotenv from 'dotenv';
+import express, { NextFunction, type Request, Response } from 'express';
+import { auditMiddleware } from './middleware/audit';
+import { registerRoutes } from './routes';
+import { log, serveStatic, setupVite } from './vite';
 // import { projectWatcher } from "./services/file-watcher.js";
 
 // Load environment variables
@@ -10,6 +11,9 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Apply comprehensive audit logging to all requests
+app.use(auditMiddleware);
 
 app.use((req, res, next) => {
   const start = Date.now();

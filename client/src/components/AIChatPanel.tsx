@@ -1,57 +1,68 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  Send, 
-  Bot, 
-  User,
-  Sparkles,
-  Brain,
-  FileText,
-  Loader2,
-  Copy,
-  ThumbsUp,
-  ThumbsDown,
-  RotateCcw,
-  Settings,
-  Download,
-  Upload,
-  Paperclip,
-  History,
-  BookOpen,
-  Scale,
-  Shield,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  MessageSquare,
-  GitBranch,
-  Zap,
-  Star,
-  Archive,
-  Share,
-  Eye,
-  EyeOff,
-  Volume2,
-  VolumeX,
-  Maximize,
-  Minimize,
-  X
-} from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import {
+  AlertCircle,
+  Archive,
+  BookOpen,
+  Bot,
+  Brain,
+  CheckCircle,
+  Clock,
+  Copy,
+  Download,
+  FileText,
+  History,
+  Loader2,
+  Maximize,
+  MessageSquare,
+  Minimize,
+  Paperclip,
+  RotateCcw,
+  Scale,
+  Send,
+  Settings,
+  Shield,
+  Sparkles,
+  Star,
+  ThumbsDown,
+  ThumbsUp,
+  User,
+  X,
+  Zap,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface Message {
   id: string;
@@ -112,7 +123,7 @@ interface AIChatPanelProps {
   caseId?: string;
   documentId?: string;
   onGenerateDraft?: (content: string) => void;
-  onDocumentAnalyze?: (documentId: string, analysis: string) => void;
+  onDocumentAnalyze: (_documentId: string, _analysis: string) => void;
   className?: string;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
@@ -122,10 +133,10 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
   caseId,
   documentId,
   onGenerateDraft,
-  onDocumentAnalyze,
+  onDocumentAnalyze: _onDocumentAnalyze,
   className,
   isExpanded = false,
-  onToggleExpand
+  onToggleExpand,
 }) => {
   // Core state
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -135,21 +146,20 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
   const [loading, setLoading] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState('');
   const [typingIndicator, setTypingIndicator] = useState(false);
-  
+
   // Configuration state
-  const [selectedModel, setSelectedModel] = useState<'llama3' | 'mistral' | 'gpt4'>('llama3');
   const [contextEnabled, setContextEnabled] = useState(true);
   const [chatMode, setChatMode] = useState<'general' | 'legal' | 'draft'>('general');
   const [streamingEnabled, setStreamingEnabled] = useState(true);
   const [confidenceThreshold, setConfidenceThreshold] = useState(0.7);
-  
+
   // UI state
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [showAttachments, setShowAttachments] = useState(false);
+  const [_showAttachments, _setShowAttachments] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<any[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  
+  const [_isRecording, _setIsRecording] = useState(false);
+
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -159,51 +169,57 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
     {
       id: 'summarize-case',
       label: 'Summarize Case',
-      prompt: 'Please provide a comprehensive summary of this case, including key facts, legal issues, and current status.',
+      prompt:
+        'Please provide a comprehensive summary of this case, including key facts, legal issues, and current status.',
       icon: FileText,
       category: 'analysis',
-      description: 'Get an overview of the case details'
+      description: 'Get an overview of the case details',
     },
     {
       id: 'identify-issues',
       label: 'Identify Legal Issues',
-      prompt: 'What are the primary legal issues in this case? Please analyze potential claims, defenses, and procedural considerations.',
+      prompt:
+        'What are the primary legal issues in this case? Please analyze potential claims, defenses, and procedural considerations.',
       icon: Scale,
       category: 'legal',
-      description: 'Analyze legal issues and claims'
+      description: 'Analyze legal issues and claims',
     },
     {
       id: 'draft-letter',
       label: 'Draft Response Letter',
-      prompt: 'Help me draft a professional response letter for this case. Please use an empathetic tone appropriate for the client\'s situation.',
+      prompt:
+        "Help me draft a professional response letter for this case. Please use an empathetic tone appropriate for the client's situation.",
       icon: Sparkles,
       category: 'drafting',
-      description: 'Create legal correspondence'
+      description: 'Create legal correspondence',
     },
     {
       id: 'compliance-check',
       label: 'Compliance Review',
-      prompt: 'Please review this matter for compliance with UK legal requirements, including limitation periods, procedural rules, and regulatory obligations.',
+      prompt:
+        'Please review this matter for compliance with UK legal requirements, including limitation periods, procedural rules, and regulatory obligations.',
       icon: Shield,
       category: 'compliance',
-      description: 'Check legal compliance requirements'
+      description: 'Check legal compliance requirements',
     },
     {
       id: 'timeline-analysis',
       label: 'Timeline Analysis',
-      prompt: 'Create a chronological timeline of events and identify critical dates, including any limitation periods or deadlines.',
+      prompt:
+        'Create a chronological timeline of events and identify critical dates, including any limitation periods or deadlines.',
       icon: Clock,
       category: 'analysis',
-      description: 'Analyze case timeline and deadlines'
+      description: 'Analyze case timeline and deadlines',
     },
     {
       id: 'risk-assessment',
       label: 'Risk Assessment',
-      prompt: 'Provide a risk assessment for this case, including likelihood of success, potential costs, and recommended strategy.',
+      prompt:
+        'Provide a risk assessment for this case, including likelihood of success, potential costs, and recommended strategy.',
       icon: AlertCircle,
       category: 'analysis',
-      description: 'Assess case risks and strategy'
-    }
+      description: 'Assess case risks and strategy',
+    },
   ];
 
   // Toast notifications
@@ -219,11 +235,13 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setConversations(parsed.map((c: any) => ({
-          ...c,
-          createdAt: new Date(c.createdAt),
-          lastUpdated: new Date(c.lastUpdated)
-        })));
+        setConversations(
+          parsed.map((c: any) => ({
+            ...c,
+            createdAt: new Date(c.createdAt),
+            lastUpdated: new Date(c.lastUpdated),
+          })),
+        );
       } catch (error) {
         console.error('Failed to load conversations:', error);
       }
@@ -248,41 +266,50 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
       messages: [],
       createdAt: new Date(),
       lastUpdated: new Date(),
-      context: { caseId, documentIds: documentId ? [documentId] : [] }
+      context: { caseId, documentIds: documentId ? [documentId] : [] },
     };
-    
-    setConversations(prev => [newConversation, ...prev]);
+
+    setConversations((prev) => [newConversation, ...prev]);
     setActiveConversationId(newConversation.id);
     setMessages([]);
-    
+
     return newConversation;
   }, [caseId, documentId]);
 
-  const switchConversation = useCallback((conversationId: string) => {
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (conversation) {
-      setActiveConversationId(conversationId);
-      setMessages(conversation.messages);
-    }
-  }, [conversations]);
+  const switchConversation = useCallback(
+    (conversationId: string) => {
+      const conversation = conversations.find((c) => c.id === conversationId);
+      if (conversation) {
+        setActiveConversationId(conversationId);
+        setMessages(conversation.messages);
+      }
+    },
+    [conversations],
+  );
 
-  const updateCurrentConversation = useCallback((updates: Partial<Conversation>) => {
-    if (!activeConversationId) return;
-    
-    setConversations(prev => prev.map(c => 
-      c.id === activeConversationId 
-        ? { ...c, ...updates, lastUpdated: new Date() }
-        : c
-    ));
-  }, [activeConversationId]);
+  const updateCurrentConversation = useCallback(
+    (updates: Partial<Conversation>) => {
+      if (!activeConversationId) return;
 
-  const deleteConversation = useCallback((conversationId: string) => {
-    setConversations(prev => prev.filter(c => c.id !== conversationId));
-    if (activeConversationId === conversationId) {
-      setActiveConversationId(null);
-      setMessages([]);
-    }
-  }, [activeConversationId]);
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === activeConversationId ? { ...c, ...updates, lastUpdated: new Date() } : c,
+        ),
+      );
+    },
+    [activeConversationId],
+  );
+
+  const deleteConversation = useCallback(
+    (conversationId: string) => {
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+      if (activeConversationId === conversationId) {
+        setActiveConversationId(null);
+        setMessages([]);
+      }
+    },
+    [activeConversationId],
+  );
 
   const handleSend = async (messageText?: string) => {
     const textToSend = messageText || input;
@@ -301,11 +328,13 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
       role: 'user',
       content: textToSend,
       timestamp: new Date(),
-      context: contextEnabled ? { 
-        caseId, 
-        documentId,
-        attachedFiles 
-      } : undefined
+      context: contextEnabled
+        ? {
+            caseId,
+            documentId,
+            attachedFiles,
+          }
+        : undefined,
     };
 
     const newMessages = [...messages, userMessage];
@@ -318,21 +347,30 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
     try {
       const requestBody = {
         message: textToSend,
-        model: selectedModel,
         mode: chatMode,
         stream: streamingEnabled,
-        context: contextEnabled ? {
-          caseId,
-          documentId,
-          attachedFiles: attachedFiles.map(f => ({ id: f.id, name: f.name, type: f.type })),
-          previousMessages: messages.slice(-5)
-        } : undefined
+        context: contextEnabled
+          ? {
+              caseId,
+              documentId,
+              attachedFiles: attachedFiles.map((f) => ({ id: f.id, name: f.name, type: f.type })),
+              previousMessages: messages.slice(-5),
+            }
+          : undefined,
       };
 
-      const response = await fetch('/api/ai/chat', {
+      // Route to agent system based on mode
+      let endpoint = '/api/ai/chat';
+      if (chatMode === 'legal') {
+        endpoint = '/api/agents/research';
+      } else if (chatMode === 'draft') {
+        endpoint = '/api/agents/generate-document';
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -350,9 +388,9 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          
+
           const chunk = decoder.decode(value);
-          
+
           // Try to parse JSON chunks for metadata
           try {
             const parsed = JSON.parse(chunk);
@@ -381,60 +419,62 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
         role: 'assistant',
         content: fullResponse,
         timestamp: new Date(),
-        model: selectedModel,
+        model: 'llama3.2',
         confidence,
         processingTime,
-        context: contextEnabled ? { 
-          caseId, 
-          documentId,
-          attachedFiles: attachedFiles.length > 0 ? attachedFiles : undefined
-        } : undefined
+        context: contextEnabled
+          ? {
+              caseId,
+              documentId,
+              attachedFiles: attachedFiles.length > 0 ? attachedFiles : undefined,
+            }
+          : undefined,
       };
 
       const updatedMessages = [...newMessages, assistantMessage];
       setMessages(updatedMessages);
       setStreamingResponse('');
-      
+
       // Update conversation
-      updateCurrentConversation({ 
+      updateCurrentConversation({
         messages: updatedMessages,
         metadata: {
-          totalTokens: (updatedMessages.length * 100), // Rough estimate
-          averageConfidence: updatedMessages
-            .filter(m => m.confidence)
-            .reduce((acc, m) => acc + (m.confidence || 0), 0) / 
-            updatedMessages.filter(m => m.confidence).length || 0
-        }
+          totalTokens: updatedMessages.length * 100, // Rough estimate
+          averageConfidence:
+            updatedMessages
+              .filter((m) => m.confidence)
+              .reduce((acc, m) => acc + (m.confidence || 0), 0) /
+              updatedMessages.filter((m) => m.confidence).length || 0,
+        },
       });
-      
+
       // Show confidence warning if low
       if (confidence < confidenceThreshold) {
         toast({
           title: 'Low Confidence Response',
           description: `The AI response has ${(confidence * 100).toFixed(0)}% confidence. Please verify the information.`,
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
-      
     } catch (error: any) {
       console.error('Chat error:', error);
       setTypingIndicator(false);
-      
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'system',
         content: `I'm sorry, but I encountered an error: ${error.message}. Please try again or contact support if the problem persists.`,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      
+
       const updatedMessages = [...newMessages, errorMessage];
       setMessages(updatedMessages);
       updateCurrentConversation({ messages: updatedMessages });
-      
+
       toast({
         title: 'Chat Error',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -442,57 +482,64 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
     }
   };
 
-  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  }, [handleSend]);
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    },
+    [handleSend],
+  );
 
   const handleCopyMessage = useCallback(async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
       toast({
         title: 'Copied to clipboard',
-        description: 'Message content copied successfully'
+        description: 'Message content copied successfully',
       });
     } catch (error) {
       console.error('Copy failed:', error);
       toast({
         title: 'Copy failed',
         description: 'Unable to copy to clipboard',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   }, []);
 
-  const handleFeedback = useCallback((messageId: string, feedback: 'positive' | 'negative') => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId ? { ...msg, feedback } : msg
-    ));
-    
-    // Update conversation
-    const updatedMessages = messages.map(msg => 
-      msg.id === messageId ? { ...msg, feedback } : msg
-    );
-    updateCurrentConversation({ messages: updatedMessages });
-    
-    toast({
-      title: 'Feedback recorded',
-      description: `Thank you for your ${feedback} feedback`
-    });
-  }, [messages, updateCurrentConversation]);
+  const handleFeedback = useCallback(
+    (messageId: string, feedback: 'positive' | 'negative') => {
+      setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, feedback } : msg)));
 
-  const handleStarMessage = useCallback((messageId: string) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId ? { ...msg, starred: !msg.starred } : msg
-    ));
-    
-    const updatedMessages = messages.map(msg => 
-      msg.id === messageId ? { ...msg, starred: !msg.starred } : msg
-    );
-    updateCurrentConversation({ messages: updatedMessages });
-  }, [messages, updateCurrentConversation]);
+      // Update conversation
+      const updatedMessages = messages.map((msg) =>
+        msg.id === messageId ? { ...msg, feedback } : msg,
+      );
+      updateCurrentConversation({ messages: updatedMessages });
+
+      toast({
+        title: 'Feedback recorded',
+        description: `Thank you for your ${feedback} feedback`,
+      });
+    },
+    [messages, updateCurrentConversation],
+  );
+
+  const handleStarMessage = useCallback(
+    (messageId: string) => {
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === messageId ? { ...msg, starred: !msg.starred } : msg)),
+      );
+
+      const updatedMessages = messages.map((msg) =>
+        msg.id === messageId ? { ...msg, starred: !msg.starred } : msg,
+      );
+      updateCurrentConversation({ messages: updatedMessages });
+    },
+    [messages, updateCurrentConversation],
+  );
 
   const handleReset = useCallback(() => {
     if (activeConversationId) {
@@ -503,13 +550,16 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
     setAttachedFiles([]);
   }, [activeConversationId, deleteConversation]);
 
-  const handleGenerateDraft = useCallback((content: string) => {
-    onGenerateDraft?.(content);
-    toast({
-      title: 'Draft created',
-      description: 'Content has been sent to the draft editor'
-    });
-  }, [onGenerateDraft]);
+  const handleGenerateDraft = useCallback(
+    (content: string) => {
+      onGenerateDraft?.(content);
+      toast({
+        title: 'Draft created',
+        description: 'Content has been sent to the draft editor',
+      });
+    },
+    [onGenerateDraft],
+  );
 
   const handleFileAttach = useCallback(() => {
     fileInputRef.current?.click();
@@ -517,31 +567,31 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    const newAttachments = files.map(file => ({
+    const newAttachments = files.map((file) => ({
       id: Date.now().toString() + Math.random(),
       name: file.name,
       type: file.type,
       size: file.size,
-      file
+      file,
     }));
-    
-    setAttachedFiles(prev => [...prev, ...newAttachments]);
+
+    setAttachedFiles((prev) => [...prev, ...newAttachments]);
     toast({
       title: 'Files attached',
-      description: `${files.length} file(s) attached to conversation`
+      description: `${files.length} file(s) attached to conversation`,
     });
   }, []);
 
   const handleRemoveAttachment = useCallback((attachmentId: string) => {
-    setAttachedFiles(prev => prev.filter(f => f.id !== attachmentId));
+    setAttachedFiles((prev) => prev.filter((f) => f.id !== attachmentId));
   }, []);
 
   const handleExportConversation = useCallback(async () => {
     if (!activeConversationId) return;
-    
-    const conversation = conversations.find(c => c.id === activeConversationId);
+
+    const conversation = conversations.find((c) => c.id === activeConversationId);
     if (!conversation) return;
-    
+
     const exportData = {
       conversation,
       exportedAt: new Date().toISOString(),
@@ -549,10 +599,10 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
         caseId,
         documentId,
         totalMessages: conversation.messages.length,
-        averageConfidence: conversation.metadata?.averageConfidence
-      }
+        averageConfidence: conversation.metadata?.averageConfidence,
+      },
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -562,29 +612,32 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     toast({
       title: 'Conversation exported',
-      description: 'Chat history downloaded as JSON file'
+      description: 'Chat history downloaded as JSON file',
     });
   }, [activeConversationId, conversations, caseId, documentId]);
 
-  const handleQuickAction = useCallback((action: QuickAction) => {
-    let contextualPrompt = action.prompt;
-    
-    if (caseId) {
-      contextualPrompt += ` (Case ID: ${caseId})`;
-    }
-    
-    if (attachedFiles.length > 0) {
-      contextualPrompt += ` Please consider the attached documents: ${attachedFiles.map(f => f.name).join(', ')}.`;
-    }
-    
-    setInput(contextualPrompt);
-    
-    // Optionally send immediately
-    setTimeout(() => handleSend(contextualPrompt), 100);
-  }, [caseId, attachedFiles, handleSend]);
+  const handleQuickAction = useCallback(
+    (action: QuickAction) => {
+      let contextualPrompt = action.prompt;
+
+      if (caseId) {
+        contextualPrompt += ` (Case ID: ${caseId})`;
+      }
+
+      if (attachedFiles.length > 0) {
+        contextualPrompt += ` Please consider the attached documents: ${attachedFiles.map((f) => f.name).join(', ')}.`;
+      }
+
+      setInput(contextualPrompt);
+
+      // Optionally send immediately
+      setTimeout(() => handleSend(contextualPrompt), 100);
+    },
+    [caseId, attachedFiles, handleSend],
+  );
 
   const getModeColor = useCallback((mode: string) => {
     switch (mode) {
@@ -620,11 +673,11 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
     return 'Low';
   }, []);
 
-  const currentConversation = conversations.find(c => c.id === activeConversationId);
+  const currentConversation = conversations.find((c) => c.id === activeConversationId);
 
   return (
     <TooltipProvider>
-      <Card className={cn("h-full flex flex-col", className)}>
+      <Card className={cn('h-full flex flex-col', className)}>
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
@@ -633,8 +686,10 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
           accept=".pdf,.doc,.docx,.txt,.json"
           onChange={handleFileSelect}
           className="hidden"
+          aria-label="Upload files for AI analysis"
+          title="Upload files for AI analysis"
         />
-        
+
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -646,14 +701,14 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 </Badge>
               )}
             </CardTitle>
-            
+
             <div className="flex items-center gap-1">
               {/* Mode indicator */}
               <Badge className={getModeColor(chatMode)}>
                 {getModeIcon(chatMode)}
                 <span className="ml-1 capitalize">{chatMode}</span>
               </Badge>
-              
+
               {/* Attachment indicator */}
               {attachedFiles.length > 0 && (
                 <Badge variant="secondary" className="text-xs">
@@ -661,7 +716,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                   {attachedFiles.length}
                 </Badge>
               )}
-              
+
               {/* History button */}
               <Sheet open={showHistory} onOpenChange={setShowHistory}>
                 <SheetTrigger asChild>
@@ -672,31 +727,25 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 <SheetContent side="left" className="w-80">
                   <SheetHeader>
                     <SheetTitle>Conversation History</SheetTitle>
-                    <SheetDescription>
-                      Manage your AI chat conversations
-                    </SheetDescription>
+                    <SheetDescription>Manage your AI chat conversations</SheetDescription>
                   </SheetHeader>
-                  
+
                   <div className="mt-4 space-y-2">
-                    <Button 
-                      onClick={createNewConversation}
-                      className="w-full"
-                      size="sm"
-                    >
+                    <Button onClick={createNewConversation} className="w-full" size="sm">
                       <MessageSquare className="h-4 w-4 mr-2" />
                       New Conversation
                     </Button>
-                    
+
                     <ScrollArea className="h-[calc(100vh-200px)]">
                       <div className="space-y-2">
                         {conversations.map((conv) => (
                           <div
                             key={conv.id}
                             className={cn(
-                              "p-3 rounded-lg border cursor-pointer transition-colors",
+                              'p-3 rounded-lg border cursor-pointer transition-colors',
                               activeConversationId === conv.id
-                                ? "bg-primary/10 border-primary"
-                                : "hover:bg-muted"
+                                ? 'bg-primary/10 border-primary'
+                                : 'hover:bg-muted',
                             )}
                             onClick={() => {
                               switchConversation(conv.id);
@@ -705,20 +754,22 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                  {conv.name}
-                                </p>
+                                <p className="text-sm font-medium truncate">{conv.name}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {conv.messages.length} messages • {conv.lastUpdated.toLocaleDateString()}
+                                  {conv.messages.length} messages •{' '}
+                                  {conv.lastUpdated.toLocaleDateString()}
                                 </p>
                                 {conv.metadata?.averageConfidence && (
                                   <div className="flex items-center mt-1">
                                     <div className="text-xs text-muted-foreground mr-2">
                                       Avg. confidence:
                                     </div>
-                                    <Badge 
-                                      variant="secondary" 
-                                      className={cn("text-xs", getConfidenceColor(conv.metadata.averageConfidence))}
+                                    <Badge
+                                      variant="secondary"
+                                      className={cn(
+                                        'text-xs',
+                                        getConfidenceColor(conv.metadata.averageConfidence),
+                                      )}
                                     >
                                       {(conv.metadata.averageConfidence * 100).toFixed(0)}%
                                     </Badge>
@@ -744,7 +795,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                   </div>
                 </SheetContent>
               </Sheet>
-              
+
               {/* Settings button */}
               <Sheet open={showSettings} onOpenChange={setShowSettings}>
                 <SheetTrigger asChild>
@@ -755,29 +806,14 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 <SheetContent>
                   <SheetHeader>
                     <SheetTitle>AI Chat Settings</SheetTitle>
-                    <SheetDescription>
-                      Configure your AI assistant preferences
-                    </SheetDescription>
+                    <SheetDescription>Configure your AI assistant preferences</SheetDescription>
                   </SheetHeader>
-                  
+
                   <div className="mt-6 space-y-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">AI Model</label>
-                      <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as 'llama3' | 'mistral' | 'gpt4')}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="llama3">Llama 3.2 (Recommended)</SelectItem>
-                          <SelectItem value="mistral">Mistral 7B</SelectItem>
-                          <SelectItem value="gpt4">GPT-4 (Premium)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
+
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
-                        <Checkbox 
+                        <Checkbox
                           id="streaming"
                           checked={streamingEnabled}
                           onCheckedChange={(checked) => setStreamingEnabled(!!checked)}
@@ -786,9 +822,9 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                           Enable streaming responses
                         </label>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
-                        <Checkbox 
+                        <Checkbox
                           id="context"
                           checked={contextEnabled}
                           onCheckedChange={(checked) => setContextEnabled(!!checked)}
@@ -798,7 +834,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                         </label>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="text-sm font-medium">
                         Confidence Threshold ({(confidenceThreshold * 100).toFixed(0)}%)
@@ -811,6 +847,8 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                         value={confidenceThreshold}
                         onChange={(e) => setConfidenceThreshold(parseFloat(e.target.value))}
                         className="w-full"
+                        aria-label="Confidence threshold slider"
+                        title="Adjust confidence threshold for AI responses"
                       />
                       <p className="text-xs text-muted-foreground">
                         Warn when AI confidence falls below this threshold
@@ -819,46 +857,40 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                   </div>
                 </SheetContent>
               </Sheet>
-              
+
               {/* Export button */}
               {activeConversationId && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={handleExportConversation}
                       title="Export conversation"
                     >
                       <Download className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    Export conversation as JSON
-                  </TooltipContent>
+                  <TooltipContent>Export conversation as JSON</TooltipContent>
                 </Tooltip>
               )}
-              
+
               {/* Expand toggle */}
               {onToggleExpand && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={onToggleExpand}
-                  title={isExpanded ? "Minimize" : "Expand"}
+                  title={isExpanded ? 'Minimize' : 'Expand'}
                 >
                   {isExpanded ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                 </Button>
               )}
-              
+
               {/* Reset button */}
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    title="Clear conversation"
-                  >
+                  <Button variant="ghost" size="icon" title="Clear conversation">
                     <RotateCcw className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
@@ -866,7 +898,8 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                   <DialogHeader>
                     <DialogTitle>Clear Conversation</DialogTitle>
                     <DialogDescription>
-                      This will permanently delete the current conversation. This action cannot be undone.
+                      This will permanently delete the current conversation. This action cannot be
+                      undone.
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
@@ -899,7 +932,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
               </TabsTrigger>
             </TabsList>
           </Tabs>
-          
+
           {/* Attached Files Display */}
           {attachedFiles.length > 0 && (
             <div className="border rounded-lg p-3 bg-muted/50">
@@ -919,7 +952,10 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
               </div>
               <div className="space-y-1">
                 {attachedFiles.map((file) => (
-                  <div key={file.id} className="flex items-center justify-between bg-background rounded p-2">
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between bg-background rounded p-2"
+                  >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <span className="text-sm truncate">{file.name}</span>
@@ -948,39 +984,46 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 <div className="flex flex-col items-center justify-center h-full text-center py-8">
                   <Bot className="h-16 w-16 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
-                    {chatMode === 'legal' 
+                    {chatMode === 'legal'
                       ? 'Legal Analysis Assistant'
                       : chatMode === 'draft'
-                      ? 'Document Drafting Assistant'
-                      : 'AI Legal Assistant'}
+                        ? 'Document Drafting Assistant'
+                        : 'AI Legal Assistant'}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-6 max-w-md">
-                    {chatMode === 'legal' 
+                    {chatMode === 'legal'
                       ? 'I can help analyze legal documents, identify issues, assess risks, and provide guidance on UK law matters.'
                       : chatMode === 'draft'
-                      ? 'I can help draft legal documents, letters, contracts, and other legal correspondence with appropriate tone and language.'
-                      : 'I\'m here to assist with your legal work. Ask me anything about UK law, case analysis, or document drafting.'}
+                        ? 'I can help draft legal documents, letters, contracts, and other legal correspondence with appropriate tone and language.'
+                        : "I'm here to assist with your legal work. Ask me anything about UK law, case analysis, or document drafting."}
                   </p>
-                  
+
                   {/* Quick Actions Grid */}
                   <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
                     {quickActions
-                      .filter(action => chatMode === 'general' || action.category === chatMode || 
-                               (chatMode === 'legal' && ['legal', 'analysis', 'compliance'].includes(action.category)) ||
-                               (chatMode === 'draft' && action.category === 'drafting'))
+                      .filter(
+                        (action) =>
+                          chatMode === 'general' ||
+                          action.category === chatMode ||
+                          (chatMode === 'legal' &&
+                            ['legal', 'analysis', 'compliance'].includes(action.category)) ||
+                          (chatMode === 'draft' && action.category === 'drafting'),
+                      )
                       .slice(0, 6)
                       .map((action) => {
                         const Icon = action.icon;
                         return (
                           <Tooltip key={action.id}>
                             <TooltipTrigger asChild>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 className="h-auto p-4 flex flex-col items-center gap-2 hover:bg-primary/5"
                                 onClick={() => handleQuickAction(action)}
                               >
                                 <Icon className="h-6 w-6 text-primary" />
-                                <span className="text-xs font-medium text-center">{action.label}</span>
+                                <span className="text-xs font-medium text-center">
+                                  {action.label}
+                                </span>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -990,7 +1033,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                         );
                       })}
                   </div>
-                  
+
                   <div className="mt-6 text-xs text-muted-foreground text-center">
                     <p>💡 Tip: You can attach documents using the paperclip icon below</p>
                   </div>
@@ -1015,11 +1058,17 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                           )}
                         </div>
                       )}
-                      
-                      <div className={`flex-1 max-w-[85%] ${message.role === 'user' ? 'ml-auto' : ''}`}>
+
+                      <div
+                        className={`flex-1 max-w-[85%] ${message.role === 'user' ? 'ml-auto' : ''}`}
+                      >
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-medium text-muted-foreground">
-                            {message.role === 'user' ? 'You' : message.role === 'assistant' ? 'AI Assistant' : 'System'}
+                            {message.role === 'user'
+                              ? 'You'
+                              : message.role === 'assistant'
+                                ? 'AI Assistant'
+                                : 'System'}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {message.timestamp.toLocaleTimeString()}
@@ -1032,9 +1081,12 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                           {message.confidence && (
                             <Tooltip>
                               <TooltipTrigger>
-                                <Badge 
-                                  variant="secondary" 
-                                  className={cn("text-xs h-4 px-1", getConfidenceColor(message.confidence))}
+                                <Badge
+                                  variant="secondary"
+                                  className={cn(
+                                    'text-xs h-4 px-1',
+                                    getConfidenceColor(message.confidence),
+                                  )}
                                 >
                                   {getConfidenceLabel(message.confidence)}
                                 </Badge>
@@ -1042,7 +1094,9 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                               <TooltipContent>
                                 <p>Confidence: {(message.confidence * 100).toFixed(1)}%</p>
                                 {message.processingTime && (
-                                  <p>Response time: {(message.processingTime / 1000).toFixed(1)}s</p>
+                                  <p>
+                                    Response time: {(message.processingTime / 1000).toFixed(1)}s
+                                  </p>
                                 )}
                               </TooltipContent>
                             </Tooltip>
@@ -1051,20 +1105,20 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                             <Star className="h-3 w-3 text-yellow-500 fill-current" />
                           )}
                         </div>
-                        
+
                         <div
                           className={`rounded-lg p-4 ${
                             message.role === 'user'
                               ? 'bg-primary text-primary-foreground'
                               : message.role === 'system'
-                              ? 'bg-orange-50 border border-orange-200 text-orange-900'
-                              : 'bg-muted border'
+                                ? 'bg-orange-50 border border-orange-200 text-orange-900'
+                                : 'bg-muted border'
                           }`}
                         >
                           <div className="prose prose-sm max-w-none dark:prose-invert">
                             <div className="text-sm whitespace-pre-wrap">{message.content}</div>
                           </div>
-                          
+
                           {/* Citations */}
                           {message.context?.citations && message.context.citations.length > 0 && (
                             <div className="mt-3 pt-3 border-t border-current/20">
@@ -1076,17 +1130,16 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                                 {message.context.citations.map((citation, idx) => (
                                   <div key={idx} className="bg-background/80 rounded p-2 text-xs">
                                     <div className="flex items-center justify-between mb-1">
-                                      <Badge 
-                                        variant="secondary" 
-                                        className="text-xs"
-                                      >
+                                      <Badge variant="secondary" className="text-xs">
                                         {citation.source}
                                         {citation.page && ` p.${citation.page}`}
                                       </Badge>
-                                      <div className={cn(
-                                        "text-xs font-medium",
-                                        getConfidenceColor(citation.confidence)
-                                      )}>
+                                      <div
+                                        className={cn(
+                                          'text-xs font-medium',
+                                          getConfidenceColor(citation.confidence),
+                                        )}
+                                      >
                                         {(citation.confidence * 100).toFixed(0)}%
                                       </div>
                                     </div>
@@ -1100,25 +1153,26 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                               </div>
                             </div>
                           )}
-                          
+
                           {/* Attached files context */}
-                          {message.context?.attachedFiles && message.context.attachedFiles.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-current/20">
-                              <p className="text-xs font-medium mb-2 flex items-center gap-1">
-                                <Paperclip className="h-3 w-3" />
-                                Referenced Files:
-                              </p>
-                              <div className="flex flex-wrap gap-1">
-                                {message.context.attachedFiles.map((file, idx) => (
-                                  <Badge key={idx} variant="outline" className="text-xs">
-                                    {file.name}
-                                  </Badge>
-                                ))}
+                          {message.context?.attachedFiles &&
+                            message.context.attachedFiles.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-current/20">
+                                <p className="text-xs font-medium mb-2 flex items-center gap-1">
+                                  <Paperclip className="h-3 w-3" />
+                                  Referenced Files:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {message.context.attachedFiles.map((file, idx) => (
+                                    <Badge key={idx} variant="outline" className="text-xs">
+                                      {file.name}
+                                    </Badge>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
                         </div>
-                        
+
                         {/* Message Actions */}
                         {(message.role === 'assistant' || message.role === 'user') && (
                           <div className="flex items-center gap-1 mt-3">
@@ -1131,10 +1185,12 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                               <Copy className="h-3 w-3 mr-1" />
                               Copy
                             </Button>
-                            
+
                             {message.role === 'assistant' && (
                               <>
-                                {(chatMode === 'draft' || message.content.includes('draft') || message.content.includes('letter')) && (
+                                {(chatMode === 'draft' ||
+                                  message.content.includes('draft') ||
+                                  message.content.includes('letter')) && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -1145,17 +1201,19 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                                     Use as Draft
                                   </Button>
                                 )}
-                                
+
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="h-7 px-2 text-xs"
                                   onClick={() => handleStarMessage(message.id)}
                                 >
-                                  <Star className={`h-3 w-3 mr-1 ${message.starred ? 'text-yellow-500 fill-current' : ''}`} />
+                                  <Star
+                                    className={`h-3 w-3 mr-1 ${message.starred ? 'text-yellow-500 fill-current' : ''}`}
+                                  />
                                   {message.starred ? 'Starred' : 'Star'}
                                 </Button>
-                                
+
                                 <div className="flex items-center">
                                   <Button
                                     variant="ghost"
@@ -1179,7 +1237,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                           </div>
                         )}
                       </div>
-                      
+
                       {message.role === 'user' && (
                         <div className="flex-shrink-0 mt-1">
                           <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center ring-2 ring-secondary/30">
@@ -1189,7 +1247,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                       )}
                     </div>
                   ))}
-                  
+
                   {/* Typing Indicator */}
                   {typingIndicator && (
                     <div className="flex gap-3">
@@ -1201,16 +1259,18 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                       <div className="flex-1 max-w-[85%]">
                         <div className="rounded-lg p-4 bg-muted border">
                           <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                            <span className="ml-2 text-xs text-muted-foreground">AI is thinking...</span>
+                            <div className="w-2 h-2 bg-primary rounded-full animate-bounce bounce-delay-0"></div>
+                            <div className="w-2 h-2 bg-primary rounded-full animate-bounce bounce-delay-150"></div>
+                            <div className="w-2 h-2 bg-primary rounded-full animate-bounce bounce-delay-300"></div>
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              AI is thinking...
+                            </span>
                           </div>
                         </div>
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Streaming Response */}
                   {streamingResponse && (
                     <div className="flex gap-3">
@@ -1221,7 +1281,9 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                       </div>
                       <div className="flex-1 max-w-[85%]">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium text-muted-foreground">AI Assistant</span>
+                          <span className="text-xs font-medium text-muted-foreground">
+                            AI Assistant
+                          </span>
                           <Badge variant="outline" className="text-xs h-4 px-1 animate-pulse">
                             Streaming...
                           </Badge>
@@ -1251,10 +1313,10 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 <div className="flex items-center gap-1">
                   <span className="text-muted-foreground">Model:</span>
                   <Badge variant="outline" className="text-xs">
-                    {selectedModel === 'llama3' ? 'Llama 3.2' : selectedModel === 'mistral' ? 'Mistral' : 'GPT-4'}
+                    Llama 3.2
                   </Badge>
                 </div>
-                
+
                 {contextEnabled && (caseId || documentId) && (
                   <div className="flex items-center gap-1">
                     <CheckCircle className="h-3 w-3 text-green-500" />
@@ -1262,7 +1324,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                   </div>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -1276,7 +1338,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 </Button>
               </div>
             </div>
-            
+
             {/* Main Input */}
             <div className="flex gap-2">
               <div className="flex-1">
@@ -1285,22 +1347,22 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyPress}
                   placeholder={
-                    chatMode === 'legal' 
+                    chatMode === 'legal'
                       ? 'Ask about legal issues, case analysis, or UK law...'
                       : chatMode === 'draft'
-                      ? 'Describe the document you want to draft...'
-                      : 'How can I help with your legal work today?'
+                        ? 'Describe the document you want to draft...'
+                        : 'How can I help with your legal work today?'
                   }
                   className="min-h-[80px] max-h-[150px] resize-none"
                   disabled={loading}
                 />
-                
+
                 {/* Character count and suggestions */}
                 <div className="flex items-center justify-between mt-1">
                   <div className="text-xs text-muted-foreground">
                     {input.length > 0 && `${input.length} characters`}
                   </div>
-                  
+
                   {input.length === 0 && messages.length === 0 && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Zap className="h-3 w-3" />
@@ -1309,7 +1371,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                   )}
                 </div>
               </div>
-              
+
               <div className="flex flex-col gap-2">
                 <Button
                   onClick={() => handleSend()}
@@ -1328,12 +1390,13 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 </Button>
               </div>
             </div>
-            
+
             {/* Disclaimer */}
             <div className="text-xs text-muted-foreground text-center border-t pt-2">
               <p className="flex items-center justify-center gap-1">
                 <Shield className="h-3 w-3" />
-                AI responses are for guidance only. Always verify legal advice with qualified professionals.
+                AI responses are for guidance only. Always verify legal advice with qualified
+                professionals.
               </p>
             </div>
           </div>

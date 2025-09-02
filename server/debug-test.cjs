@@ -63,8 +63,9 @@ app.get('/debug-test', (req, res) => {
   // Error object
   const sampleError = new Error('This is a test error');
   
-  // Buffer
-  const buffer = Buffer.from('Binary data here');
+  // Buffer (commented out to prevent Redis serialization issues)
+  // const buffer = Buffer.from('Binary data here');
+  const buffer = 'Binary data as string (safe for JSON)';
   
   // Regular expression
   const pattern = /test.*debug/gi;
