@@ -14,7 +14,6 @@ import agentRoutes from './routes/agents.js';
 import aiRoutes from './routes/ai.js';
 import auditRoutes from './routes/audit.js';
 import authRoutes from './routes/auth.js';
-import simpleAuthRoutes from './routes/simple-auth.js';
 import mfaRoutes from './routes/mfa.js';
 import searchRoutes from './routes/search.js';
 import uploadRoutes from './routes/upload.js';
@@ -34,7 +33,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/auth', authRoutes);
   
   // Simple auth routes (public) - for testing
-  app.use('/api', simpleAuthRoutes);
 
   // MFA routes (semi-protected - requires basic auth but not MFA completion)
   app.use('/api/mfa', mfaRoutes);

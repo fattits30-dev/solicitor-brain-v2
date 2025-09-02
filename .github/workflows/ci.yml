@@ -7,71 +7,77 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
   lint-build-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
+          
       - name: Install dependencies
         run: npm ci
+        
       - name: Lint
         run: npm run lint
+        
       - name: Typecheck
         run: npm run typecheck
+        
       - name: Unit tests
         run: npm test -- --runInBand --coverage
+        
       - name: Build
         run: npm run build
-name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+        
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
         with:
-          node-version: 20
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - name: Lint
-        run: npm run lint
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Unit tests
-        run: npm test -- --runInBand --coverage
-      - name: Build
-        run: npm run build
-name: CI/CD Pipeline
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
 
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-
-jobs:
-  test:
+  e2e-tests:
     runs-on: ubuntu-latest
-
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        image: postgres:16
         env:
+          POSTGRES_USER: solicitor
           POSTGRES_PASSWORD: development_secure_2024
-          POSTGRES_DB: solicitor_brain_test
+          POSTGRES_DB: solicitor_brain_v2
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -79,7 +85,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
+          
       redis:
         image: redis:7-alpine
         options: >-
@@ -89,58 +95,41 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-
+          
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Setup environment
-      run: |
-        cp .env.example .env
-        echo "DATABASE_URL=postgresql://postgres:development_secure_2024@localhost:5432/solicitor_brain_test" >> .env
-        echo "REDIS_URL=redis://localhost:6379" >> .env
-        echo "JWT_SECRET=test-secret-key" >> .env
-        echo "ENABLE_AI_FEATURES=false" >> .env
-
-    - name: Run database migrations
-      run: |
-        npm run db:setup
-        npm run db:seed
-
-    - name: Run unit tests
-      run: npm test
-
-    - name: Install Playwright
-      run: npx playwright install --with-deps
-
-    - name: Start server and run E2E tests
-      run: |
-        npm run dev &
-        sleep 10
-        npm run e2e
-      env:
-        PORT: 3333
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-    - name: Install dependencies
-      run: npm ci
-    - name: Run ESLint
-      run: npm run lint
-    - name: Run TypeScript check
-      run: npm run typecheck
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Setup database
+        env:
+          DATABASE_URL: postgresql://solicitor:development_secure_2024@localhost:5432/solicitor_brain_v2
+        run: |
+          npm run db:push
+          npm run db:seed
+          
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        
+      - name: Run E2E tests
+        env:
+          DATABASE_URL: postgresql://solicitor:development_secure_2024@localhost:5432/solicitor_brain_v2
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret-for-ci
+          ENABLE_AI_FEATURES: false
+        run: npm run e2e
+        
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
