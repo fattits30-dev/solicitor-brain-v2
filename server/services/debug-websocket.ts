@@ -31,7 +31,7 @@ export class DebugWebSocketService extends EventEmitter {
       path: '/debug-ws'
     });
 
-    this.wss.on('connection', (ws, req) => {
+    this.wss.on('connection', (ws, _req) => {
       const clientId = this.generateClientId();
       const client: DebugClient = {
         id: clientId,

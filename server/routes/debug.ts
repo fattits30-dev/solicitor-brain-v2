@@ -3,7 +3,6 @@ import { db } from '../db';
 import { DebugLogger, perfMonitor } from '../utils/debug';
 import { DebugPresetManager, getPresets, getActivePreset } from '../utils/debug-presets';
 import { debugRecorder } from '../services/debug-recorder';
-import { debugWebSocket } from '../services/debug-websocket';
 import { getNetworkStats, getNetworkRequests, getNetworkResponses } from '../middleware/debug-interceptor';
 import os from 'os';
 import { users, cases, documents, persons } from '../../shared/schema';
@@ -211,7 +210,7 @@ if (process.env.NODE_ENV !== 'production') {
         message: 'Cache stats would go here if Redis is configured',
         redisUrl: process.env.REDIS_URL ? 'Configured' : 'Not configured',
       });
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: 'Failed to get cache stats' });
     }
   });

@@ -1,0 +1,109 @@
+name: GitIgnore Check
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  check-gitignore:
+    runs-on: ubuntu-latest
+    name: Verify .gitignore Rules
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Check for node_modules in git
+        run: |
+          echo "🔍 Checking for node_modules in version control..."
+          if git ls-files | grep -q "node_modules/"; then
+            echo "❌ ERROR: node_modules directory found in git!"
+            echo "Files found:"
+            git ls-files | grep "node_modules/" | head -20
+            echo ""
+            echo "To fix this, run:"
+            echo "  git rm -r --cached node_modules/"
+            echo "  git commit -m 'fix: remove node_modules from version control'"
+            exit 1
+          else
+            echo "✅ No node_modules in version control"
+          fi
+          
+      - name: Check for other ignored files
+        run: |
+          echo "🔍 Checking for other files that should be ignored..."
+          
+          # Check for common files that should be ignored
+          IGNORED_PATTERNS=(
+            "*.log"
+            "*.env"
+            "*.db"
+            "*.sqlite"
+            "coverage/"
+            "dist/"
+            "build/"
+            ".DS_Store"
+            "Thumbs.db"
+            "__pycache__/"
+            "*.pyc"
+            "venv/"
+            ".venv/"
+          )
+          
+          FOUND_IGNORED=false
+          for pattern in "${IGNORED_PATTERNS[@]}"; do
+            if git ls-files | grep -q "$pattern"; then
+              echo "⚠️  WARNING: Found $pattern in version control"
+              git ls-files | grep "$pattern" | head -5
+              FOUND_IGNORED=true
+            fi
+          done
+          
+          if [ "$FOUND_IGNORED" = true ]; then
+            echo ""
+            echo "⚠️  Some files that should be ignored are tracked in git."
+            echo "Consider removing them with: git rm --cached <file>"
+          else
+            echo "✅ No commonly ignored files found in version control"
+          fi
+          
+      - name: Verify .gitignore exists and is valid
+        run: |
+          echo "🔍 Verifying .gitignore file..."
+          if [ ! -f .gitignore ]; then
+            echo "❌ ERROR: .gitignore file not found!"
+            exit 1
+          fi
+          
+          # Check for essential entries
+          ESSENTIAL_ENTRIES=(
+            "node_modules"
+            ".env"
+            "dist"
+            "coverage"
+          )
+          
+          for entry in "${ESSENTIAL_ENTRIES[@]}"; do
+            if ! grep -q "$entry" .gitignore; then
+              echo "⚠️  WARNING: .gitignore missing essential entry: $entry"
+            fi
+          done
+          
+          echo "✅ .gitignore file exists and appears valid"
+          
+      - name: Check repository size
+        run: |
+          echo "📊 Repository size check..."
+          REPO_SIZE=$(du -sh .git | cut -f1)
+          echo "Repository size: $REPO_SIZE"
+          
+          # Get size in MB for comparison
+          SIZE_MB=$(du -sm .git | cut -f1)
+          if [ "$SIZE_MB" -gt 100 ]; then
+            echo "⚠️  WARNING: Repository is larger than 100MB ($SIZE_MB MB)"
+            echo "Consider using git-filter-repo or BFG to clean history if needed"
+          else
+            echo "✅ Repository size is reasonable"
+          fi

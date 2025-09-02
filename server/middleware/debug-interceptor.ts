@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { DebugLogger, apiDebug, perfMonitor } from '../utils/debug.js';
+import { DebugLogger, apiDebug } from '../utils/debug.js';
 import { debugWebSocket } from '../services/debug-websocket.js';
 import { debugRecorder } from '../services/debug-recorder.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -83,7 +83,6 @@ export class NetworkInterceptor {
       const originalStatus = res.status;
 
       let responseStatus = 200;
-      let responseBody: any;
 
       res.status = function(code: number) {
         responseStatus = code;

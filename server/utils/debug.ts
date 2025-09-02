@@ -6,7 +6,7 @@ let chalk: ChalkInstance | null = null;
   try {
     const chalkModule = await import('chalk');
     chalk = chalkModule.default;
-  } catch (error) {
+  } catch {
     console.warn('Chalk not available, using plain console output');
   }
 })();
