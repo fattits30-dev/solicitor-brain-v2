@@ -221,3 +221,8 @@ output/
 API_TEST_RESULTS.md
 APP_STATUS_REPORT.md
 PROJECT_STATUS.md
+
+# Large binary files and tools
+*.traineddata
+bfg.jar
+*.jar

@@ -219,7 +219,8 @@ describe('EnhancedDebugPanel', () => {
   it('should handle WebSocket messages', async () => {
     let wsInstance: MockWebSocket | null = null;
     
-    jest.spyOn(global, 'WebSocket' as any).mockImplementation((url: string) => {
+    jest.spyOn(global, 'WebSocket' as any).mockImplementation((...args: any[]) => {
+      const url = args[0] as string;
       wsInstance = new MockWebSocket(url);
       return wsInstance;
     });
@@ -234,8 +235,8 @@ describe('EnhancedDebugPanel', () => {
     });
     
     // Simulate receiving a log message
-    if (wsInstance && wsInstance.onmessage) {
-      wsInstance.onmessage(new MessageEvent('message', {
+    if (wsInstance && (wsInstance as any).onmessage) {
+      (wsInstance as any).onmessage(new MessageEvent('message', {
         data: JSON.stringify({
           type: 'log',
           level: 'INFO',
@@ -254,7 +255,8 @@ describe('EnhancedDebugPanel', () => {
   it('should toggle connection status indicator', async () => {
     let wsInstance: MockWebSocket | null = null;
     
-    jest.spyOn(global, 'WebSocket' as any).mockImplementation((url: string) => {
+    jest.spyOn(global, 'WebSocket' as any).mockImplementation((...args: any[]) => {
+      const url = args[0] as string;
       wsInstance = new MockWebSocket(url);
       return wsInstance;
     });
@@ -274,7 +276,7 @@ describe('EnhancedDebugPanel', () => {
     
     // Simulate disconnection
     if (wsInstance) {
-      wsInstance.close();
+      (wsInstance as any).close();
     }
     
     // Should show disconnected status (WifiOff icon)
