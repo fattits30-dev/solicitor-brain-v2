@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { DebugLogger, DEBUG_LEVELS, QueryDebugger, ApiDebugger, PerformanceMonitor } from '../utils/debug';
+import { DebugLogger, QueryDebugger, ApiDebugger, PerformanceMonitor } from '../utils/debug';
 
 describe('DebugLogger', () => {
   let consoleSpy: {

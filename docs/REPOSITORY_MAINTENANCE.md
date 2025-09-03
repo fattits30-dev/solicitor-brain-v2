@@ -5,6 +5,7 @@
 This guide documents best practices and procedures for maintaining a clean, efficient repository.
 
 ## Table of Contents
+
 - [Preventing node_modules in Git](#preventing-node_modules-in-git)
 - [Repository Size Management](#repository-size-management)
 - [CI/CD Enforcement](#cicd-enforcement)
@@ -14,6 +15,7 @@ This guide documents best practices and procedures for maintaining a clean, effi
 ## Preventing node_modules in Git
 
 ### Why It Matters
+
 - **Security**: Dependencies can contain vulnerabilities
 - **Performance**: Reduces repository size by 90%+
 - **Conflicts**: Avoids merge conflicts in dependency files
@@ -22,6 +24,7 @@ This guide documents best practices and procedures for maintaining a clean, effi
 ### Prevention Measures
 
 1. **`.gitignore` Configuration**
+
    ```gitignore
    node_modules/
    **/node_modules/
@@ -39,6 +42,7 @@ This guide documents best practices and procedures for maintaining a clean, effi
 ### If node_modules Gets Committed
 
 **Immediate Fix:**
+
 ```bash
 # Remove from current commit
 git rm -r --cached node_modules/
@@ -47,6 +51,7 @@ git push
 ```
 
 **Clean History (if needed):**
+
 ```bash
 # Download BFG Repo Cleaner
 wget -O bfg.jar https://repo1.maven.org/maven2/com/madgag/bfg/1.14.0/bfg-1.14.0.jar
@@ -78,6 +83,7 @@ find . -type f -size +1M ! -path "./.git/*" ! -path "./node_modules/*" -exec ls 
 ```
 
 ### Size Targets
+
 - **Ideal**: < 100MB
 - **Acceptable**: < 250MB
 - **Warning**: > 250MB
@@ -91,6 +97,7 @@ find . -type f -size +1M ! -path "./.git/*" ! -path "./node_modules/*" -exec ls 
    - Add to .gitignore
 
 2. **Build Artifacts**
+
    ```gitignore
    dist/
    build/
@@ -164,17 +171,20 @@ git push --force-with-lease
 ## Regular Maintenance Tasks
 
 ### Weekly
+
 - [ ] Check repository size: `du -sh .git`
 - [ ] Review dependency updates: `npm outdated`
 - [ ] Check for security alerts: `npm audit`
 
 ### Monthly
+
 - [ ] Review and update .gitignore
 - [ ] Clean up old branches
 - [ ] Analyze large files
 - [ ] Review CI workflow performance
 
 ### Quarterly
+
 - [ ] Full repository audit
 - [ ] Consider history cleanup if > 250MB
 - [ ] Update this documentation
@@ -183,6 +193,7 @@ git push --force-with-lease
 ## Best Practices
 
 ### DO ✅
+
 - Commit early and often (small commits)
 - Use .gitignore proactively
 - Review file sizes before committing
@@ -191,6 +202,7 @@ git push --force-with-lease
 - Use environment variables for secrets
 
 ### DON'T ❌
+
 - Commit node_modules
 - Commit .env files
 - Commit large binary files
@@ -201,6 +213,7 @@ git push --force-with-lease
 ## Tools and Resources
 
 ### Essential Tools
+
 - **BFG Repo Cleaner**: Fast repository cleaning
 - **git-filter-repo**: Alternative to BFG
 - **git-sizer**: Analyze repository size issues
@@ -235,6 +248,7 @@ If you encounter issues:
 ## Automation Scripts
 
 ### cleanup.sh
+
 Create this script in the project root:
 
 ```bash
