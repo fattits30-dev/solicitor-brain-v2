@@ -21,6 +21,15 @@ jobs:
           fi
           echo "✅ policy.yml found"
 
+      - name: Check for untracked files
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "❌ ERROR: Untracked files detected"
+            git status --porcelain
+            exit 1
+          fi
+          echo "✅ No untracked files detected"
+
       - name: Validate policy.yml format
         run: |
           if ! command -v yq &> /dev/null; then
