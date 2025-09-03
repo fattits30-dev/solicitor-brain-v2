@@ -28,7 +28,12 @@
     "commit": "cz",
     "typecheck": "tsc --noEmit",
     "backend:openapi:export": "tsx scripts/export-openapi.ts",
-    "web:sdk:generate": "echo 'SDK generation pending OpenAPI setup'"
+    "web:sdk:generate": "echo 'SDK generation pending OpenAPI setup'",
+    "warden:check": "./guardian/warden check",
+    "warden:fix": "./guardian/warden check --fix",
+    "warden:status": "./guardian/warden status",
+    "warden:scan": "./guardian/warden scan",
+    "warden:test": "cd guardian && python3 -m unittest test_guardian.py -v"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [

@@ -30,6 +30,15 @@ jobs:
           fi
           echo "✅ policy.yml is valid YAML"
 
+      - name: Install Python dependencies
+        run: |
+          python3 -c "import yaml" || pip install pyyaml
+
+      - name: Run Project Warden checks
+        run: |
+          chmod +x ./guardian/warden
+          ./guardian/warden check
+
   security-scan:
     runs-on: ubuntu-latest
     needs: policy-check
