@@ -1,0 +1,80 @@
+{
+  "defaultLevel": "FULL",
+  "roleBasedLevels": {
+    "admin": "NONE",
+    "senior_solicitor": "PARTIAL",
+    "solicitor": "PARTIAL", 
+    "paralegal": "FULL",
+    "support": "FULL",
+    "guest": "FULL"
+  },
+  "environmentOverrides": {
+    "development": "PARTIAL",
+    "test": "FULL", 
+    "staging": "FULL",
+    "production": "FULL"
+  },
+  "exemptedFields": [
+    "id",
+    "created_at",
+    "updated_at",
+    "version",
+    "status"
+  ],
+  "logRedactions": true,
+  "preserveFormat": true,
+  "customRules": {
+    "solicitor-reference": {
+      "pattern": "SLR[0-9]{6}",
+      "category": "LEGAL",
+      "severity": "MEDIUM",
+      "enabled": true
+    },
+    "court-reference": {
+      "pattern": "CO[0-9]{8}",
+      "category": "LEGAL", 
+      "severity": "MEDIUM",
+      "enabled": true
+    }
+  },
+  "categorySettings": {
+    "PII": {
+      "enabled": true,
+      "minRole": "guest"
+    },
+    "FINANCIAL": {
+      "enabled": true,
+      "minRole": "guest"
+    },
+    "LEGAL": {
+      "enabled": true,
+      "minRole": "paralegal"
+    },
+    "CONTACT": {
+      "enabled": true,
+      "minRole": "guest"
+    },
+    "IDENTIFIER": {
+      "enabled": true,
+      "minRole": "guest"
+    }
+  },
+  "alerts": {
+    "criticalPIIFound": {
+      "enabled": true,
+      "threshold": 5,
+      "notify": ["admin", "senior_solicitor"]
+    },
+    "massRedaction": {
+      "enabled": true,
+      "threshold": 50,
+      "notify": ["admin"]
+    }
+  },
+  "performance": {
+    "cacheResults": true,
+    "cacheExpiryMs": 300000,
+    "maxTextLength": 1000000,
+    "batchSize": 1000
+  }
+}

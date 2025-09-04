@@ -1,0 +1,48 @@
+{
+  "recommendations": [
+    // Core Development
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    
+    // Git and Version Control
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+    "github.copilot",
+    
+    // Testing and Quality
+    "orta.vscode-jest",
+    "ms-playwright.playwright",
+    "ms-vscode.test-adapter-converter",
+    
+    // Database and SQL
+    "ms-mssql.mssql",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    
+    // Legal/Documentation
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+    "streetsidesoftware.code-spell-checker",
+    "streetsidesoftware.code-spell-checker-british-english",
+    
+    // Security and Audit
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "ms-vscode.powershell",
+    
+    // Productivity
+    "ms-vscode.vscode-todo-highlight",
+    "gruntfuggly.todo-tree",
+    "alefragnani.bookmarks",
+    "ms-vscode.references-view",
+    
+    // Theme and UI
+    "pkief.material-icon-theme",
+    "github.github-vscode-theme"
+  ],
+  "unwantedRecommendations": [
+    "hookyqr.beautify"
+  ]
+}

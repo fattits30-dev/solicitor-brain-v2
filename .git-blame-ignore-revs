@@ -1,0 +1,8 @@
+# Git blame ignore file for solicitor-brain-v2
+# This file contains commit SHAs that should be ignored in git blame
+# Typically formatting commits, large refactors, or automated changes
+
+# Format: one commit SHA per line with optional comments
+
+# Initial TypeScript/Prettier setup commits (if any)
+# Add commit SHAs here as needed for formatting-only changes

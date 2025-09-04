@@ -1,0 +1,73 @@
+{
+  "$schema": "https://raw.githubusercontent.com/gitkraken/vscode-gitlens/main/schema/gitlens.schema.json",
+  "blame": {
+    "compact": false,
+    "format": "${author|12} ${date} ${message|50}",
+    "highlight": {
+      "locations": ["line", "overview"]
+    },
+    "toggleMode": "file"
+  },
+  "codeLens": {
+    "enabled": true,
+    "authors": {
+      "enabled": true
+    },
+    "recentChange": {
+      "enabled": true
+    }
+  },
+  "currentLine": {
+    "enabled": true,
+    "format": "${author} • ${date} • ${message}"
+  },
+  "statusBar": {
+    "enabled": true,
+    "format": "${author} • ${date}"
+  },
+  "fileAnnotations": {
+    "command": "gitlens.toggleFileBlame"
+  },
+  "views": {
+    "repositories": {
+      "files": {
+        "compact": false,
+        "layout": "tree"
+      }
+    },
+    "fileHistory": {
+      "enabled": true
+    },
+    "lineHistory": {
+      "enabled": true
+    }
+  },
+  "hovers": {
+    "currentLine": {
+      "over": "line"
+    },
+    "annotations": {
+      "over": "line"
+    }
+  },
+  "autolinks": [
+    {
+      "prefix": "JIRA-",
+      "url": "https://your-org.atlassian.net/browse/JIRA-<num>",
+      "title": "Open JIRA Issue JIRA-<num>"
+    }
+  ],
+  "defaultDateFormat": "YYYY-MM-DD HH:mm",
+  "defaultDateShortFormat": "MM-DD HH:mm",
+  "advanced": {
+    "messages": {
+      "suppressShowKeyBindingsNotice": true,
+      "suppressWelcomeNotice": true
+    },
+    "blame": {
+      "customArguments": [
+        "--ignore-revs-file=.git-blame-ignore-revs"
+      ]
+    }
+  }
+}

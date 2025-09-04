@@ -1,0 +1,48 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: "[FEATURE] "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Description
+      description: What problem does this feature solve?
+      placeholder: I'm frustrated when...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: What would you like to happen?
+    validations:
+      required: true
+      
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Any alternative solutions or features considered?
+      
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Low - Nice to have
+        - Medium - Would improve workflow
+        - High - Important for users
+        - Critical - Blocking legal compliance
+    validations:
+      required: true
+      
+  - type: checkboxes
+    id: compliance
+    attributes:
+      label: Legal & Compliance
+      options:
+        - label: This feature maintains GDPR compliance
+        - label: This feature follows trauma-informed design principles
+        - label: This feature meets accessibility requirements (WCAG 2.2 AA)

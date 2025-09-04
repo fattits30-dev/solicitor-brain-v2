@@ -1,0 +1,288 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev:diff",
+      "type": "shell",
+      "command": "git diff HEAD~1..HEAD --stat && git status --porcelain",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev:repair",
+      "type": "shell",
+      "command": "npm run lint -- --fix && npm run typecheck && npm test -- --passWithNoTests",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": ["$tsc", "$eslint-stylish"]
+    },
+    {
+      "label": "dev:commit",
+      "type": "shell",
+      "command": "git add . && git commit -m \"feat: automated dev improvements 🤖 Generated with Claude Code\\n\\nCo-Authored-By: Claude <noreply@anthropic.com>\"",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev:cycle",
+      "dependsOrder": "sequence",
+      "dependsOn": ["dev:diff", "dev:repair", "dev:commit"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "dev:test-cycle",
+      "type": "shell",
+      "command": "npm run test:all && echo 'Tests passed! Ready for commit.'",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "dev:full-cycle",
+      "dependsOrder": "sequence",
+      "dependsOn": ["dev:diff", "dev:repair", "dev:test-cycle", "dev:commit"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "dev:health-check",
+      "type": "shell",
+      "command": "curl -s http://localhost:3333/api/health | jq . && echo '\nServer Status: Healthy'",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev:db-status",
+      "type": "shell",
+      "command": "PGPASSWORD=development_secure_2024 psql -h localhost -U solicitor -d solicitor_brain_v2 -c \"SELECT 'Database connected successfully' as status, COUNT(*) as total_cases FROM cases;\"",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev:ai-status",
+      "type": "shell",
+      "command": "curl -s http://localhost:11434/api/tags | jq '.models[] | {name: .name, size: (.size / 1024 / 1024 / 1024 | round * 100 / 100), modified: .modified_at}'",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev:system-status",
+      "dependsOrder": "parallel",
+      "dependsOn": ["dev:health-check", "dev:db-status", "dev:ai-status"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "dev:quick-fix",
+      "type": "shell",
+      "command": "npm run lint -- --fix && git add . && git commit -m \"fix: quick linting fixes 🔧\"",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "Start Development Server",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": ["$tsc", "$eslint-stylish"],
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "Build Production",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "npm",
+      "args": ["test"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Lint Code",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "lint"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      },
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "Format Code",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "format"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Database: Connect PostgreSQL",
+      "type": "shell",
+      "command": "PGPASSWORD=development_secure_2024",
+      "args": ["psql", "-h", "localhost", "-U", "solicitor", "-d", "solicitor_brain_v2"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Database: Check Tables",
+      "type": "shell",
+      "command": "PGPASSWORD=development_secure_2024 psql -h localhost -U solicitor -d solicitor_brain_v2 -c \"\\dt\"",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Database: View Cases",
+      "type": "shell",
+      "command": "PGPASSWORD=development_secure_2024 psql -h localhost -U solicitor -d solicitor_brain_v2 -c \"SELECT id, case_number, title, status, created_at FROM cases LIMIT 10;\"",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "AI: Check Ollama Status",
+      "type": "shell",
+      "command": "curl",
+      "args": ["http://localhost:11434/api/tags"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Security: Audit Logs",
+      "type": "shell",
+      "command": "PGPASSWORD=development_secure_2024 psql -h localhost -U solicitor -d solicitor_brain_v2 -c \"SELECT action, table_name, user_id, timestamp FROM audit_log ORDER BY timestamp DESC LIMIT 20;\"",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Health Check: Full System",
+      "type": "shell",
+      "command": "curl",
+      "args": ["http://localhost:3000/api/health"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      }
+    }
+  ]
+}

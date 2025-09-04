@@ -1,0 +1,461 @@
+{
+  "metadata": {
+    "title": "Trauma-Informed Copy Deck - Solicitor Brain v2",
+    "version": "1.0.0",
+    "created": "2025-09-04",
+    "purpose": "Provide empathetic, accessible, and legally appropriate micro-copy for vulnerable clients",
+    "compliance": ["WCAG 2.2 AA", "UK Equality Act 2010", "Trauma-Informed Design Principles"],
+    "target_users": ["UK solicitors", "paralegals", "vulnerable legal clients", "screen reader users"],
+    "legal_contexts": ["employment law", "discrimination", "harassment", "domestic violence", "personal injury"]
+  },
+  
+  "voice_and_tone": {
+    "core_principles": [
+      "User agency and control",
+      "Non-judgmental language", 
+      "Clear, plain English",
+      "Empathetic but professional",
+      "Trauma-aware communication",
+      "Culturally sensitive"
+    ],
+    "tone_by_context": {
+      "error_states": "Supportive, reassuring, solution-focused",
+      "success_states": "Affirming, encouraging, not overwhelming",
+      "loading_states": "Patient, informative, calming",
+      "empty_states": "Hopeful, guiding, non-judgmental",
+      "legal_content": "Clear, accessible, empowering",
+      "security_flows": "Protective, explaining benefits, user-controlled"
+    }
+  },
+
+  "authentication_flow": {
+    "login_page": {
+      "page_title": {
+        "current": "Solicitor Brain - AI-Powered Legal Case Management",
+        "improved": "Solicitor Brain - Your Secure Legal Workspace",
+        "character_limit": 60,
+        "accessibility_notes": "Focus on security and user ownership rather than AI emphasis",
+        "trauma_considerations": "Avoid 'AI-Powered' which may feel impersonal to vulnerable clients"
+      },
+      "email_label": {
+        "current": "Email",
+        "improved": "Your email address",
+        "character_limit": 25,
+        "accessibility_notes": "Screen reader friendly, personal pronoun creates connection",
+        "trauma_considerations": "Using 'your' emphasizes user ownership and control"
+      },
+      "email_placeholder": {
+        "current": "Enter your email address", 
+        "improved": "email@example.com",
+        "character_limit": 40,
+        "accessibility_notes": "Example format reduces cognitive load",
+        "trauma_considerations": "No command language, shows expected format clearly"
+      },
+      "password_label": {
+        "current": "Password",
+        "improved": "Your secure password", 
+        "character_limit": 25,
+        "accessibility_notes": "Reinforces security without fear",
+        "trauma_considerations": "Emphasizes security as protection, not barrier"
+      },
+      "submit_button": {
+        "current": "Sign In",
+        "improved": "Access my workspace",
+        "character_limit": 25,
+        "accessibility_notes": "Clear action outcome, personal ownership",
+        "trauma_considerations": "Focus on gaining access to 'my' space, not system entry"
+      }
+    },
+    
+    "error_messages": {
+      "login_failed": {
+        "current": "Login failed. Please check your credentials and try again.",
+        "improved": "We couldn't sign you in with those details. Let's try again - check your email and password match what you set up.",
+        "character_limit": 120,
+        "accessibility_notes": "Explains what to check specifically, collaborative tone",
+        "trauma_considerations": "No failure language, collaborative 'we', specific helpful guidance"
+      },
+      "account_locked": {
+        "current": "Account locked due to too many failed attempts.",
+        "improved": "Your account is temporarily protected. For your security, please wait 15 minutes or contact support who can help you access your workspace safely.",
+        "character_limit": 150,
+        "accessibility_notes": "Explains why and provides clear next steps",
+        "trauma_considerations": "Frame as protection, not punishment; emphasize help availability"
+      },
+      "network_error": {
+        "current": "Network error occurred. Please try again.",
+        "improved": "We're having trouble connecting right now. Your information is safe. Please try again in a moment.",
+        "character_limit": 100,
+        "accessibility_notes": "Reassures about data safety, gives time expectation",
+        "trauma_considerations": "Immediate reassurance about safety, not user's fault"
+      }
+    }
+  },
+
+  "mfa_verification": {
+    "modal_title": {
+      "current": "Multi-Factor Authentication Required",
+      "improved": "Secure your account - verification step",
+      "character_limit": 50,
+      "accessibility_notes": "Explains purpose positively",
+      "trauma_considerations": "Frame as securing 'your' account, not system requirement"
+    },
+    "modal_description": {
+      "current": "Please verify your identity to continue accessing the system.",
+      "improved": "This extra step keeps your legal information secure. Choose how you'd like to verify it's really you.",
+      "character_limit": 120,
+      "accessibility_notes": "Explains benefit and gives user choice",
+      "trauma_considerations": "Emphasizes protection of user's information and user choice"
+    },
+    "totp_description": {
+      "current": "Enter the 6-digit code from your authenticator app",
+      "improved": "Check your authenticator app for a 6-digit code, then enter it below",
+      "character_limit": 80,
+      "accessibility_notes": "Clear sequence of actions",
+      "trauma_considerations": "Step-by-step guidance, no pressure language"
+    },
+    "verification_errors": {
+      "code_incorrect": {
+        "current": "Verification failed. The code you entered is incorrect.",
+        "improved": "That code didn't match. Double-check your authenticator app for the current code - they change every 30 seconds.",
+        "character_limit": 120,
+        "accessibility_notes": "Explains why codes change and what to do",
+        "trauma_considerations": "No failure language, explains the system behavior, reassuring"
+      },
+      "code_expired": {
+        "current": "Code expired. Please enter a new code.",
+        "improved": "This code has timed out. Your authenticator app will show a fresh code - please try the new one.",
+        "character_limit": 100,
+        "accessibility_notes": "Explains system behavior and next action",
+        "trauma_considerations": "Natural timeout explanation, clear guidance"
+      },
+      "too_many_attempts": {
+        "current": "Too many failed attempts. Please try again later.",
+        "improved": "We've paused verification for your security. Please wait 5 minutes, or try a different verification method below.",
+        "character_limit": 120,
+        "accessibility_notes": "Gives specific time and alternative options",
+        "trauma_considerations": "Frame as security protection, offers alternatives, specific timeframe"
+      }
+    },
+    "trust_device": {
+      "current": "Trust this device for 30 days",
+      "improved": "Remember this device for 30 days (you can change this anytime in settings)",
+      "character_limit": 80,
+      "accessibility_notes": "Explains duration and user control",
+      "trauma_considerations": "Emphasizes user control and ability to change settings"
+    }
+  },
+
+  "document_viewer": {
+    "loading_states": {
+      "document_loading": {
+        "current": "Loading document...",
+        "improved": "Preparing your document - this may take a moment",
+        "character_limit": 60,
+        "accessibility_notes": "Sets expectation for timing",
+        "trauma_considerations": "Personal ownership 'your document', patience expectation"
+      },
+      "ocr_processing": {
+        "current": "Processing document with OCR...",
+        "improved": "Making this document searchable for you - we'll show progress below",
+        "character_limit": 80,
+        "accessibility_notes": "Explains benefit and references progress indicator",
+        "trauma_considerations": "Focus on benefit to user, transparent about process"
+      }
+    },
+    "error_states": {
+      "document_failed": {
+        "current": "Failed to load document",
+        "improved": "We couldn't open this document right now. Your file is safe - let's try again.",
+        "character_limit": 90,
+        "accessibility_notes": "Reassures about file safety",
+        "trauma_considerations": "Immediate reassurance file is safe, no failure language"
+      },
+      "ocr_failed": {
+        "current": "OCR processing failed",
+        "improved": "We had trouble reading the text in this document. You can still view it, and we can try the text extraction again.",
+        "character_limit": 120,
+        "accessibility_notes": "Explains what failed specifically and available options",
+        "trauma_considerations": "No failure language, emphasizes what still works, offers retry"
+      }
+    },
+    "navigation": {
+      "page_navigation": {
+        "current": "Page {current} of {total}",
+        "improved": "Page {current} of {total} (use arrow keys to navigate)",
+        "character_limit": 60,
+        "accessibility_notes": "Includes keyboard navigation hint",
+        "trauma_considerations": "Provides multiple ways to navigate, reduces frustration"
+      },
+      "zoom_controls": {
+        "current": "Zoom In / Zoom Out",
+        "improved": "Make text larger / Make text smaller",
+        "character_limit": 40,
+        "accessibility_notes": "Plain language explanation of zoom effect",
+        "trauma_considerations": "Focus on user benefit (readable text) not technical function"
+      }
+    }
+  },
+
+  "ai_chat_interface": {
+    "welcome_messages": {
+      "general_mode": {
+        "current": "I'm here to assist with your legal work. Ask me anything about UK law, case analysis, or document drafting.",
+        "improved": "I'm here to help with your legal work. You can ask me about UK law, analyze your cases, or draft documents - whatever would be most useful right now.",
+        "character_limit": 150,
+        "accessibility_notes": "Personal and flexible, emphasizes user choice",
+        "trauma_considerations": "Helpful tone, user-directed, acknowledges their current needs"
+      },
+      "legal_mode": {
+        "current": "I can help analyze legal documents, identify issues, assess risks, and provide guidance on UK law matters.",
+        "improved": "I can help you understand your legal documents, spot important issues, and explain UK law in plain English. What would you like to explore first?",
+        "character_limit": 150,
+        "accessibility_notes": "Emphasizes understanding and explanation",
+        "trauma_considerations": "Focus on understanding and empowerment, plain language commitment"
+      },
+      "draft_mode": {
+        "current": "I can help draft legal documents, letters, contracts, and other legal correspondence with appropriate tone and language.",
+        "improved": "I can help you draft letters, documents, and correspondence that sound professional and appropriate for your situation. What do you need to write?",
+        "character_limit": 150,
+        "accessibility_notes": "Emphasizes appropriateness for user's specific situation",
+        "trauma_considerations": "Personal situation focus, professional support, user-directed"
+      }
+    },
+    
+    "processing_states": {
+      "thinking": {
+        "current": "AI is thinking...",
+        "improved": "Considering your question...",
+        "character_limit": 30,
+        "accessibility_notes": "More personal, less robotic",
+        "trauma_considerations": "Feels more human and thoughtful, less mechanical"
+      },
+      "streaming": {
+        "current": "Streaming...",
+        "improved": "Writing response...",
+        "character_limit": 25,
+        "accessibility_notes": "Clearer about what's happening",
+        "trauma_considerations": "Active, purposeful activity rather than technical process"
+      }
+    },
+
+    "confidence_warnings": {
+      "low_confidence": {
+        "current": "The AI response has {confidence}% confidence. Please verify the information.",
+        "improved": "I'm not completely certain about this answer ({confidence}% sure). Please double-check this information or ask a qualified solicitor to confirm.",
+        "character_limit": 150,
+        "accessibility_notes": "More conversational, clearer action needed",
+        "trauma_considerations": "Honest uncertainty, specific guidance for verification"
+      }
+    },
+
+    "error_messages": {
+      "chat_error": {
+        "current": "I'm sorry, but I encountered an error. Please try again or contact support if the problem persists.",
+        "improved": "Something didn't work as expected on my end. Your question is saved, and you can try asking again. If this keeps happening, our support team can help.",
+        "character_limit": 150,
+        "accessibility_notes": "Reassures question is saved, provides escalation path",
+        "trauma_considerations": "Takes responsibility, reassures nothing is lost, offers human help"
+      },
+      "context_error": {
+        "current": "Failed to load context for this conversation.",
+        "improved": "I'm having trouble accessing the background information for this chat. Your messages are still here - I just might need you to remind me of key details.",
+        "character_limit": 150,
+        "accessibility_notes": "Explains what the user might need to do",
+        "trauma_considerations": "Reassures messages are safe, explains impact clearly"
+      }
+    }
+  },
+
+  "form_validation": {
+    "required_field_errors": {
+      "email_required": {
+        "current": "Email is required",
+        "improved": "Please add your email address to continue",
+        "character_limit": 50,
+        "accessibility_notes": "Polite request with clear action",
+        "trauma_considerations": "Polite 'please', explains why (to continue)"
+      },
+      "password_required": {
+        "current": "Password is required", 
+        "improved": "Please enter your password",
+        "character_limit": 40,
+        "accessibility_notes": "Simple, polite request",
+        "trauma_considerations": "No harsh 'required' language"
+      }
+    },
+    
+    "format_errors": {
+      "email_invalid": {
+        "current": "Please enter a valid email address",
+        "improved": "This doesn't look like an email address - please check it includes an @ symbol and domain (like .com)",
+        "character_limit": 100,
+        "accessibility_notes": "Explains what makes an email valid",
+        "trauma_considerations": "Helpful explanation rather than just saying 'invalid'"
+      },
+      "password_weak": {
+        "current": "Password must be at least 8 characters with uppercase, lowercase, numbers, and symbols",
+        "improved": "To keep your account secure, please choose a password with at least 8 characters including: a capital letter, lowercase letter, number, and symbol",
+        "character_limit": 150,
+        "accessibility_notes": "Explains security reason first, then requirements",
+        "trauma_considerations": "Frame as keeping 'your account' secure, explains the purpose"
+      }
+    }
+  },
+
+  "success_messages": {
+    "login_success": {
+      "current": "Login successful. Welcome back!",
+      "improved": "Welcome back to your secure workspace",
+      "character_limit": 50,
+      "accessibility_notes": "Emphasizes security and ownership",
+      "trauma_considerations": "Welcoming without overly enthusiastic tone"
+    },
+    "document_uploaded": {
+      "current": "Document uploaded successfully",
+      "improved": "Your document is now safely stored and ready to work with",
+      "character_limit": 70,
+      "accessibility_notes": "Emphasizes safety and next steps",
+      "trauma_considerations": "Emphasizes safety and user ownership"
+    },
+    "note_saved": {
+      "current": "Note saved",
+      "improved": "Your note has been saved securely",
+      "character_limit": 40,
+      "accessibility_notes": "Confirms security of personal notes",
+      "trauma_considerations": "Reassures about security of personal information"
+    }
+  },
+
+  "empty_states": {
+    "no_documents": {
+      "current": "No documents yet",
+      "improved": "Your documents will appear here when you upload them. You can drag and drop files, or use the upload button above.",
+      "character_limit": 120,
+      "accessibility_notes": "Explains what will appear and how to add content",
+      "trauma_considerations": "Explains the space will fill up, provides clear instructions"
+    },
+    "no_cases": {
+      "current": "No cases found",
+      "improved": "You don't have any cases yet. When your solicitor creates cases or adds you to existing ones, they'll appear here.",
+      "character_limit": 120,
+      "accessibility_notes": "Explains how cases are created and who creates them",
+      "trauma_considerations": "Explains the process, removes any sense that user did something wrong"
+    },
+    "no_messages": {
+      "current": "No messages yet",
+      "improved": "Start a conversation by typing a question below. I can help with legal questions, document analysis, or drafting letters.",
+      "character_limit": 120,
+      "accessibility_notes": "Clear call to action with examples",
+      "trauma_considerations": "Encouraging, specific examples of how to start"
+    }
+  },
+
+  "loading_states": {
+    "general_loading": {
+      "current": "Loading...",
+      "improved": "Just a moment please...",
+      "character_limit": 30,
+      "accessibility_notes": "More polite and human",
+      "trauma_considerations": "Patient, respectful tone"
+    },
+    "saving_data": {
+      "current": "Saving...",
+      "improved": "Saving your work securely...",
+      "character_limit": 40,
+      "accessibility_notes": "Emphasizes security of user data",
+      "trauma_considerations": "Reassures about security during vulnerable save moment"
+    },
+    "processing_request": {
+      "current": "Processing your request...",
+      "improved": "Working on that for you...",
+      "character_limit": 40,
+      "accessibility_notes": "More personal, less mechanical",
+      "trauma_considerations": "Feels more human and attentive"
+    }
+  },
+
+  "consent_and_privacy": {
+    "ocr_consent": {
+      "title": "Document Text Extraction",
+      "description": "We'd like to extract text from your document to make it searchable and easier to work with. This processing happens securely on our servers and helps you find information quickly.",
+      "accept_button": "Yes, make it searchable",
+      "decline_button": "No thanks, I'll view it as-is",
+      "character_limit": 200,
+      "accessibility_notes": "Clear benefit explanation and equal weight to both choices",
+      "trauma_considerations": "Explains benefit clearly, equal weight to decline option, user choice emphasized"
+    },
+    
+    "data_sharing_consent": {
+      "title": "Share Information with AI Assistant", 
+      "description": "To give you the most helpful legal guidance, the AI can use information from your case and documents. Your data stays private and secure - we just connect the dots to give better answers.",
+      "accept_button": "Connect my information",
+      "decline_button": "Keep separate for now",
+      "character_limit": 220,
+      "accessibility_notes": "Explains benefit and privacy protection",
+      "trauma_considerations": "Emphasizes privacy protection, user control, can change later"
+    }
+  },
+
+  "accessibility_features": {
+    "skip_links": {
+      "skip_to_main": "Skip to main content",
+      "skip_to_nav": "Skip to navigation", 
+      "skip_to_search": "Skip to document search"
+    },
+    
+    "screen_reader_descriptions": {
+      "document_viewer": "Document viewer showing {filename}. Use arrow keys to navigate pages, plus and minus to zoom.",
+      "chat_interface": "AI conversation area. Messages appear here as you chat. Type your questions in the text box below.",
+      "case_timeline": "Case event timeline. Use arrow keys to navigate between events chronologically."
+    },
+    
+    "keyboard_shortcuts": {
+      "help_text": "Press Ctrl+K to search, Escape to close dialogs, Tab to navigate. Full keyboard shortcut help is available in settings."
+    }
+  },
+
+  "crisis_support": {
+    "crisis_detection_keywords": [
+      "suicide", "self-harm", "end it all", "can't go on", 
+      "domestic violence", "being hurt", "afraid", "threatened",
+      "harassment", "stalking", "unsafe", "emergency"
+    ],
+    
+    "crisis_response": {
+      "immediate_safety": "Your safety is the most important thing. If you're in immediate danger, please call 999 right away.",
+      "support_resources": "For support with difficult situations, you can contact: Samaritans (116 123), National Domestic Violence Helpline (0808 2000 247), or your local police (101 for non-emergencies).",
+      "legal_support": "Our legal team is here to help you through this process. You don't have to face this alone.",
+      "next_steps": "Would you like me to help you find local support services, or shall we focus on the legal aspects of your situation?"
+    }
+  },
+
+  "implementation_guidelines": {
+    "character_limits": {
+      "button_text": 25,
+      "error_messages": 150,
+      "help_text": 200,
+      "labels": 40,
+      "placeholders": 60,
+      "tooltips": 100
+    },
+    
+    "voice_checklist": [
+      "Uses 'your/you' to emphasize user ownership",
+      "Avoids failure/error language",
+      "Explains 'why' behind system requirements", 
+      "Offers alternatives when possible",
+      "Uses plain English, avoids legal jargon",
+      "Provides specific next steps",
+      "Acknowledges user emotions appropriately"
+    ],
+    
+    "testing_requirements": [
+      "Screen reader compatibility tested",
+      "Content scales with text zoom up to 200%", 
+      "Language tested with plain English tools",
+      "User tested with trauma survivors",
+      "Legal terminology reviewed by solicitors"
+    ]
+  }
+}

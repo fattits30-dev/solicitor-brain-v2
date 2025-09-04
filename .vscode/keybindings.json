@@ -1,0 +1,150 @@
+[
+  // Enhanced Development Workflow Shortcuts
+  {
+    "key": "ctrl+shift+d",
+    "command": "workbench.action.tasks.runTask",
+    "args": "dev:diff"
+  },
+  {
+    "key": "ctrl+shift+r",
+    "command": "workbench.action.tasks.runTask", 
+    "args": "dev:repair"
+  },
+  {
+    "key": "ctrl+shift+e",
+    "command": "workbench.action.tasks.runTask",
+    "args": "dev:commit"
+  },
+  {
+    "key": "ctrl+shift+y",
+    "command": "workbench.action.tasks.runTask",
+    "args": "dev:cycle"
+  },
+  {
+    "key": "ctrl+shift+f",
+    "command": "workbench.action.tasks.runTask",
+    "args": "dev:full-cycle"
+  },
+  {
+    "key": "ctrl+shift+q",
+    "command": "workbench.action.tasks.runTask",
+    "args": "dev:quick-fix"
+  },
+  {
+    "key": "ctrl+shift+t",
+    "command": "workbench.action.tasks.runTask",
+    "args": "dev:test-cycle"
+  },
+  {
+    "key": "ctrl+shift+b",
+    "command": "workbench.action.tasks.runTask", 
+    "args": "Start Development Server"
+  },
+  {
+    "key": "ctrl+shift+l",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Lint Code"
+  },
+  
+  // Database Quick Access  
+  {
+    "key": "ctrl+alt+d",
+    "command": "workbench.action.tasks.runTask",
+    "args": "dev:db-status"
+  },
+  {
+    "key": "ctrl+alt+c",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Database: View Cases"
+  },
+  
+  // Security and Audit
+  {
+    "key": "ctrl+shift+a",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Security: Audit Logs"
+  },
+  {
+    "key": "ctrl+shift+h",
+    "command": "workbench.action.tasks.runTask",
+    "args": "dev:system-status"
+  },
+  
+  // GitLens Shortcuts for Code Review
+  {
+    "key": "ctrl+shift+g b",
+    "command": "gitlens.toggleFileBlame"
+  },
+  {
+    "key": "ctrl+shift+g h",
+    "command": "gitlens.showQuickFileHistory"
+  },
+  {
+    "key": "ctrl+shift+g l",
+    "command": "gitlens.showQuickRepoHistory"
+  },
+  
+  // Enhanced Navigation for Legal Codebase
+  {
+    "key": "ctrl+shift+e",
+    "command": "workbench.view.explorer"
+  },
+  {
+    "key": "ctrl+shift+s",
+    "command": "workbench.view.search"
+  },
+  {
+    "key": "ctrl+shift+x",
+    "command": "workbench.view.extensions"
+  },
+  {
+    "key": "ctrl+shift+p",
+    "command": "workbench.action.showCommands"
+  },
+  
+  // File Management for Legal Documents
+  {
+    "key": "ctrl+alt+n",
+    "command": "explorer.newFile"
+  },
+  {
+    "key": "ctrl+alt+f",
+    "command": "explorer.newFolder"
+  },
+  
+  // Split Editor for Code Review
+  {
+    "key": "ctrl+\\",
+    "command": "workbench.action.splitEditor"
+  },
+  {
+    "key": "ctrl+shift+\\",
+    "command": "workbench.action.splitEditorDown"
+  },
+  
+  // Terminal Management
+  {
+    "key": "ctrl+`",
+    "command": "workbench.action.terminal.toggleTerminal"
+  },
+  {
+    "key": "ctrl+shift+`",
+    "command": "workbench.action.terminal.new"
+  },
+  
+  // Problems Panel for Code Quality
+  {
+    "key": "ctrl+shift+m",
+    "command": "workbench.action.problems.focus"
+  },
+  
+  // Toggle Features
+  {
+    "key": "f11",
+    "command": "workbench.action.toggleZenMode"
+  },
+  {
+    "key": "ctrl+k z",
+    "command": "workbench.action.toggleZenMode"
+  }
+]
