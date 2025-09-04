@@ -4,11 +4,22 @@ import { Card } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
-import { 
-  Bug, X, Trash2, Download, Globe, Terminal,
-  Play, Pause, Radio, Settings, Wifi, WifiOff, Clock
+import {
+  Bug,
+  X,
+  Trash2,
+  Download,
+  Globe,
+  Terminal,
+  Play,
+  Pause,
+  Radio,
+  Settings,
+  Wifi,
+  WifiOff,
+  Clock,
 } from 'lucide-react';
-import { useToast } from '../ui/use-toast';
+import { useToast } from '../../hooks/use-toast';
 
 interface DebugPreset {
   id: string;
@@ -57,12 +68,14 @@ export const EnhancedDebugPanel: React.FC = () => {
     ws.onopen = () => {
       setWsConnected(true);
       console.log('Debug WebSocket connected');
-      
+
       // Subscribe to channels
-      ws.send(JSON.stringify({
-        type: 'subscribe',
-        channels: ['logs', 'metrics', 'queries', 'network']
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'subscribe',
+          channels: ['logs', 'metrics', 'queries', 'network'],
+        }),
+      );
     };
 
     ws.onmessage = (event) => {
@@ -98,10 +111,10 @@ export const EnhancedDebugPanel: React.FC = () => {
   const handleWebSocketMessage = (message: any) => {
     switch (message.type) {
       case 'log':
-        setRealtimeLogs(prev => [...prev.slice(-99), message]);
+        setRealtimeLogs((prev) => [...prev.slice(-99), message]);
         break;
       case 'network':
-        setNetworkRequests(prev => [...prev.slice(-49), message.data]);
+        setNetworkRequests((prev) => [...prev.slice(-49), message.data]);
         break;
       case 'recordingStarted':
         setIsRecording(true);
@@ -136,9 +149,9 @@ export const EnhancedDebugPanel: React.FC = () => {
   const activatePreset = async (presetId: string) => {
     try {
       const response = await fetch(`/api/debug/presets/${presetId}/activate`, {
-        method: 'POST'
+        method: 'POST',
       });
-      
+
       if (response.ok) {
         setActivePreset(presetId);
         toast({
@@ -159,10 +172,10 @@ export const EnhancedDebugPanel: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: `Debug Session ${new Date().toLocaleString()}`,
-          description: 'Manual debug recording'
-        })
+          description: 'Manual debug recording',
+        }),
       });
-      
+
       if (response.ok) {
         await response.json();
         setIsRecording(true);
@@ -176,9 +189,9 @@ export const EnhancedDebugPanel: React.FC = () => {
   const stopRecording = async () => {
     try {
       const response = await fetch('/api/debug/recording/stop', {
-        method: 'POST'
+        method: 'POST',
       });
-      
+
       if (response.ok) {
         setIsRecording(false);
         fetchSessions();
@@ -217,7 +230,7 @@ export const EnhancedDebugPanel: React.FC = () => {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-        setIsVisible(prev => !prev);
+        setIsVisible((prev) => !prev);
       }
     };
 
@@ -239,9 +252,11 @@ export const EnhancedDebugPanel: React.FC = () => {
 
       {/* Enhanced Debug Panel */}
       {isVisible && (
-        <Card className={`fixed bottom-20 right-4 z-40 shadow-2xl transition-all ${
-          isMinimized ? 'w-80 h-12' : 'w-[800px] h-[600px]'
-        }`}>
+        <Card
+          className={`fixed bottom-20 right-4 z-40 shadow-2xl transition-all ${
+            isMinimized ? 'w-80 h-12' : 'w-[800px] h-[600px]'
+          }`}
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b">
             <div className="flex items-center gap-2">
@@ -258,18 +273,10 @@ export const EnhancedDebugPanel: React.FC = () => {
               )}
             </div>
             <div className="flex items-center gap-1">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsMinimized(!isMinimized)}
-              >
+              <Button size="sm" variant="ghost" onClick={() => setIsMinimized(!isMinimized)}>
                 {isMinimized ? '▲' : '▼'}
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsVisible(false)}
-              >
+              <Button size="sm" variant="ghost" onClick={() => setIsVisible(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -322,18 +329,20 @@ export const EnhancedDebugPanel: React.FC = () => {
                       <div key={i} className="break-all">
                         <span className="text-gray-400">
                           {new Date(log.timestamp).toLocaleTimeString()}
-                        </span>
-                        {' '}
-                        <Badge variant={
-                          log.level === 'ERROR' ? 'destructive' :
-                          log.level === 'WARN' ? 'secondary' :
-                          'outline'
-                        } className="text-xs">
+                        </span>{' '}
+                        <Badge
+                          variant={
+                            log.level === 'ERROR'
+                              ? 'destructive'
+                              : log.level === 'WARN'
+                                ? 'secondary'
+                                : 'outline'
+                          }
+                          className="text-xs"
+                        >
                           {log.level}
-                        </Badge>
-                        {' '}
-                        {log.category && <span className="text-blue-500">[{log.category}]</span>}
-                        {' '}
+                        </Badge>{' '}
+                        {log.category && <span className="text-blue-500">[{log.category}]</span>}{' '}
                         {log.message}
                       </div>
                     ))}
@@ -356,9 +365,7 @@ export const EnhancedDebugPanel: React.FC = () => {
                             <Badge variant={req.status >= 400 ? 'destructive' : 'default'}>
                               {req.status}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {req.duration}ms
-                            </span>
+                            <span className="text-xs text-muted-foreground">{req.duration}ms</span>
                           </div>
                         </div>
                       </Card>
@@ -370,7 +377,7 @@ export const EnhancedDebugPanel: React.FC = () => {
               {/* Presets Tab */}
               <TabsContent value="presets" className="p-4">
                 <div className="grid grid-cols-2 gap-3">
-                  {presets.map(preset => (
+                  {presets.map((preset) => (
                     <Card
                       key={preset.id}
                       className={`p-3 cursor-pointer transition-colors ${
@@ -379,11 +386,11 @@ export const EnhancedDebugPanel: React.FC = () => {
                       onClick={() => activatePreset(preset.id)}
                     >
                       <h4 className="font-semibold text-sm">{preset.name}</h4>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {preset.description}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{preset.description}</p>
                       {activePreset === preset.id && (
-                        <Badge className="mt-2" variant="default">Active</Badge>
+                        <Badge className="mt-2" variant="default">
+                          Active
+                        </Badge>
                       )}
                     </Card>
                   ))}
@@ -417,7 +424,7 @@ export const EnhancedDebugPanel: React.FC = () => {
                       )}
                     </Button>
                   </div>
-                  
+
                   {isRecording && (
                     <Card className="p-4 bg-destructive/5 border-destructive">
                       <div className="flex items-center gap-2">
@@ -441,7 +448,7 @@ export const EnhancedDebugPanel: React.FC = () => {
                         No recorded sessions yet
                       </p>
                     ) : (
-                      sessions.map(session => (
+                      sessions.map((session) => (
                         <Card key={session.id} className="p-3">
                           <div className="flex items-center justify-between">
                             <div>
@@ -489,14 +496,14 @@ export const EnhancedDebugPanel: React.FC = () => {
                       <li>• Console logs forwarded to debug panel</li>
                     </ul>
                   </Card>
-                  
+
                   <Card className="p-4">
                     <h3 className="font-semibold text-sm mb-2">Performance Metrics</h3>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <span className="text-muted-foreground">Memory:</span>
                         <span className="ml-2 font-mono">
-                          {(performance as any).memory?.usedJSHeapSize 
+                          {(performance as any).memory?.usedJSHeapSize
                             ? `${Math.round((performance as any).memory.usedJSHeapSize / 1024 / 1024)}MB`
                             : 'N/A'}
                         </span>
