@@ -160,7 +160,7 @@
     "@babel/preset-typescript": "^7.27.1",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "@octokit/rest": "^19.0.0",
+    "@octokit/rest": "^22.0.0",
     "@playwright/test": "^1.55.0",
     "@replit/vite-plugin-cartographer": "^0.3.0",
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
